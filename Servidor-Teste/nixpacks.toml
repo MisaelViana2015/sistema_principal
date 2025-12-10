@@ -1,0 +1,8 @@
+[phases.install]
+cmd = "rm -rf node_modules && npm cache clean --force && npm install --no-package-lock"
+
+[phases.build]
+cmd = "npm run build"
+
+[start]
+cmd = "npm start"

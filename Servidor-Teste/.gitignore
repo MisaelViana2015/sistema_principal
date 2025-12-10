@@ -1,0 +1,17 @@
+node_modules
+dist
+.env
+.env.local
+.env.production
+*.log
+.DS_Store
+coverage
+.vscode
+.idea
+*.swp
+*.swo
+backups/db/*.sql
+backups/code/*.zip
+.replit
+.config
+package-lock.json
