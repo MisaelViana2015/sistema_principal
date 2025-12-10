@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { Driver } from "@shared/schema";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient } from "../lib/queryClient";
 
 interface AuthContextType {
   user: Driver | null;
