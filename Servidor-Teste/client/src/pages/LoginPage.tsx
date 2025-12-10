@@ -424,7 +424,7 @@ export default function LoginPage() {
                 <div className="box" onClick={() => setIsExpanded(!isExpanded)}>
                     <div className="loginBox">
                         <div className="LoginTile">Login</div>
-                        <form className="login-form" onSubmit={handleSubmit}>
+                        <form className="login-form" onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
                             {error && (
                                 <div className="error-message">
                                     {error}

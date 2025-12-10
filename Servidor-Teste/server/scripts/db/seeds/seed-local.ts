@@ -110,7 +110,7 @@ async function seedLocal() {
                 senha: hashedPassword,
                 telefone: null,
                 role: "admin",
-                is_active: true,
+                isActive: true,
             })
             .returning();
 

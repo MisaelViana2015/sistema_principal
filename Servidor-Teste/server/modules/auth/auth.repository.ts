@@ -59,8 +59,9 @@ export async function createDriver(data: CreateDriverInput & { senha: string }) 
  * Atualiza última vez que driver fez login
  */
 export async function updateLastLogin(driverId: string) {
-    await db
+    // Coluna updated_at removida do schema pois não existe no banco
+    /*await db
         .update(drivers)
         .set({ updated_at: new Date() })
-        .where(eq(drivers.id, driverId));
+        .where(eq(drivers.id, driverId));*/
 }

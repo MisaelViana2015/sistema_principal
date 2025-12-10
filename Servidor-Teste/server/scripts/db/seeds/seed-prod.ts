@@ -32,7 +32,7 @@ async function seedProd() {
                 email: "admin@rotaverde.com",
                 senha: hashedPassword,
                 role: "admin",
-                is_active: true,
+                isActive: true,
             })
             .returning();
 

@@ -1,10 +1,20 @@
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import MainLayout from "../components/MainLayout";
 import { Car, Plus, CheckCircle, AlertCircle, Wrench, Gauge } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import { authService } from "../lib/api";
 
 export default function VeiculosPage() {
     const { theme } = useTheme();
+    const navigate = useNavigate();
     const isDark = theme === 'dark';
+
+    useEffect(() => {
+        if (!authService.isAuthenticated()) {
+            navigate("/login");
+        }
+    }, [navigate]);
 
     const veiculos = [
         { placa: 'ABC-1234', modelo: 'Fiat Uno', status: 'Disponível', km: 45000, proximaRevisao: 50000 },
@@ -47,12 +57,12 @@ export default function VeiculosPage() {
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         },
         badge: (status: string) => {
-            const colors = {
+            const colors: Record<string, { bg: string; text: string; border: string }> = {
                 'Disponível': { bg: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7', text: '#16a34a', border: '#22c55e' },
                 'Em Uso': { bg: isDark ? 'rgba(59, 130, 246, 0.2)' : '#dbeafe', text: '#2563eb', border: '#3b82f6' },
                 'Manutenção': { bg: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2', text: '#dc2626', border: '#ef4444' }
             };
-            const color = colors[status as keyof typeof colors];
+            const color = colors[status] || colors['Disponível'];
             return {
                 display: 'inline-block',
                 padding: '0.25rem 0.75rem',
@@ -169,3 +179,4 @@ export default function VeiculosPage() {
         </MainLayout>
     );
 }
+

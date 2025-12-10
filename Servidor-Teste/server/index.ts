@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 import app from "./app.js";
 import { testConnection, closeConnection } from "./core/db/connection.js";

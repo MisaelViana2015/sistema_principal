@@ -5,11 +5,16 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import GradientCardLegacy from "../components/GradientCardLegacy";
 
 // Mock Data para visualizar o layout
-const MOCK_VEHICLES = [
-    { id: "1", placa: "ABC-1234", modelo: "Fiat Uno", status: "ativo", km: 150000, custoKm: 0.85 },
-    { id: "2", placa: "XYZ-5678", modelo: "VW Gol", status: "ativo", km: 120000, custoKm: 0.75 },
-    { id: "3", placa: "DEF-9012", modelo: "Chevrolet Onix", status: "manutencao", km: 80000, custoKm: 0.90 },
-];
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../../../lib/api";
+
+type Vehicle = {
+    id: string;
+    plate: string;
+    modelo: string;
+    kmInicial: number;
+    isActive: boolean;
+};
 
 const MOCK_MAINTENANCES = [
     { id: "1", data: "01/12/2025", veiculo: "ABC-1234", descricao: "Troca de Óleo", tipo: "Preventiva", km: 150000, valor: 250.00 },
@@ -26,6 +31,10 @@ const MOCK_PNEUS = [
 export default function VeiculosTabLegacy() {
     const { theme } = useTheme();
     const isDark = theme === "dark";
+
+    const { data: vehicles, isLoading } = useQuery<Vehicle[]>({
+        queryKey: ["/api/veiculos"],
+    });
 
     const [subTab, setSubTab] = useState<"cadastro" | "gerais" | "manutencoes" | "pneus">("cadastro");
     const [period, setPeriod] = useState<"semana" | "mes" | "ano" | "total">("mes");
@@ -407,31 +416,35 @@ export default function VeiculosTabLegacy() {
 
                     {/* Lista (Grid) de Veículos */}
                     <div style={styles.grid}>
-                        {MOCK_VEHICLES.map((vehicle, index) => (
-                            <GradientCardLegacy
-                                key={vehicle.id}
-                                gradient={index % 2 === 0 ? "blue" : "purple"}
-                            >
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                    <div style={styles.vehicleInfo}>
-                                        <h3 style={styles.vehiclePlate}>{vehicle.placa}</h3>
-                                        <p style={styles.vehicleModel}>{vehicle.modelo}</p>
+                        {isLoading ? (
+                            <div style={{ padding: "2rem", textAlign: "center", opacity: 0.6 }}>Carregando veículos...</div>
+                        ) : (
+                            vehicles?.map((vehicle, index) => (
+                                <GradientCardLegacy
+                                    key={vehicle.id}
+                                    gradient={index % 2 === 0 ? "blue" : "purple"}
+                                >
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                        <div style={styles.vehicleInfo}>
+                                            <h3 style={styles.vehiclePlate}>{vehicle.plate}</h3>
+                                            <p style={styles.vehicleModel}>{vehicle.modelo}</p>
+                                        </div>
+                                        <Car size={24} opacity={0.5} />
                                     </div>
-                                    <Car size={24} opacity={0.5} />
-                                </div>
 
-                                <div style={styles.metrics}>
-                                    <div style={styles.metricItem}>
-                                        <span style={styles.metricLabel}>Rodagem</span>
-                                        <span style={styles.metricValue}>{vehicle.km.toLocaleString()} km</span>
+                                    <div style={styles.metrics}>
+                                        <div style={styles.metricItem}>
+                                            <span style={styles.metricLabel}>Rodagem</span>
+                                            <span style={styles.metricValue}>{vehicle.kmInicial.toLocaleString()} km</span>
+                                        </div>
+                                        <div style={styles.metricItem}>
+                                            <span style={styles.metricLabel}>Status</span>
+                                            <span style={styles.metricValue}>{vehicle.isActive ? "Ativo" : "Inativo"}</span>
+                                        </div>
                                     </div>
-                                    <div style={styles.metricItem}>
-                                        <span style={styles.metricLabel}>Custo/Km</span>
-                                        <span style={styles.metricValue}>R$ {vehicle.custoKm.toFixed(2)}</span>
-                                    </div>
-                                </div>
-                            </GradientCardLegacy>
-                        ))}
+                                </GradientCardLegacy>
+                            ))
+                        )}
                     </div>
                 </>
             )}

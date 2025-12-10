@@ -32,7 +32,7 @@ export async function login(credentials: LoginInput) {
     }
 
     // Verifica se está ativo
-    if (!driver.is_active) {
+    if (!driver.isActive) {
         throw new UnauthorizedError("Usuário inativo. Contate o administrador.");
     }
 
@@ -44,7 +44,7 @@ export async function login(credentials: LoginInput) {
     }
 
     // Atualiza último login
-    await authRepository.updateLastLogin(driver.id);
+    // await authRepository.updateLastLogin(driver.id);
 
     // Gera token JWT
     const token = generateToken({
@@ -110,6 +110,6 @@ export async function getDriverById(id: string) {
         nome: driver.nome,
         email: driver.email,
         role: driver.role as UserRole,
-        is_active: driver.is_active,
+        isActive: driver.isActive,
     };
 }

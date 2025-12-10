@@ -7,6 +7,7 @@ import { errorHandler, notFoundHandler } from "./core/errors/errorHandler.js";
 
 // Importar rotas dos módulos
 import authRoutes from "./modules/auth/auth.routes.js";
+import veiculosRoutes from "./modules/veiculos/veiculos.routes.js";
 
 /**
  * CONFIGURAÇÃO DO EXPRESS APP
@@ -73,6 +74,7 @@ app.get("/api/health", (req, res) => {
 
 // Rotas de API
 app.use("/api/auth", authRoutes);
+app.use("/api/veiculos", veiculosRoutes);
 
 // ============================================
 // TRATAMENTO DE ERROS
