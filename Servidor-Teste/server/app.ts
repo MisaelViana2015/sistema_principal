@@ -10,6 +10,7 @@ import authRoutes from "./modules/auth/auth.routes.js";
 import veiculosRoutes from "./modules/veiculos/veiculos.routes.js";
 import shiftsRoutes from "./modules/shifts/shifts.routes.js";
 import driversRoutes from "./modules/drivers/drivers.routes.js";
+import ridesRoutes from "./modules/rides/rides.routes.js";
 
 /**
  * CONFIGURAÇÃO DO EXPRESS APP
@@ -79,6 +80,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/veiculos", veiculosRoutes);
 app.use("/api/shifts", shiftsRoutes);
 app.use("/api/drivers", driversRoutes);
+app.use("/api/rides", ridesRoutes);
 
 // ============================================
 // TRATAMENTO DE ERROS

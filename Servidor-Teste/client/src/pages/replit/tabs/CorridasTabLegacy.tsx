@@ -1,24 +1,68 @@
 
 import React, { useState } from "react";
-import { Filter, Trash2, Calendar, DollarSign, MapPin } from "lucide-react";
+import { Filter, Trash2, Calendar, DollarSign, MapPin, Loader2 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { useQuery } from "@tanstack/react-query";
 
-const MOCK_RIDES = [
-    { id: "1", data: "09/12/2025 10:30", motorista: "João Silva", origem: "Centro", destino: "Aeroporto", valor: 45.50, tipo: "app" },
-    { id: "2", data: "09/12/2025 11:15", motorista: "João Silva", origem: "Aeroporto", destino: "Hotel Plaza", valor: 30.00, tipo: "app" },
-    { id: "3", data: "08/12/2025 14:20", motorista: "Maria Oliveira", origem: "Shopping", destino: "Bairro Sul", valor: 25.00, tipo: "particular" },
-    { id: "4", data: "08/12/2025 15:45", motorista: "Maria Oliveira", origem: "Bairro Sul", destino: "Centro", valor: 22.50, tipo: "particular" },
-    { id: "5", data: "07/12/2025 09:00", motorista: "Carlos Santos", origem: "Residencial A", destino: "Escola B", valor: 15.00, tipo: "app" },
-];
+// Helper functions
+async function fetchRides() {
+    const response = await fetch("/api/rides");
+    if (!response.ok) throw new Error("Falha ao buscar corridas");
+    return response.json();
+}
+
+async function fetchDrivers() {
+    const response = await fetch("/api/drivers");
+    if (!response.ok) throw new Error("Falha ao buscar motoristas");
+    return response.json();
+}
 
 export default function CorridasTabLegacy() {
     const { theme } = useTheme();
     const isDark = theme === "dark";
 
     const [periodType, setPeriodType] = useState("semana");
-    const [selectedDocs, setSelectedDocs] = useState("todos");
+    const [selectedDocs, setSelectedDocs] = useState("todos"); // Unused? Leaving for structure match or maybe this is 'motorista' filter?
+    const [selectedDriver, setSelectedDriver] = useState("todos");
+    const [selectedType, setSelectedType] = useState("todos");
 
-    const totalValue = MOCK_RIDES.reduce((acc, ride) => acc + ride.valor, 0);
+    const { data: rides, isLoading, error } = useQuery({
+        queryKey: ["rides"],
+        queryFn: fetchRides
+    });
+
+    const { data: drivers } = useQuery({
+        queryKey: ["drivers"],
+        queryFn: fetchDrivers
+    });
+
+    const displayRides = (rides || []).filter((ride: any) => {
+        if (selectedDriver !== "todos" && ride.motorista !== selectedDriver) return false;
+        if (selectedType !== "todos" && ride.tipo !== selectedType) return false;
+
+        // Period Logic
+        const rideDate = new Date(ride.hora);
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        if (periodType === "dia") {
+            if (rideDate < startOfDay) return false;
+        } else if (periodType === "semana") {
+            const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            if (rideDate < lastWeek) return false;
+        } else if (periodType === "mes") {
+            const lastMonth = new Date(now.getFullYear(), now.getMonth(), 1); // Start of current month? Or last 30 days? Replit usually means 'Last 30 days' or 'Current Month'. Using 30 days for simplicity or matching Turnos logic.
+            const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            if (rideDate < startOfLastMonth) return false;
+        } else if (periodType === "ano") {
+            const lastYear = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+            if (rideDate < lastYear) return false;
+        }
+
+        return true;
+    });
+
+    const totalValue = displayRides.reduce((acc: number, ride: any) => acc + Number(ride.valor), 0);
 
     const styles = {
         container: {
@@ -123,6 +167,7 @@ export default function CorridasTabLegacy() {
             borderRadius: "99px",
             fontSize: "0.7rem",
             fontWeight: "600",
+            textTransform: "uppercase" as const,
             backgroundColor: type === "app" ? (isDark ? "#1e3a8a" : "#dbeafe") : (isDark ? "#14532d" : "#dcfce7"),
             color: type === "app" ? (isDark ? "#93c5fd" : "#1e40af") : (isDark ? "#86efac" : "#166534"),
         }),
@@ -133,8 +178,31 @@ export default function CorridasTabLegacy() {
             backgroundColor: "transparent",
             color: "#ef4444",
             cursor: "pointer",
+        },
+        loadingContainer: {
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "2rem",
+            color: isDark ? "#94a3b8" : "#64748b",
         }
     };
+
+    if (isLoading) {
+        return (
+            <div style={styles.loadingContainer}>
+                <Loader2 className="animate-spin" size={24} />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div style={styles.loadingContainer}>
+                <p>Erro ao carregar corridas</p>
+            </div>
+        );
+    }
 
     return (
         <div style={styles.container}>
@@ -178,16 +246,25 @@ export default function CorridasTabLegacy() {
 
                 <div style={styles.inputGroup}>
                     <label style={styles.label}>Motorista</label>
-                    <select style={styles.select}>
+                    <select
+                        style={styles.select}
+                        value={selectedDriver}
+                        onChange={(e) => setSelectedDriver(e.target.value)}
+                    >
                         <option value="todos">Todos</option>
-                        <option value="joao">João Silva</option>
-                        <option value="maria">Maria Oliveira</option>
+                        {drivers?.map((d: any) => (
+                            <option key={d.id} value={d.nome}>{d.nome}</option>
+                        ))}
                     </select>
                 </div>
 
                 <div style={styles.inputGroup}>
                     <label style={styles.label}>Tipo</label>
-                    <select style={styles.select}>
+                    <select
+                        style={styles.select}
+                        value={selectedType}
+                        onChange={(e) => setSelectedType(e.target.value)}
+                    >
                         <option value="todos">Todos</option>
                         <option value="app">App</option>
                         <option value="particular">Particular</option>
@@ -220,16 +297,16 @@ export default function CorridasTabLegacy() {
                         </tr>
                     </thead>
                     <tbody>
-                        {MOCK_RIDES.map((ride) => (
+                        {displayRides.map((ride: any) => (
                             <tr key={ride.id}>
                                 <td style={styles.td}>
                                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                                         <Calendar size={14} opacity={0.5} />
-                                        {ride.data}
+                                        {new Date(ride.hora).toLocaleString("pt-BR")}
                                     </div>
                                 </td>
                                 <td style={styles.td}>
-                                    {ride.motorista}
+                                    {ride.motorista || "Não identificado"}
                                 </td>
                                 <td style={styles.td}>
                                     <span style={styles.typeBadge(ride.tipo)}>
@@ -237,19 +314,20 @@ export default function CorridasTabLegacy() {
                                     </span>
                                 </td>
                                 <td style={styles.td}>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", fontSize: "0.8rem" }}>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", fontSize: "0.8rem", opacity: 0.5 }}>
+                                        {/* Placeholder for Origin/Dest as not in DB currently */}
                                         <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
                                             <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#22c55e" }}></span>
-                                            {ride.origem}
+                                            -
                                         </div>
                                         <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
                                             <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444" }}></span>
-                                            {ride.destino}
+                                            -
                                         </div>
                                     </div>
                                 </td>
                                 <td style={{ ...styles.td, fontWeight: "600" }}>
-                                    R$ {ride.valor.toFixed(2)}
+                                    R$ {Number(ride.valor).toFixed(2)}
                                 </td>
                                 <td style={styles.td}>
                                     <button style={styles.actionButton} title="Excluir">
@@ -263,7 +341,7 @@ export default function CorridasTabLegacy() {
             </div>
 
             <div style={{ textAlign: "center", padding: "1rem", opacity: 0.5 }}>
-                <p>Mostrando {MOCK_RIDES.length} registros (Mock)</p>
+                <p>Mostrando {displayRides.length} registros</p>
             </div>
         </div>
     );
