@@ -6,7 +6,6 @@ import MotoristasTabLegacy from "./replit/tabs/MotoristasTabLegacy";
 import VeiculosTabLegacy from "./replit/tabs/VeiculosTabLegacy";
 import TurnosTabLegacy from "./replit/tabs/TurnosTabLegacy";
 import CorridasTabLegacy from "./replit/tabs/CorridasTabLegacy";
-import CustosTabLegacy from "./replit/tabs/CustosTabLegacy";
 import ManutencoesTabLegacy from "./replit/tabs/ManutencoesTabLegacy";
 import PneusTabLegacy from "./replit/tabs/PneusTabLegacy";
 import AnaliseTabLegacy from "./replit/tabs/AnaliseTabLegacy";
@@ -19,7 +18,7 @@ import { useTheme } from "../contexts/ThemeContext";
 
 type TabValue =
     | "motoristas" | "veiculos" | "turnos" | "corridas"
-    | "custos" | "analise" | "fraude";
+    | "analise" | "fraude";
 
 interface TabItem {
     value: TabValue;
@@ -32,7 +31,6 @@ const tabs: TabItem[] = [
     { value: "veiculos", label: "Veículos", badge: 3 },
     { value: "turnos", label: "Turnos" },
     { value: "corridas", label: "Corridas" },
-    { value: "custos", label: "Custos" },
     { value: "analise", label: "Análise" },
     { value: "fraude", label: "Fraude" }
 ];
@@ -203,7 +201,6 @@ export default function Admin() {
                                 {activeTab === "veiculos" && <VeiculosTabLegacy />}
                                 {activeTab === "turnos" && <TurnosTabLegacy />}
                                 {activeTab === "corridas" && <CorridasTabLegacy />}
-                                {activeTab === "custos" && <CustosTabLegacy />}
                                 {activeTab === "analise" && <AnaliseTabLegacy />}
                                 {activeTab === "fraude" && <FraudeTabLegacy />}
                             </div>
