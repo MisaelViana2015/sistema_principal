@@ -218,7 +218,24 @@ export default function TurnosTabLegacy() {
             if (selectedStatus === "aberto" && shift.status !== "em_andamento") return false;
             if (selectedStatus === "fechado" && shift.status === "em_andamento") return false;
         }
-        // Period logic skipped for brevity, but placeholders exist
+        // Period logic
+        const shiftDate = new Date(shift.inicio);
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        if (selectedPeriod === "hoje") {
+            if (shiftDate < startOfDay) return false;
+        } else if (selectedPeriod === "semana") {
+            const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            if (shiftDate < lastWeek) return false;
+        } else if (selectedPeriod === "mes") {
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            if (shiftDate < lastMonth) return false;
+        } else if (selectedPeriod === "ano") { // Although not in select options currently, good to have
+            const lastYear = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+            if (shiftDate < lastYear) return false;
+        }
+
         return true;
     });
 
