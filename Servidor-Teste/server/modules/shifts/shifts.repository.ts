@@ -1,5 +1,5 @@
 import { db } from "../../core/db/connection.js";
-import { shifts, drivers, vehicles } from "@shared/schema.js";
+import { shifts, drivers, vehicles } from "../../../shared/schema.js";
 import { eq, desc } from "drizzle-orm";
 
 export async function findAllShifts() {
