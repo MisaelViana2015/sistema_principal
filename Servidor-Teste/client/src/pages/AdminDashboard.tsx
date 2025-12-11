@@ -19,8 +19,7 @@ import { useTheme } from "../contexts/ThemeContext";
 
 type TabValue =
     | "motoristas" | "veiculos" | "turnos" | "corridas"
-    | "custos" | "manutencoes"
-    | "pneus" | "analise" | "fraude";
+    | "custos" | "analise" | "fraude";
 
 interface TabItem {
     value: TabValue;
@@ -34,8 +33,6 @@ const tabs: TabItem[] = [
     { value: "turnos", label: "Turnos" },
     { value: "corridas", label: "Corridas" },
     { value: "custos", label: "Custos" },
-    { value: "manutencoes", label: "Manutenções" },
-    { value: "pneus", label: "Pneus" },
     { value: "analise", label: "Análise" },
     { value: "fraude", label: "Fraude" }
 ];
@@ -207,8 +204,6 @@ export default function Admin() {
                                 {activeTab === "turnos" && <TurnosTabLegacy />}
                                 {activeTab === "corridas" && <CorridasTabLegacy />}
                                 {activeTab === "custos" && <CustosTabLegacy />}
-                                {activeTab === "manutencoes" && <ManutencoesTabLegacy />}
-                                {activeTab === "pneus" && <PneusTabLegacy />}
                                 {activeTab === "analise" && <AnaliseTabLegacy />}
                                 {activeTab === "fraude" && <FraudeTabLegacy />}
                             </div>
