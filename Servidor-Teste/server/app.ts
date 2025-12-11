@@ -11,6 +11,7 @@ import veiculosRoutes from "./modules/veiculos/veiculos.routes.js";
 import shiftsRoutes from "./modules/shifts/shifts.routes.js";
 import driversRoutes from "./modules/drivers/drivers.routes.js";
 import ridesRoutes from "./modules/rides/rides.routes.js";
+import financialRoutes from "./modules/financial/financial.routes.js";
 
 /**
  * CONFIGURAÇÃO DO EXPRESS APP
@@ -81,6 +82,7 @@ app.use("/api/veiculos", veiculosRoutes);
 app.use("/api/shifts", shiftsRoutes);
 app.use("/api/drivers", driversRoutes);
 app.use("/api/rides", ridesRoutes);
+app.use("/api/financial", financialRoutes);
 
 // ============================================
 // TRATAMENTO DE ERROS

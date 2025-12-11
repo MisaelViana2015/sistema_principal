@@ -2,6 +2,32 @@
 import React, { useState } from "react";
 import { TrendingUp, TrendingDown, DollarSign, Clock, Users, Calendar, Trophy, Car, Wrench, Filter, List, Plus, Trash2, Edit, PieChart } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { useQuery } from "@tanstack/react-query";
+
+// Fetchers
+async function fetchExpenses() {
+    const response = await fetch("/api/financial/expenses");
+    if (!response.ok) throw new Error("Falha ao buscar despesas");
+    return response.json();
+}
+
+async function fetchCostTypes() {
+    const response = await fetch("/api/financial/cost-types");
+    if (!response.ok) throw new Error("Falha ao buscar tipos de custo");
+    return response.json();
+}
+
+async function fetchFixedCosts() {
+    const response = await fetch("/api/financial/fixed-costs");
+    if (!response.ok) throw new Error("Falha ao buscar custos fixos");
+    return response.json();
+}
+
+async function fetchDrivers() {
+    const response = await fetch("/api/drivers");
+    if (!response.ok) throw new Error("Falha ao buscar motoristas");
+    return response.json();
+}
 
 // Componente simples de Card KPI
 const KPICard = ({ title, value, sublabel, icon: Icon, color, gradient }: any) => {
@@ -63,27 +89,6 @@ const KPICard = ({ title, value, sublabel, icon: Icon, color, gradient }: any) =
     );
 };
 
-// Mock Data para Tipos de Custo e Custos Fixos
-const MOCK_COST_TYPES = [
-    { id: 1, name: "Combustível", category: "Variável", description: "Gastos com abastecimento" },
-    { id: 2, name: "Manutenção", category: "Variável", description: "Peças e serviços mecânicos" },
-    { id: 3, name: "Seguro", category: "Fixo", description: "Mensalidade do seguro dos veículos" },
-];
-
-const MOCK_FIXED_COSTS = [
-    { id: 1, name: "Aluguel Garagem", value: 1200.00, frequency: "Mensal", dueDate: "Dia 10" },
-    { id: 2, name: "Sistema de Gestão", value: 250.00, frequency: "Mensal", dueDate: "Dia 05" },
-    { id: 3, name: "Internet", value: 150.00, frequency: "Mensal", dueDate: "Dia 15" },
-];
-
-const MOCK_COSTS = [
-    { id: "1", data: "09/12/2025", motorista: "João Silva", tipo: "Combustível", valor: 150.00, cor: "blue" },
-    { id: "2", data: "09/12/2025", motorista: "João Silva", tipo: "Alimentação", valor: 35.00, cor: "green" },
-    { id: "3", data: "08/12/2025", motorista: "Maria Oliveira", tipo: "Manutenção", valor: 450.00, cor: "red" },
-    { id: "4", data: "08/12/2025", motorista: "Maria Oliveira", tipo: "Lavagem", valor: 50.00, cor: "cyan" },
-    { id: "5", data: "07/12/2025", motorista: "Carlos Santos", tipo: "Combustível", valor: 200.00, cor: "blue" },
-];
-
 export default function AnaliseTabLegacy() {
     const { theme } = useTheme();
     const isDark = theme === "dark";
@@ -93,11 +98,22 @@ export default function AnaliseTabLegacy() {
     const [selectedCostType, setSelectedCostType] = useState("todos");
     const [selectedDriver, setSelectedDriver] = useState("todos");
 
-    const totalCosts = MOCK_COSTS.reduce((acc, cost) => acc + cost.valor, 0);
+    // Queries
+    const { data: costs = [] } = useQuery({ queryKey: ["expenses"], queryFn: fetchExpenses });
+    const { data: costTypes = [] } = useQuery({ queryKey: ["costTypes"], queryFn: fetchCostTypes });
+    const { data: fixedCosts = [] } = useQuery({ queryKey: ["fixedCosts"], queryFn: fetchFixedCosts });
+    const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
+
+    const totalCosts = costs.reduce((acc: number, cost: any) => acc + Number(cost.valor), 0);
 
     const getBadgeStyle = (color: string) => {
         const isDarkTheme = theme === "dark";
+        // Map simple colors or types to styles if needed
+        // For now, default fallback or logic based on type name?
+        // Let's keep it simple or map specific types if known.
         switch (color) {
+            // ... existing colors preserved if backend sends them? Backend sends 'tipoCor' from description?
+            // Let's assume we might need to derive color from type name if description is empty
             case "blue": return { bg: isDarkTheme ? "#1e3a8a" : "#dbeafe", text: isDarkTheme ? "#93c5fd" : "#1e40af" };
             case "green": return { bg: isDarkTheme ? "#14532d" : "#dcfce7", text: isDarkTheme ? "#86efac" : "#166534" };
             case "red": return { bg: isDarkTheme ? "#7f1d1d" : "#fee2e2", text: isDarkTheme ? "#fca5a5" : "#991b1b" };
@@ -405,7 +421,7 @@ export default function AnaliseTabLegacy() {
                         </div>
                         <div style={{ ...styles.filtersCard, padding: "1.5rem", flexDirection: "column", gap: "0.5rem", alignItems: "flex-start", width: "100%" }}>
                             <span style={{ fontSize: "0.875rem", color: isDark ? "#94a3b8" : "#64748b", display: "flex", gap: "0.5rem" }}><PieChart size={16} /> Média por Registro</span>
-                            <span style={{ fontSize: "1.5rem", fontWeight: "700", color: isDark ? "#ffffff" : "#0f172a" }}>R$ {(totalCosts / MOCK_COSTS.length).toFixed(2)}</span>
+                            <span style={{ fontSize: "1.5rem", fontWeight: "700", color: isDark ? "#ffffff" : "#0f172a" }}>R$ {(costs.length > 0 ? totalCosts / costs.length : 0).toFixed(2)}</span>
                         </div>
                     </div>
 
@@ -422,17 +438,17 @@ export default function AnaliseTabLegacy() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {MOCK_COSTS.map((cost) => (
+                                {costs.map((cost: any) => (
                                     <tr key={cost.id}>
-                                        <td style={styles.td}>{cost.data}</td>
-                                        <td style={styles.td}>{cost.motorista}</td>
+                                        <td style={styles.td}>{new Date(cost.data).toLocaleDateString("pt-BR")}</td>
+                                        <td style={styles.td}>{cost.motorista || "N/A"}</td>
                                         <td style={styles.td}>
-                                            <span style={styles.badge(cost.cor)}>
+                                            <span style={styles.badge(cost.tipoCor || "blue")}>
                                                 {cost.tipo}
                                             </span>
                                         </td>
                                         <td style={{ ...styles.td, fontWeight: "600" }}>
-                                            R$ {cost.valor.toFixed(2)}
+                                            R$ {Number(cost.valor).toFixed(2)}
                                         </td>
                                         <td style={styles.td}>
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -441,6 +457,13 @@ export default function AnaliseTabLegacy() {
                                         </td>
                                     </tr>
                                 ))}
+                                {costs.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} style={{ ...styles.td, textAlign: "center", padding: "2rem", color: styles.label.color }}>
+                                            Nenhum custo registrado no período.
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -465,7 +488,7 @@ export default function AnaliseTabLegacy() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {MOCK_COST_TYPES.map((type) => (
+                                {costTypes.map((type: any) => (
                                     <tr key={type.id}>
                                         <td style={styles.td}>{type.name}</td>
                                         <td style={styles.td}>{type.category}</td>
@@ -478,6 +501,13 @@ export default function AnaliseTabLegacy() {
                                         </td>
                                     </tr>
                                 ))}
+                                {costTypes.length === 0 && (
+                                    <tr>
+                                        <td colSpan={4} style={{ ...styles.td, textAlign: "center", padding: "2rem", color: styles.label.color }}>
+                                            Nenhum tipo de custo cadastrado.
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -503,12 +533,12 @@ export default function AnaliseTabLegacy() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {MOCK_FIXED_COSTS.map((cost) => (
+                                {fixedCosts.map((cost: any) => (
                                     <tr key={cost.id}>
                                         <td style={styles.td}>{cost.name}</td>
-                                        <td style={{ ...styles.td, fontWeight: 'bold' }}>R$ {cost.value.toFixed(2)}</td>
+                                        <td style={{ ...styles.td, fontWeight: 'bold' }}>R$ {Number(cost.value).toFixed(2)}</td>
                                         <td style={styles.td}>{cost.frequency}</td>
-                                        <td style={styles.td}>{cost.dueDate}</td>
+                                        <td style={styles.td}>Dia {cost.dueDay}</td>
                                         <td style={styles.td}>
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                 <button style={styles.actionButton}><Edit size={16} /></button>
@@ -517,6 +547,13 @@ export default function AnaliseTabLegacy() {
                                         </td>
                                     </tr>
                                 ))}
+                                {fixedCosts.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} style={{ ...styles.td, textAlign: "center", padding: "2rem", color: styles.label.color }}>
+                                            Nenhum custo fixo cadastrado.
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>

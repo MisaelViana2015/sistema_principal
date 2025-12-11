@@ -90,3 +90,34 @@ export type Shift = typeof shifts.$inferSelect;
 export type NewShift = typeof shifts.$inferInsert;
 export type Ride = typeof rides.$inferSelect;
 export type NewRide = typeof rides.$inferInsert;
+
+export const costTypes = pgTable("cost_types", {
+    id: varchar("id").default(sql`gen_random_uuid()`).primaryKey().notNull(),
+    name: text("name").notNull(),
+    category: text("category").default('Variável').notNull(), // 'Fixo' or 'Variável'
+    description: text("description"),
+});
+
+export const fixedCosts = pgTable("fixed_costs", {
+    id: varchar("id").default(sql`gen_random_uuid()`).primaryKey().notNull(),
+    name: text("name").notNull(),
+    value: numeric("valor", { precision: 12, scale: 2 }).notNull(),
+    frequency: text("frequency").default('Mensal').notNull(),
+    dueDay: integer("due_day").default(5), // Day of month
+});
+
+export const expenses = pgTable("expenses", {
+    id: varchar("id").default(sql`gen_random_uuid()`).primaryKey().notNull(),
+    driverId: varchar("driver_id").references(() => drivers.id), // Optional link to driver
+    costTypeId: varchar("cost_type_id").references(() => costTypes.id).notNull(),
+    value: numeric("valor", { precision: 12, scale: 2 }).notNull(),
+    date: timestamp("date").notNull(),
+    notes: text("notes"),
+});
+
+export type CostType = typeof costTypes.$inferSelect;
+export type NewCostType = typeof costTypes.$inferInsert;
+export type FixedCost = typeof fixedCosts.$inferSelect;
+export type NewFixedCost = typeof fixedCosts.$inferInsert;
+export type Expense = typeof expenses.$inferSelect;
+export type NewExpense = typeof expenses.$inferInsert;
