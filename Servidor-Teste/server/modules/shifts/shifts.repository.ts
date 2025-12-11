@@ -9,13 +9,19 @@ export async function findAllShifts() {
             id: shifts.id,
             motorista: drivers.nome,
             veiculo: vehicles.plate,
+            veiculoModelo: vehicles.modelo, // Add model if available in schema
             inicio: shifts.inicio,
             fim: shifts.fim,
             status: shifts.status,
-            kmRodado: shifts.kmFinal, // This logic might need adjustment if kmRodado is diff
+            kmRodado: shifts.kmFinal,
             kmInicial: shifts.kmInicial,
             receita: shifts.totalBruto,
-            // Add other fields as needed for the UI
+            // Stats for UI
+            totalApp: shifts.totalApp,
+            totalParticular: shifts.totalParticular,
+            totalCorridasApp: shifts.totalCorridasApp,
+            totalCorridasParticular: shifts.totalCorridasParticular,
+            totalCorridas: shifts.totalCorridas,
         })
         .from(shifts)
         .leftJoin(drivers, eq(shifts.driverId, drivers.id))
