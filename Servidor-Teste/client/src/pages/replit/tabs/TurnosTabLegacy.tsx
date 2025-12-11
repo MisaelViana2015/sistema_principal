@@ -31,6 +31,7 @@ export default function TurnosTabLegacy() {
     const [selectedDriver, setSelectedDriver] = useState("todos");
     const [selectedVehicle, setSelectedVehicle] = useState("todos");
     const [selectedPeriod, setSelectedPeriod] = useState("mes");
+    const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
     const [selectedStatus, setSelectedStatus] = useState("todos");
 
     // Fetch data
@@ -229,8 +230,9 @@ export default function TurnosTabLegacy() {
             const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             if (shiftDate < lastWeek) return false;
         } else if (selectedPeriod === "mes") {
-            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-            if (shiftDate < lastMonth) return false;
+            const [year, month] = selectedMonth.split('-').map(Number);
+            // created date is 0-indexed month in JS Date, input is 1-indexed
+            if (shiftDate.getFullYear() !== year || shiftDate.getMonth() !== month - 1) return false;
         } else if (selectedPeriod === "ano") { // Although not in select options currently, good to have
             const lastYear = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
             if (shiftDate < lastYear) return false;
@@ -257,9 +259,17 @@ export default function TurnosTabLegacy() {
                     >
                         <option value="hoje">Hoje</option>
                         <option value="semana">Últimos 7 dias</option>
-                        <option value="mes">Último Mês</option>
+                        <option value="mes">Por Mês</option>
                         <option value="todos">Todos</option>
                     </select>
+                    {selectedPeriod === "mes" && (
+                        <input
+                            type="month"
+                            style={{ ...styles.select, marginTop: "0.25rem" }}
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                        />
+                    )}
                 </div>
 
                 <div style={styles.selectGroup}>
