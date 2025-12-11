@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Filter, Trash2, Calendar, DollarSign, MapPin, Loader2 } from "lucide-react";
+import { Filter, Trash2, Calendar, DollarSign, Loader2 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useQuery } from "@tanstack/react-query";
 
@@ -22,7 +22,6 @@ export default function CorridasTabLegacy() {
     const isDark = theme === "dark";
 
     const [periodType, setPeriodType] = useState("semana");
-    const [selectedDocs, setSelectedDocs] = useState("todos"); // Unused? Leaving for structure match or maybe this is 'motorista' filter?
     const [selectedDriver, setSelectedDriver] = useState("todos");
     const [selectedType, setSelectedType] = useState("todos");
 
@@ -291,7 +290,6 @@ export default function CorridasTabLegacy() {
                             <th style={styles.th}>Data/Hora</th>
                             <th style={styles.th}>Motorista</th>
                             <th style={styles.th}>Tipo</th>
-                            <th style={styles.th}>Trajeto</th>
                             <th style={styles.th}>Valor</th>
                             <th style={styles.th}>Ações</th>
                         </tr>
@@ -312,19 +310,6 @@ export default function CorridasTabLegacy() {
                                     <span style={styles.typeBadge(ride.tipo)}>
                                         {ride.tipo.toUpperCase()}
                                     </span>
-                                </td>
-                                <td style={styles.td}>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "0.1rem", fontSize: "0.8rem", opacity: 0.5 }}>
-                                        {/* Placeholder for Origin/Dest as not in DB currently */}
-                                        <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#22c55e" }}></span>
-                                            -
-                                        </div>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-                                            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ef4444" }}></span>
-                                            -
-                                        </div>
-                                    </div>
                                 </td>
                                 <td style={{ ...styles.td, fontWeight: "600" }}>
                                     R$ {Number(ride.valor).toFixed(2)}
