@@ -236,7 +236,7 @@ export default function CorridasTabLegacy() {
                     >
                         <option value="dia">Dia</option>
                         <option value="semana">Semana</option>
-                        <option value="mes">Mês</option>
+                        <option value="mes">Por Mês</option>
                         <option value="ano">Ano</option>
                         <option value="total">Total</option>
                     </select>
