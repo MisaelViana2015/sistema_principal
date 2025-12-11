@@ -120,6 +120,7 @@ export default function CorridasTabLegacy() {
             color: isDark ? "#ffffff" : "#0f172a",
             fontSize: "0.875rem",
             outline: "none",
+            colorScheme: isDark ? "dark" : "light", // Fixes native calendar icon color
         },
         totalCard: {
             padding: "1rem",
