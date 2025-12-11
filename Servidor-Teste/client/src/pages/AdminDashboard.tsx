@@ -19,8 +19,8 @@ import { useTheme } from "../contexts/ThemeContext";
 
 type TabValue =
     | "motoristas" | "veiculos" | "turnos" | "corridas"
-    | "custos" | "tipos-custo" | "custos-fixos" | "manutencoes"
-    | "pneus" | "analise" | "fraude" | "importar" | "debug-nav";
+    | "custos" | "manutencoes"
+    | "pneus" | "analise" | "fraude";
 
 interface TabItem {
     value: TabValue;
@@ -34,14 +34,10 @@ const tabs: TabItem[] = [
     { value: "turnos", label: "Turnos" },
     { value: "corridas", label: "Corridas" },
     { value: "custos", label: "Custos" },
-    { value: "tipos-custo", label: "Tipos de Custo" },
-    { value: "custos-fixos", label: "Custos Fixos" },
     { value: "manutencoes", label: "Manutenções" },
     { value: "pneus", label: "Pneus" },
     { value: "analise", label: "Análise" },
-    { value: "fraude", label: "Fraude" },
-    { value: "importar", label: "Importar" },
-    { value: "debug-nav", label: "Debug Nav" }
+    { value: "fraude", label: "Fraude" }
 ];
 
 export default function Admin() {
@@ -215,11 +211,6 @@ export default function Admin() {
                                 {activeTab === "pneus" && <PneusTabLegacy />}
                                 {activeTab === "analise" && <AnaliseTabLegacy />}
                                 {activeTab === "fraude" && <FraudeTabLegacy />}
-
-                                {/* Tabs ainda sem implementação legacy ou novas */}
-                                {["tipos-custo", "custos-fixos", "importar", "debug-nav"].includes(activeTab) && (
-                                    <PlaceholderTab name={tabs.find(t => t.value === activeTab)?.label || ""} isDark={isDark} />
-                                )}
                             </div>
                         </div>
                     </div>
@@ -229,41 +220,4 @@ export default function Admin() {
     );
 }
 
-function PlaceholderTab({ name, isDark }: { name: string; isDark: boolean }) {
-    return (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div
-                style={{
-                    padding: '2rem',
-                    borderRadius: '9999px',
-                    background: isDark
-                        ? 'linear-gradient(135deg, #312e81 0%, #4c1d95 100%)'
-                        : 'linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%)',
-                    marginBottom: '1.5rem'
-                }}
-            >
-                <Shield
-                    className={isDark ? 'text-indigo-300' : 'text-indigo-600'}
-                    style={{ width: '4rem', height: '4rem' }}
-                    strokeWidth={1.5}
-                />
-            </div>
-            <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: 'bold',
-                marginBottom: '0.75rem',
-                color: isDark ? '#f1f5f9' : '#1e293b'
-            }}>
-                {name}
-            </h2>
-            <p style={{
-                color: isDark ? '#94a3b8' : '#64748b',
-                fontSize: '1rem',
-                maxWidth: '28rem',
-                lineHeight: '1.75'
-            }}>
-                Esta seção será implementada em breve. Estamos construindo cada módulo com cuidado para garantir qualidade.
-            </p>
-        </div>
-    );
-}
+
