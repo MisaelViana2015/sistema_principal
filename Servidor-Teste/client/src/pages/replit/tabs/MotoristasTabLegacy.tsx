@@ -1,21 +1,31 @@
 
 import React, { useState } from "react";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, AlertCircle } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import GradientCardLegacy from "../components/GradientCardLegacy";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../../../lib/api";
 
-// Mock Data para visualizar o layout
-const MOCK_DRIVERS = [
-    { id: "1", nome: "João Silva", email: "joao.silva@rotaverde.com", status: "ativo" },
-    { id: "2", nome: "Maria Oliveira", email: "maria.oliveira@rotaverde.com", status: "ativo" },
-    { id: "3", nome: "Carlos Santos", email: "carlos.santos@rotaverde.com", status: "ferias" },
-    { id: "4", nome: "Ana Pereira", email: "ana.pereira@rotaverde.com", status: "inativo" },
-];
+type Driver = {
+    id: string;
+    nome: string;
+    email: string;
+    role: string;
+    isActive: boolean;
+};
 
 export default function MotoristasTabLegacy() {
     const { theme } = useTheme();
     const isDark = theme === "dark";
     const [creating, setCreating] = useState(false);
+
+    const { data: drivers, isLoading, isError, error } = useQuery<Driver[]>({
+        queryKey: ["/auth/drivers"],
+        queryFn: async () => {
+            const res = await api.get("/auth/drivers");
+            return res.data.data;
+        }
+    });
 
     const styles = {
         container: {
@@ -86,6 +96,25 @@ export default function MotoristasTabLegacy() {
         }
     };
 
+    if (isLoading) {
+        return <div style={{ padding: "2rem", textAlign: "center", opacity: 0.6 }}>Carregando motoristas...</div>;
+    }
+
+    if (isError) {
+        return (
+            <div style={{ padding: "2rem", textAlign: "center", color: "#ef4444", border: "1px dashed #ef4444", borderRadius: "0.5rem" }}>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.5rem" }}>
+                    <AlertCircle />
+                </div>
+                <p style={{ fontWeight: "bold" }}>Erro ao carregar motoristas</p>
+                <p style={{ fontSize: "0.875rem" }}>Verifique a conexão com o banco de dados.</p>
+                <pre style={{ marginTop: "1rem", fontSize: "0.75rem", textAlign: "left", backgroundColor: "rgba(0,0,0,0.1)", padding: "0.5rem", borderRadius: "0.25rem", overflowX: "auto" }}>
+                    {JSON.stringify(error, null, 2)}
+                </pre>
+            </div>
+        );
+    }
+
     return (
         <div style={styles.container}>
             {/* Header com Título e Botão */}
@@ -104,7 +133,7 @@ export default function MotoristasTabLegacy() {
 
             {/* Lista de Motoristas */}
             <div style={styles.grid}>
-                {MOCK_DRIVERS.map((driver, index) => (
+                {drivers?.map((driver, index) => (
                     <GradientCardLegacy
                         key={driver.id}
                         gradient={index % 2 === 0 ? "green" : "blue"}
@@ -114,6 +143,10 @@ export default function MotoristasTabLegacy() {
                             <div style={styles.driverInfo}>
                                 <h3 style={styles.driverName}>{driver.nome}</h3>
                                 <p style={styles.driverEmail}>{driver.email}</p>
+                                <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>
+                                    {driver.role === 'admin' ? '🛡️ Administrador' : '🚙 Motorista'}
+                                    {driver.isActive ? ' • Ativo' : ' • Inativo'}
+                                </span>
                             </div>
                             <button style={styles.editButton}>
                                 Editar
@@ -123,10 +156,10 @@ export default function MotoristasTabLegacy() {
                 ))}
             </div>
 
-            {/* Aviso de Mock */}
+            {/* Aviso */}
             <div style={{ padding: "1rem", textAlign: "center", opacity: 0.6, fontSize: "0.8rem", borderTop: "1px dashed gray", marginTop: "1rem" }}>
                 <Users size={16} style={{ display: "inline", marginRight: "0.5rem", verticalAlign: "middle" }} />
-                Dados demonstrativos (Mock). Módulo de backend ainda não conectado nesta visualização.
+                Dados em tempo real do banco de dados (Produção).
             </div>
         </div>
     );

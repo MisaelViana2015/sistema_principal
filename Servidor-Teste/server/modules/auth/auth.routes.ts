@@ -41,4 +41,10 @@ router.get("/me", requireAuth, authController.getMeController);
  */
 router.post("/logout", requireAuth, authController.logoutController);
 
+/**
+ * GET /api/auth/drivers
+ * Lista todos os motoristas (apenas admin/auth)
+ */
+router.get("/drivers", requireAuth, authController.getAllDriversController);
+
 export default router;

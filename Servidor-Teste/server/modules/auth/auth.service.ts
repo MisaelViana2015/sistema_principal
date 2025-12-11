@@ -37,7 +37,9 @@ export async function login(credentials: LoginInput) {
     }
 
     // Verifica senha
+    console.log(`[AUTH DEBUG] Verificando senha para ${email}...`);
     const isPasswordValid = await verifyPassword(senha, driver.senha);
+    console.log(`[AUTH DEBUG] Senha válida? ${isPasswordValid}`);
 
     if (!isPasswordValid) {
         throw new UnauthorizedError(ERROR_MESSAGES.INVALID_CREDENTIALS);
@@ -112,4 +114,20 @@ export async function getDriverById(id: string) {
         role: driver.role as UserRole,
         isActive: driver.isActive,
     };
+}
+
+/**
+ * Busca todos os motoristas (apenas dados seguros)
+ */
+export async function getAllDrivers() {
+    const drivers = await authRepository.findAllDrivers();
+
+    return drivers.map(d => ({
+        id: d.id,
+        nome: d.nome,
+        email: d.email,
+        role: d.role as UserRole,
+        isActive: d.isActive,
+        telefone: d.telefone
+    }));
 }

@@ -25,20 +25,19 @@ export function TopBar() {
   const isAdminRoute = location.pathname.startsWith("/admin");
 
   return (
-    <header className="sticky top-0 z-10 bg-background border-b border-border px-4 py-3">
+    <header className="sticky top-0 z-10 bg-background px-4 py-3">
       <div className="flex items-center justify-between max-w-7xl mx-auto">
-        {/* Lado Esquerdo: Logo e Info User */}
+        {/* Lado Esquerdo: Info User */}
         <div className="flex items-center gap-3">
+          {/* Logo removida para limpar, mantendo apenas info do user se desejar, ou voltando tudo */}
           <h1 className="text-xl font-bold text-foreground">Rota Verde</h1>
           {user && (
             <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
               <span>•</span>
               <span className="font-medium">{user.nome}</span>
-              {isAdmin && (
-                <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
-                  Admin
-                </span>
-              )}
+              <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                {isAdmin ? 'Administrador' : 'Motorista'}
+              </span>
             </div>
           )}
         </div>
@@ -46,7 +45,7 @@ export function TopBar() {
         {/* Lado Direito: Menus e Ações */}
         <div className="flex items-center gap-2">
 
-          {/* Botão Casa (Sempre visível para navegar) */}
+          {/* Botão Casa */}
           <Button
             variant="ghost"
             size="icon"
@@ -60,22 +59,22 @@ export function TopBar() {
           {/* Botões Administrativos */}
           {isAdmin && (
             <>
-              {/* Painel Admin (Base Replit) - ESCUDO */}
+              {/* Painel Admin (Base Replit) */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate("/admin")}
-                title="Painel Administrativo (Base Replit)"
+                title="Painel Administrativo"
                 className={isAdminRoute ? "bg-accent text-primary" : ""}
               >
                 <Shield className="w-5 h-5" />
               </Button>
 
-              {/* Configurações (Geral) - ENGRENAGEM */}
+              {/* Configurações */}
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate("/settings")} // Futura página de settings
+                onClick={() => navigate("/settings")}
                 title="Configurações"
               >
                 <Settings className="w-5 h-5 text-foreground" />
@@ -83,7 +82,7 @@ export function TopBar() {
             </>
           )}
 
-          {/* Tema (Sol/Lua) */}
+          {/* Tema */}
           <ThemeToggle />
 
           {/* Logout */}

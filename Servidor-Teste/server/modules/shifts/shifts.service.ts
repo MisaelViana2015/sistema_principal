@@ -1,4 +1,4 @@
-import * as shiftsRepository from "./shifts.repository";
+import * as shiftsRepository from "./shifts.repository.js";
 
 export async function getAllShifts() {
     try {

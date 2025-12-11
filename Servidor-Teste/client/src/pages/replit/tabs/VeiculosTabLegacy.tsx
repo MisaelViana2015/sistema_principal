@@ -418,8 +418,18 @@ export default function VeiculosTabLegacy() {
                     <div style={styles.grid}>
                         {isLoading ? (
                             <div style={{ padding: "2rem", textAlign: "center", opacity: 0.6 }}>Carregando veículos...</div>
+                        ) : !Array.isArray(vehicles) ? (
+                            <div style={{ padding: "2rem", textAlign: "center", color: "#ef4444", border: "1px dashed #ef4444", borderRadius: "0.5rem" }}>
+                                <p style={{ fontWeight: "bold" }}>Erro ao carregar veículos</p>
+                                <p style={{ fontSize: "0.875rem" }}>Os dados recebidos não são válidos ou o servidor retornou erro.</p>
+                                <pre style={{ marginTop: "1rem", fontSize: "0.75rem", textAlign: "left", backgroundColor: "rgba(0,0,0,0.1)", padding: "0.5rem", borderRadius: "0.25rem" }}>
+                                    {JSON.stringify(vehicles, null, 2)}
+                                </pre>
+                            </div>
+                        ) : vehicles.length === 0 ? (
+                            <div style={{ padding: "2rem", textAlign: "center", opacity: 0.6 }}>Nenhum veículo encontrado.</div>
                         ) : (
-                            vehicles?.map((vehicle, index) => (
+                            vehicles.map((vehicle, index) => (
                                 <GradientCardLegacy
                                     key={vehicle.id}
                                     gradient={index % 2 === 0 ? "blue" : "purple"}

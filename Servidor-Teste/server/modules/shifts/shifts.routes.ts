@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllShiftsController } from "./shifts.controller";
+import { getAllShiftsController } from "./shifts.controller.js";
 
 const router = Router();
 

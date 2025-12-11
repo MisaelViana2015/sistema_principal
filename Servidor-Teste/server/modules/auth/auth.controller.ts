@@ -112,3 +112,24 @@ export async function logoutController(
         next(error);
     }
 }
+
+/**
+ * GET /api/auth/drivers
+ * Lista todos os motoristas
+ */
+export async function getAllDriversController(
+    req: Request,
+    res: Response,
+    next: NextFunction
+) {
+    try {
+        const drivers = await authService.getAllDrivers();
+
+        res.status(200).json({
+            success: true,
+            data: drivers,
+        });
+    } catch (error) {
+        next(error);
+    }
+}

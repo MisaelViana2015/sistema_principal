@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import * as shiftsService from "./shifts.service";
+import * as shiftsService from "./shifts.service.js";
 
 export async function getAllShiftsController(req: Request, res: Response) {
     try {

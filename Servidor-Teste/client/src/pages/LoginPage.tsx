@@ -421,7 +421,7 @@ export default function LoginPage() {
                 </div>
                 <ThemeToggle />
 
-                <div className="box" onClick={() => setIsExpanded(!isExpanded)}>
+                <div className="box" onClick={() => setIsExpanded(true)}>
                     <div className="loginBox">
                         <div className="LoginTile">Login</div>
                         <form className="login-form" onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>

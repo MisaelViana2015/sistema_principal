@@ -2,7 +2,15 @@ import { useState } from "react";
 import { Card } from "../components/ui/card";
 import { Shield } from "lucide-react";
 import { TopBar } from "../components/TopBar";
-import MotoristasTab from "../modules/admin/MotoristasTab";
+import MotoristasTabLegacy from "./replit/tabs/MotoristasTabLegacy";
+import VeiculosTabLegacy from "./replit/tabs/VeiculosTabLegacy";
+import TurnosTabLegacy from "./replit/tabs/TurnosTabLegacy";
+import CorridasTabLegacy from "./replit/tabs/CorridasTabLegacy";
+import CustosTabLegacy from "./replit/tabs/CustosTabLegacy";
+import ManutencoesTabLegacy from "./replit/tabs/ManutencoesTabLegacy";
+import PneusTabLegacy from "./replit/tabs/PneusTabLegacy";
+import AnaliseTabLegacy from "./replit/tabs/AnaliseTabLegacy";
+import FraudeTabLegacy from "./replit/tabs/FraudeTabLegacy";
 import { useTheme } from "../contexts/ThemeContext";
 
 /**
@@ -70,8 +78,8 @@ export default function Admin() {
         fontWeight: isActive ? '600' : '500',
         borderRadius: '0.5rem',
         border: `1px solid ${isActive
-                ? (isDark ? '#6366f1' : '#4f46e5')
-                : (isDark ? '#475569' : '#cbd5e1')
+            ? (isDark ? '#6366f1' : '#4f46e5')
+            : (isDark ? '#475569' : '#cbd5e1')
             }`,
         cursor: 'pointer',
         transition: 'all 0.2s ease',
@@ -198,8 +206,20 @@ export default function Admin() {
 
                             {/* CONTEÚDO */}
                             <div>
-                                {activeTab === "motoristas" && <MotoristasTab />}
-                                {activeTab !== "motoristas" && <PlaceholderTab name={tabs.find(t => t.value === activeTab)?.label || ""} isDark={isDark} />}
+                                {activeTab === "motoristas" && <MotoristasTabLegacy />}
+                                {activeTab === "veiculos" && <VeiculosTabLegacy />}
+                                {activeTab === "turnos" && <TurnosTabLegacy />}
+                                {activeTab === "corridas" && <CorridasTabLegacy />}
+                                {activeTab === "custos" && <CustosTabLegacy />}
+                                {activeTab === "manutencoes" && <ManutencoesTabLegacy />}
+                                {activeTab === "pneus" && <PneusTabLegacy />}
+                                {activeTab === "analise" && <AnaliseTabLegacy />}
+                                {activeTab === "fraude" && <FraudeTabLegacy />}
+
+                                {/* Tabs ainda sem implementação legacy ou novas */}
+                                {["tipos-custo", "custos-fixos", "importar", "debug-nav"].includes(activeTab) && (
+                                    <PlaceholderTab name={tabs.find(t => t.value === activeTab)?.label || ""} isDark={isDark} />
+                                )}
                             </div>
                         </div>
                     </div>

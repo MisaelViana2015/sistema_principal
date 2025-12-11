@@ -65,3 +65,15 @@ export async function updateLastLogin(driverId: string) {
         .set({ updated_at: new Date() })
         .where(eq(drivers.id, driverId));*/
 }
+
+/**
+ * Busca todos os motoristas
+ */
+export async function findAllDrivers() {
+    const result = await db
+        .select()
+        .from(drivers)
+        .orderBy(drivers.nome);
+
+    return result;
+}
