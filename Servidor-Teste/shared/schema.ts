@@ -54,3 +54,39 @@ export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
 export type Vehicle = typeof vehicles.$inferSelect;
 export type NewVehicle = typeof vehicles.$inferInsert;
+
+export const shifts = pgTable("shifts", {
+    id: varchar("id").default(sql`gen_random_uuid()`).primaryKey().notNull(),
+    driverId: varchar("driver_id").notNull(),
+    vehicleId: varchar("vehicle_id").notNull(),
+    inicio: timestamp("inicio").notNull(),
+    fim: timestamp("fim"),
+    kmInicial: real("km_inicial").notNull(),
+    kmFinal: real("km_final"),
+    status: text("status").default('em_andamento').notNull(),
+    totalApp: real("total_app").default(0),
+    totalParticular: real("total_particular").default(0),
+    totalBruto: real("total_bruto").default(0),
+    totalCustos: real("total_custos").default(0),
+    liquido: real("liquido").default(0),
+    repasseEmpresa: real("repasse_empresa").default(0),
+    repasseMotorista: real("repasse_motorista").default(0),
+    totalCorridasApp: integer("total_corridas_app").default(0),
+    totalCorridasParticular: integer("total_corridas_particular").default(0),
+    totalCorridas: integer("total_corridas").default(0),
+    duracaoMin: integer("duracao_min").default(0),
+    valorKm: real("valor_km").default(0),
+});
+
+export const rides = pgTable("rides", {
+    id: varchar("id").default(sql`gen_random_uuid()`).primaryKey().notNull(),
+    shiftId: varchar("shift_id").notNull(),
+    tipo: text("tipo").notNull(),
+    valor: numeric("valor", { precision: 12, scale: 2 }).notNull(),
+    hora: timestamp("hora").notNull(),
+});
+
+export type Shift = typeof shifts.$inferSelect;
+export type NewShift = typeof shifts.$inferInsert;
+export type Ride = typeof rides.$inferSelect;
+export type NewRide = typeof rides.$inferInsert;

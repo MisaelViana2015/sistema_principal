@@ -1,51 +1,31 @@
 
 import React, { useState } from "react";
-import { Filter, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { Filter, ChevronDown, ChevronUp, AlertTriangle, Loader2 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { useQuery } from "@tanstack/react-query";
 
-// Mock Data
-const MOCK_SHIFTS = [
-    {
-        id: "1",
-        motorista: "João Silva",
-        veiculo: "ABC-1234",
-        inicio: "09/12/2025 08:00",
-        fim: null,
-        status: "em_andamento",
-        kmRodado: 0,
-        receita: 0
-    },
-    {
-        id: "2",
-        motorista: "Maria Oliveira",
-        veiculo: "XYZ-5678",
-        inicio: "08/12/2025 07:00",
-        fim: "08/12/2025 19:00",
-        status: "finalizado",
-        kmRodado: 150,
-        receita: 450.50
-    },
-    {
-        id: "3",
-        motorista: "Carlos Santos",
-        veiculo: "DEF-9012",
-        inicio: "07/12/2025 08:00",
-        fim: "07/12/2025 18:00",
-        status: "finalizado",
-        kmRodado: 10,
-        receita: 800.00,
-        suspeito: true,
-        motivoSuspeita: "Receita alta com baixo KM"
-    },
-];
+// Helper function to fetch shifts
+async function fetchShifts() {
+    const response = await fetch("/api/shifts");
+    if (!response.ok) {
+        throw new Error("Falha ao buscar turnos");
+    }
+    return response.json();
+}
 
 export default function TurnosTabLegacy() {
     const { theme } = useTheme();
     const isDark = theme === "dark";
 
-    // Estados de Filtro (Mock)
+    // Estados de Filtro
     const [selectedDriver, setSelectedDriver] = useState("todos");
     const [selectedPeriod, setSelectedPeriod] = useState("semana");
+
+    // Fetch data using React Query
+    const { data: shifts, isLoading, error } = useQuery({
+        queryKey: ["shifts"],
+        queryFn: fetchShifts
+    });
 
     const styles = {
         container: {
@@ -152,8 +132,35 @@ export default function TurnosTabLegacy() {
             display: "flex",
             alignItems: "center",
             gap: "0.5rem",
+        },
+        loadingContainer: {
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "2rem",
+            color: isDark ? "#94a3b8" : "#64748b",
         }
     };
+
+    if (isLoading) {
+        return (
+            <div style={styles.loadingContainer}>
+                <Loader2 className="animate-spin" size={24} />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div style={styles.loadingContainer}>
+                <p>Erro ao carregar turnos</p>
+            </div>
+        );
+    }
+
+    // Process data to match previous mock structure if needed logic isn't in backend
+    // Assuming backend returns { id, motorista, veiculo, inicio, fim, status, kmRodado, receita }
+    const displayShifts = shifts || [];
 
     return (
         <div style={styles.container}>
@@ -186,6 +193,7 @@ export default function TurnosTabLegacy() {
                         onChange={(e) => setSelectedDriver(e.target.value)}
                     >
                         <option value="todos">Todos os Motoristas</option>
+                        {/* Populate explicitly if we have drivers list, otherwise static for now */}
                         <option value="joao">João Silva</option>
                         <option value="maria">Maria Oliveira</option>
                     </select>
@@ -211,37 +219,37 @@ export default function TurnosTabLegacy() {
 
             {/* Lista de Turnos */}
             <div style={styles.listContainer}>
-                {MOCK_SHIFTS.map((shift) => (
+                {displayShifts.map((shift: any) => (
                     <div key={shift.id} style={styles.card}>
 
                         {/* Coluna Esquerda: Info Principal */}
                         <div style={styles.cardMainInfo}>
                             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                                <span style={styles.cardTitle}>{shift.motorista}</span>
+                                <span style={styles.cardTitle}>{shift.motorista || "Desconhecido"}</span>
                                 <span style={styles.badge(shift.status)}>
                                     {shift.status === "em_andamento" ? "ABERTO" : "FECHADO"}
                                 </span>
                             </div>
                             <div style={styles.cardSubtitle}>
-                                <span>{shift.veiculo}</span>
+                                <span>{shift.veiculo || "N/A"}</span>
                                 <span>•</span>
-                                <span>{shift.inicio}</span>
+                                <span>{new Date(shift.inicio).toLocaleString("pt-BR")}</span>
                             </div>
 
-                            {/* Alerta de Suspeita */}
-                            {shift.suspeito && (
+                            {/* Alerta de Suspeita (Mock logic for now as database doesn't have suspeito flag easily available) */}
+                            {false && (
                                 <div style={styles.alertBox}>
                                     <AlertTriangle size={14} />
-                                    <span>Suspeita: {shift.motivoSuspeita}</span>
+                                    <span>Suspeita: ...</span>
                                 </div>
                             )}
                         </div>
 
                         {/* Coluna Direita: Valores */}
                         <div style={{ textAlign: "right" }}>
-                            {shift.status === "finalizado" ? (
+                            {shift.status !== "em_andamento" ? (
                                 <>
-                                    <div style={styles.money}>R$ {shift.receita.toFixed(2)}</div>
+                                    <div style={styles.money}>R$ {Number(shift.receita || 0).toFixed(2)}</div>
                                     <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>
                                         {shift.kmRodado} km rodados
                                     </div>
@@ -258,7 +266,7 @@ export default function TurnosTabLegacy() {
             </div>
 
             <div style={{ textAlign: "center", padding: "1rem", opacity: 0.5 }}>
-                <p>Mostrando 3 de 3 registros (Mock)</p>
+                <p>Mostrando {displayShifts.length} registros</p>
             </div>
         </div>
     );
