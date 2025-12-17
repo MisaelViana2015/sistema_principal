@@ -1,9 +1,18 @@
+# Ignorar Backups Locais
+Servidor-Teste/
+Sistema_Rota_Verde_06_12_25/
+Sistema_Velho_Antigravity/
+Replit/
+Backups_Servidores/
+Visuais/
+backup-prod-para-hml.sql
+FILES.TXT
 
-node_modules
-dist
-.env
-*.sql
-*.log
-.DS_Store
-coverage
-.vscode
+# node_modules na raiz (caso existam)
+node_modules/
+dist/
+
+# Tudo o que for segredo dentro da pasta oficial continua ignorado
+SISTEMA_OFICIAL/**/.env
+SISTEMA_OFICIAL/**/node_modules
+SISTEMA_OFICIAL/**/dist

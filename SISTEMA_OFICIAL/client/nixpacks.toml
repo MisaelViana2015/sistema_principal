@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_20", "postgresql"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build", "mkdir -p dist/server/scripts/db/migrations", "cp -r server/scripts/db/migrations/* dist/server/scripts/db/migrations/"]
+
+[start]
+cmd = "npm start"
