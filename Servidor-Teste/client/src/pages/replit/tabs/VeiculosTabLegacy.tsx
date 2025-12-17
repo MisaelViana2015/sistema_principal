@@ -1,12 +1,7 @@
-
 import React, { useState } from "react";
-import { Plus, Car, Clock, Filter, Trash2, Wrench, ArrowUp, ArrowDown, CircleDot } from "lucide-react";
-import { useTheme } from "../../../contexts/ThemeContext";
-import GradientCardLegacy from "../components/GradientCardLegacy";
-
-// Mock Data para visualizar o layout
+import { Plus, Car, Clock, Filter, Trash2, Wrench, ArrowUp, ArrowDown, CircleDot, Activity, DollarSign } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../../../lib/api";
+import { useTheme } from "../../../contexts/ThemeContext";
 
 type Vehicle = {
     id: string;
@@ -16,6 +11,7 @@ type Vehicle = {
     isActive: boolean;
 };
 
+// Mock Data preserved for layout visualization where real data isn't hooked up yet
 const MOCK_MAINTENANCES = [
     { id: "1", data: "01/12/2025", veiculo: "ABC-1234", descricao: "Troca de Óleo", tipo: "Preventiva", km: 150000, valor: 250.00 },
     { id: "2", data: "20/11/2025", veiculo: "XYZ-5678", descricao: "Reparo Freio", tipo: "Corretiva", km: 118000, valor: 800.00 },
@@ -30,7 +26,7 @@ const MOCK_PNEUS = [
 
 export default function VeiculosTabLegacy() {
     const { theme } = useTheme();
-    const isDark = theme === "dark";
+    // const isDark = theme === "dark"; // theme handled by CSS classes
 
     const { data: vehicles, isLoading } = useQuery<Vehicle[]>({
         queryKey: ["/api/veiculos"],
@@ -39,375 +35,105 @@ export default function VeiculosTabLegacy() {
     const [subTab, setSubTab] = useState<"cadastro" | "gerais" | "manutencoes" | "pneus">("cadastro");
     const [period, setPeriod] = useState<"semana" | "mes" | "ano" | "total">("mes");
     const [sortBy, setSortBy] = useState<"uso" | "rentabilidade" | "custo">("uso");
-
-    // Estados para sub-abas
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-    const getBadgeStyle = (type: string) => {
-        const isPreventive = type === "Preventiva";
-        if (isDark) {
-            return {
-                bg: isPreventive ? "rgba(34, 197, 94, 0.2)" : "rgba(239, 68, 68, 0.2)",
-                text: isPreventive ? "#4ade80" : "#fca5a5"
-            };
-        } else {
-            return {
-                bg: isPreventive ? "#dcfce7" : "#fee2e2",
-                text: isPreventive ? "#166534" : "#991b1b"
-            };
-        }
+    const getBadgeClass = (type: string) => {
+        const t = type?.toLowerCase() || '';
+        if (t.includes('preventiva')) return "badge-success";
+        if (t.includes('corretiva')) return "badge-warning";
+        return "badge-app";
     };
 
-    const getPneuBadgeStyle = (estado: string) => {
-        const isNovo = estado === "Novo";
-        if (isDark) {
-            return {
-                bg: isNovo ? "rgba(34, 197, 94, 0.2)" : "rgba(234, 179, 8, 0.2)",
-                text: isNovo ? "#4ade80" : "#facc15"
-            };
-        } else {
-            return {
-                bg: isNovo ? "#dcfce7" : "#fef9c3",
-                text: isNovo ? "#166534" : "#854d0e"
-            };
-        }
-    };
-
-    const styles = {
-        container: {
-            display: "flex",
-            flexDirection: "column" as const,
-            gap: "1.5rem",
-        },
-        header: {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-        },
-        title: {
-            fontSize: "1.25rem",
-            fontWeight: "700",
-            color: isDark ? "#ffffff" : "#0f172a",
-            margin: 0,
-        },
-        subTabsContainer: {
-            display: "flex",
-            backgroundColor: isDark ? "#1e293b" : "#f1f5f9",
-            borderRadius: "0.5rem",
-            padding: "0.25rem",
-            gap: "0.25rem",
-            flexWrap: "wrap" as const,
-        },
-        subTabTrigger: (isActive: boolean) => ({
-            flex: 1,
-            minWidth: "100px",
-            padding: "0.5rem 1rem",
-            borderRadius: "0.375rem",
-            border: "none",
-            backgroundColor: isActive ? (isDark ? "#0f172a" : "#ffffff") : "transparent",
-            color: isActive ? (isDark ? "#ffffff" : "#0f172a") : (isDark ? "#cbd5e1" : "#64748b"),
-            fontSize: "0.875rem",
-            fontWeight: "500",
-            cursor: "pointer",
-            boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-            transition: "all 0.2s",
-            textAlign: "center" as const,
-        }),
-        filtersBar: {
-            display: "flex",
-            flexWrap: "wrap" as const,
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "1rem",
-        },
-        periodButtons: {
-            display: "flex",
-            gap: "0.5rem",
-        },
-        periodButton: (isActive: boolean) => ({
-            padding: "0.375rem 0.75rem",
-            borderRadius: "0.375rem",
-            border: `1px solid ${isActive ? (isDark ? "transparent" : "transparent") : (isDark ? "#334155" : "#e2e8f0")}`,
-            backgroundColor: isActive ? (isDark ? "#ffffff" : "#0f172a") : "transparent",
-            color: isActive ? (isDark ? "#0f172a" : "#ffffff") : (isDark ? "#ffffff" : "#0f172a"),
-            fontSize: "0.875rem",
-            cursor: "pointer",
-            transition: "all 0.2s",
-        }),
-        actionsGroup: {
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
-        },
-        select: {
-            padding: "0.375rem 2rem 0.375rem 0.75rem",
-            borderRadius: "0.375rem",
-            border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-            backgroundColor: isDark ? "#0f172a" : "#ffffff",
-            color: isDark ? "#ffffff" : "#0f172a",
-            fontSize: "0.875rem",
-            cursor: "pointer",
-        },
-        addButton: {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "0.5rem",
-            backgroundColor: "#2563eb", // blue-600
-            color: "white",
-            border: "none",
-            borderRadius: "0.5rem",
-            padding: "0.5rem 1rem",
-            fontSize: "0.875rem",
-            fontWeight: "500",
-            cursor: "pointer",
-            transition: "background-color 0.2s",
-        },
-        addMaintButton: {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "0.5rem",
-            backgroundColor: isDark ? "#e11d48" : "#be123c",
-            color: "white",
-            border: "none",
-            borderRadius: "0.5rem",
-            padding: "0.5rem 1rem",
-            fontSize: "0.875rem",
-            fontWeight: "500",
-            cursor: "pointer",
-            transition: "background-color 0.2s",
-        },
-        addPneuButton: {
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.5rem 1rem",
-            borderRadius: "0.375rem",
-            border: "none",
-            color: "white",
-            background: isDark ? "#ea580c" : "#c2410c",
-            fontSize: "0.875rem",
-            cursor: "pointer",
-            fontWeight: "500"
-        },
-        grid: {
-            display: "grid",
-            gap: "1rem",
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-        },
-        vehicleInfo: {
-            display: "flex",
-            flexDirection: "column" as const,
-            gap: "0.25rem",
-        },
-        vehiclePlate: {
-            fontWeight: "700",
-            fontSize: "1.125rem",
-            margin: 0,
-        },
-        vehicleModel: {
-            fontSize: "0.875rem",
-            opacity: 0.8,
-            margin: 0,
-        },
-        metrics: {
-            marginTop: "1rem",
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "1rem",
-            fontSize: "0.875rem",
-        },
-        metricItem: {
-            display: "flex",
-            flexDirection: "column" as const,
-        },
-        metricLabel: {
-            opacity: 0.7,
-            fontSize: "0.75rem",
-        },
-        metricValue: {
-            fontWeight: "600",
-        },
-        // Estilos Comuns de Cards e Tabelas
-        filtersCard: {
-            padding: "1rem",
-            backgroundColor: isDark ? "#1e293b" : "#ffffff",
-            borderRadius: "0.5rem",
-            border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-            display: "flex",
-            flexDirection: "column" as const,
-            gap: "1rem",
-        },
-        filtersHeader: {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "0.5rem",
-        },
-        filtersGrid: {
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "1rem",
-        },
-        inputGroup: {
-            display: "flex",
-            flexDirection: "column" as const,
-            gap: "0.35rem",
-        },
-        label: {
-            fontSize: "0.75rem",
-            fontWeight: "500",
-            color: isDark ? "#cbd5e1" : "#64748b",
-        },
-        tableContainer: {
-            border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-            borderRadius: "0.5rem",
-            overflow: "hidden",
-        },
-        table: {
-            width: "100%",
-            borderCollapse: "collapse" as const,
-            textAlign: "left" as const,
-            fontSize: "0.875rem",
-        },
-        th: {
-            padding: "0.75rem 1rem",
-            backgroundColor: isDark ? "#1e293b" : "#f8fafc",
-            color: isDark ? "#e2e8f0" : "#64748b",
-            fontWeight: "600",
-            borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-        },
-        td: {
-            padding: "0.75rem 1rem",
-            borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-            color: isDark ? "#e2e8f0" : "#1e293b",
-        },
-        badge: (type: string) => {
-            const style = getBadgeStyle(type);
-            return {
-                padding: "0.15rem 0.5rem",
-                borderRadius: "0.25rem",
-                fontSize: "0.75rem",
-                fontWeight: "600",
-                backgroundColor: style.bg,
-                color: style.text,
-            };
-        },
-        pneuBadge: (estado: string) => {
-            const style = getPneuBadgeStyle(estado);
-            return {
-                padding: "0.15rem 0.5rem",
-                borderRadius: "0.25rem",
-                fontSize: "0.75rem",
-                fontWeight: "600",
-                backgroundColor: style.bg,
-                color: style.text,
-            };
-        },
-        actionButton: {
-            padding: "0.25rem",
-            borderRadius: "0.25rem",
-            border: "none",
-            backgroundColor: "transparent",
-            color: "#ef4444",
-            cursor: "pointer",
-        },
-        sortButton: {
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.375rem 0.75rem",
-            borderRadius: "0.375rem",
-            border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-            backgroundColor: "transparent",
-            color: isDark ? "#cbd5e1" : "#64748b",
-            fontSize: "0.875rem",
-            cursor: "pointer",
-        }
+    const getPneuBadgeClass = (estado: string) => {
+        if (estado === "Novo") return "badge-success";
+        return "badge-warning";
     };
 
     return (
-        <div style={styles.container}>
-            <div style={styles.header}>
-                <h2 style={styles.title}>Gestão de Veículos</h2>
-                {subTab === "manutencoes" && (
-                    <button style={styles.addMaintButton}>
-                        <Plus size={16} />
-                        Nova Manutenção
-                    </button>
-                )}
-                {subTab === "pneus" && (
-                    <button style={styles.addPneuButton}>
-                        <Plus size={16} />
-                        Novo Pneu
-                    </button>
-                )}
+        <div className="flex flex-col gap-6 animate-fade-in">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-display font-bold text-glow-blue uppercase tracking-wider text-white">
+                        Gestão de Veículos
+                    </h2>
+                    <p className="text-muted-foreground font-body text-sm mt-1">
+                        Controle total da frota, manutenções e pneus.
+                    </p>
+                </div>
+
+                <div className="flex gap-2">
+                    {subTab === "manutencoes" && (
+                        <button className="btn-futuristic flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-bold transition-transform active:scale-95">
+                            <Plus size={18} className="animate-pulse" />
+                            Nova Manutenção
+                        </button>
+                    )}
+                    {subTab === "pneus" && (
+                        <button className="btn-futuristic flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-white font-bold transition-transform active:scale-95 from-orange-600 to-amber-600 border-orange-500" style={{ '--primary': '25 95% 53%', '--accent': '45 93% 47%' } as React.CSSProperties}>
+                            <Plus size={18} className="animate-pulse" />
+                            Novo Pneu
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Sub-Abas */}
-            <div style={styles.subTabsContainer}>
-                <button
-                    style={styles.subTabTrigger(subTab === "cadastro")}
-                    onClick={() => setSubTab("cadastro")}
-                >
-                    Cadastro
-                </button>
-                <button
-                    style={styles.subTabTrigger(subTab === "gerais")}
-                    onClick={() => setSubTab("gerais")}
-                >
-                    Gerais
-                </button>
-                <button
-                    style={styles.subTabTrigger(subTab === "manutencoes")}
-                    onClick={() => setSubTab("manutencoes")}
-                >
-                    Manutenções
-                </button>
-                <button
-                    style={styles.subTabTrigger(subTab === "pneus")}
-                    onClick={() => setSubTab("pneus")}
-                >
-                    Pneus
-                </button>
+            <div className="flex flex-wrap gap-2 bg-muted/30 p-1.5 rounded-lg border border-white/10">
+                {(["cadastro", "gerais", "manutencoes", "pneus"] as const).map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setSubTab(tab)}
+                        className={`
+                            flex-1 min-w-[100px] py-2 px-4 rounded-md text-sm font-bold uppercase tracking-wide transition-all
+                            ${subTab === tab
+                                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]"
+                                : "hover:bg-white/5 text-muted-foreground hover:text-white"
+                            }
+                        `}
+                    >
+                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                    </button>
+                ))}
             </div>
 
             {subTab === "cadastro" && (
                 <>
                     {/* Filtros e Ações */}
-                    <div style={styles.filtersBar}>
-                        <div style={styles.periodButtons}>
+                    <div className="futuristic-card p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="flex gap-2 p-1 bg-background/50 rounded-lg border border-white/5">
                             {(["semana", "mes", "ano", "total"] as const).map((p) => (
                                 <button
                                     key={p}
-                                    style={styles.periodButton(period === p)}
                                     onClick={() => setPeriod(p)}
+                                    className={`
+                                        px-4 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all
+                                        ${period === p
+                                            ? "bg-primary/20 text-primary border border-primary/30 shadow-[0_0_10px_rgba(var(--primary),0.3)]"
+                                            : "text-muted-foreground hover:text-white hover:bg-white/5"
+                                        }
+                                    `}
                                 >
                                     {p === "semana" ? "Semana" : p === "mes" ? "Mês" : p === "ano" ? "Ano" : "Total"}
                                 </button>
                             ))}
                         </div>
 
-                        <div style={styles.actionsGroup}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                <span style={{ fontSize: "0.875rem", opacity: 0.7 }}>Ordenar:</span>
+                        <div className="flex flex-col md:flex-row items-center gap-4">
+                            <div className="flex items-center gap-3 bg-background/50 px-3 py-2 rounded-lg border border-white/10 w-full md:w-auto">
+                                <span className="text-xs font-bold uppercase text-muted-foreground">Ordenar:</span>
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value as any)}
-                                    style={styles.select}
+                                    className="bg-transparent text-sm font-medium text-white focus:outline-none cursor-pointer"
                                 >
-                                    <option value="uso">Mais usado</option>
-                                    <option value="rentabilidade">Mais rentável</option>
-                                    <option value="custo">Maior custo/km</option>
+                                    <option value="uso" className="bg-background">Mais usado</option>
+                                    <option value="rentabilidade" className="bg-background">Mais rentável</option>
+                                    <option value="custo" className="bg-background">Maior custo/km</option>
                                 </select>
                             </div>
 
-                            <button
-                                style={styles.addButton}
-                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1d4ed8"} // blue-700
-                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#2563eb"} // blue-600
-                            >
+                            <button className="btn-futuristic flex items-center justify-center gap-2 px-6 py-2 rounded-lg text-white font-bold text-sm w-full md:w-auto">
                                 <Plus size={16} />
                                 Novo Veículo
                             </button>
@@ -415,44 +141,56 @@ export default function VeiculosTabLegacy() {
                     </div>
 
                     {/* Lista (Grid) de Veículos */}
-                    <div style={styles.grid}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {isLoading ? (
-                            <div style={{ padding: "2rem", textAlign: "center", opacity: 0.6 }}>Carregando veículos...</div>
+                            <div className="col-span-full py-12 text-center text-muted-foreground animate-pulse">
+                                Carregando frota...
+                            </div>
                         ) : !Array.isArray(vehicles) ? (
-                            <div style={{ padding: "2rem", textAlign: "center", color: "#ef4444", border: "1px dashed #ef4444", borderRadius: "0.5rem" }}>
-                                <p style={{ fontWeight: "bold" }}>Erro ao carregar veículos</p>
-                                <p style={{ fontSize: "0.875rem" }}>Os dados recebidos não são válidos ou o servidor retornou erro.</p>
-                                <pre style={{ marginTop: "1rem", fontSize: "0.75rem", textAlign: "left", backgroundColor: "rgba(0,0,0,0.1)", padding: "0.5rem", borderRadius: "0.25rem" }}>
-                                    {JSON.stringify(vehicles, null, 2)}
-                                </pre>
+                            <div className="col-span-full futuristic-card p-6 border-destructive/50 text-center">
+                                <p className="text-destructive font-bold mb-2">Erro ao carregar veículos</p>
+                                <p className="text-xs text-muted-foreground">Os dados recebidos não são válidos ou o servidor retornou erro.</p>
                             </div>
                         ) : vehicles.length === 0 ? (
-                            <div style={{ padding: "2rem", textAlign: "center", opacity: 0.6 }}>Nenhum veículo encontrado.</div>
+                            <div className="col-span-full py-12 text-center text-muted-foreground">
+                                Nenhum veículo encontrado.
+                            </div>
                         ) : (
                             vehicles.map((vehicle, index) => (
-                                <GradientCardLegacy
+                                <div
                                     key={vehicle.id}
-                                    gradient={index % 2 === 0 ? "blue" : "purple"}
+                                    className="futuristic-card p-6 group hover:translate-y-[-2px] transition-all duration-300 relative overflow-hidden"
                                 >
-                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                        <div style={styles.vehicleInfo}>
-                                            <h3 style={styles.vehiclePlate}>{vehicle.plate}</h3>
-                                            <p style={styles.vehicleModel}>{vehicle.modelo}</p>
+                                    {/* Gradient Decoration */}
+                                    <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${index % 2 === 0 ? 'from-cyan-500 to-blue-500' : 'from-purple-500 to-pink-500'}`}></div>
+                                    <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity ${index % 2 === 0 ? 'bg-cyan-500' : 'bg-purple-500'}`}></div>
+
+                                    <div className="flex justify-between items-start mb-6 relative z-10">
+                                        <div>
+                                            <h3 className="text-xl font-display font-bold text-white tracking-wide">{vehicle.plate}</h3>
+                                            <p className="text-sm text-muted-foreground">{vehicle.modelo}</p>
                                         </div>
-                                        <Car size={24} opacity={0.5} />
+                                        <div className={`p-2 rounded-lg ${index % 2 === 0 ? 'bg-cyan-500/10 text-cyan-400' : 'bg-purple-500/10 text-purple-400'}`}>
+                                            <Car size={24} />
+                                        </div>
                                     </div>
 
-                                    <div style={styles.metrics}>
-                                        <div style={styles.metricItem}>
-                                            <span style={styles.metricLabel}>Rodagem</span>
-                                            <span style={styles.metricValue}>{vehicle.kmInicial.toLocaleString()} km</span>
+                                    <div className="grid grid-cols-2 gap-4 relative z-10">
+                                        <div className="flex flex-col gap-1 p-2 rounded-md bg-background/50 border border-white/5">
+                                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Rodagem</span>
+                                            <span className="font-mono font-medium text-white">{vehicle.kmInicial.toLocaleString()} km</span>
                                         </div>
-                                        <div style={styles.metricItem}>
-                                            <span style={styles.metricLabel}>Status</span>
-                                            <span style={styles.metricValue}>{vehicle.isActive ? "Ativo" : "Inativo"}</span>
+                                        <div className="flex flex-col gap-1 p-2 rounded-md bg-background/50 border border-white/5">
+                                            <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Status</span>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className={`w-1.5 h-1.5 rounded-full ${vehicle.isActive ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500'}`}></div>
+                                                <span className={`text-sm font-medium ${vehicle.isActive ? 'text-green-400' : 'text-red-400'}`}>
+                                                    {vehicle.isActive ? "Ativo" : "Inativo"}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </GradientCardLegacy>
+                                </div>
                             ))
                         )}
                     </div>
@@ -460,52 +198,55 @@ export default function VeiculosTabLegacy() {
             )}
 
             {subTab === "gerais" && (
-                <div style={{ ...styles.grid, gridTemplateColumns: "1fr" }}>
-                    <div style={{ padding: "2rem", textAlign: "center", opacity: 0.6, border: "1px dashed gray", borderRadius: "0.5rem" }}>
-                        <Clock size={48} style={{ marginBottom: "1rem", opacity: 0.5 }} />
-                        <p>Visualização Geral (KPIs) será implementada posteriormente.</p>
-                    </div>
+                <div className="futuristic-card p-12 flex flex-col items-center justify-center text-center opacity-60 border-dashed border-white/10">
+                    <Clock size={48} className="mb-4 text-primary animate-pulse" />
+                    <p className="font-display text-xl text-white">Em Desenvolvimento</p>
+                    <p className="text-sm text-muted-foreground mt-2">Visualização Geral (KPIs) será implementada posteriormente na nova interface.</p>
                 </div>
             )}
 
             {subTab === "manutencoes" && (
                 <>
                     {/* Filtros de Manutenção */}
-                    <div style={styles.filtersCard}>
-                        <div style={styles.filtersHeader}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", fontWeight: "500" }}>
-                                <Filter size={16} opacity={0.5} />
+                    <div className="futuristic-card p-6 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <Wrench size={80} />
+                        </div>
+
+                        <div className="flex items-center justify-between mb-6 relative z-10">
+                            <div className="flex items-center gap-2 text-primary font-display font-bold uppercase tracking-wider">
+                                <Filter size={18} />
                                 Filtros
                             </div>
                             <button
-                                style={styles.sortButton}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-primary/30 text-primary hover:bg-primary/10 transition-colors text-sm font-medium"
                                 onClick={() => setSortOrder(prev => prev === "desc" ? "asc" : "desc")}
                             >
                                 {sortOrder === "desc" ? <ArrowDown size={14} /> : <ArrowUp size={14} />}
-                                {sortOrder === "desc" ? "Mais Recentes" : "Mais Antigas"}
+                                {sortOrder === "desc" ? "Recentes" : "Antigas"}
                             </button>
                         </div>
 
-                        <div style={styles.filtersGrid}>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Veículo</label>
-                                <select style={styles.select}>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">Veículo</label>
+                                <select className="w-full bg-background/50 border border-border/50 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none">
                                     <option value="todos">Todos os Veículos</option>
                                     <option value="abc">ABC-1234 - Fiat Uno</option>
                                     <option value="xyz">XYZ-5678 - VW Gol</option>
                                 </select>
                             </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Ano</label>
-                                <select style={styles.select}>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">Ano</label>
+                                <select className="w-full bg-background/50 border border-border/50 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none">
                                     <option value="todos">Todos</option>
                                     <option value="2025">2025</option>
                                     <option value="2024">2024</option>
                                 </select>
                             </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Mês</label>
-                                <select style={styles.select}>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">Mês</label>
+                                <select className="w-full bg-background/50 border border-border/50 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none">
                                     <option value="todos">Todos</option>
                                     <option value="12">Dezembro</option>
                                     <option value="11">Novembro</option>
@@ -515,43 +256,45 @@ export default function VeiculosTabLegacy() {
                     </div>
 
                     {/* Tabela de Manutenção */}
-                    <div style={styles.tableContainer}>
-                        <table style={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th style={styles.th}>Data</th>
-                                    <th style={styles.th}>Veículo</th>
-                                    <th style={styles.th}>Descrição</th>
-                                    <th style={styles.th}>Tipo</th>
-                                    <th style={styles.th}>KM</th>
-                                    <th style={styles.th}>Valor</th>
-                                    <th style={styles.th}>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {MOCK_MAINTENANCES.map((m) => (
-                                    <tr key={m.id}>
-                                        <td style={styles.td}>{m.data}</td>
-                                        <td style={styles.td}>{m.veiculo}</td>
-                                        <td style={styles.td}>{m.descricao}</td>
-                                        <td style={styles.td}>
-                                            <span style={styles.badge(m.tipo)}>
-                                                {m.tipo}
-                                            </span>
-                                        </td>
-                                        <td style={styles.td}>{m.km} km</td>
-                                        <td style={{ ...styles.td, fontWeight: "600" }}>
-                                            R$ {m.valor.toFixed(2)}
-                                        </td>
-                                        <td style={styles.td}>
-                                            <button style={styles.actionButton} title="Excluir">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
+                    <div className="futuristic-card p-0 overflow-hidden border-t-2 border-primary/50">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-muted/50 text-muted-foreground uppercase text-xs font-bold tracking-wider">
+                                    <tr>
+                                        <th className="px-6 py-4">Data</th>
+                                        <th className="px-6 py-4">Veículo</th>
+                                        <th className="px-6 py-4">Descrição</th>
+                                        <th className="px-6 py-4">Tipo</th>
+                                        <th className="px-6 py-4">KM</th>
+                                        <th className="px-6 py-4">Valor</th>
+                                        <th className="px-6 py-4 text-right">Ações</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-border/20">
+                                    {MOCK_MAINTENANCES.map((m) => (
+                                        <tr key={m.id} className="hover:bg-primary/5 transition-colors group">
+                                            <td className="px-6 py-4 text-white font-medium">{m.data}</td>
+                                            <td className="px-6 py-4 text-white">{m.veiculo}</td>
+                                            <td className="px-6 py-4 text-muted-foreground">{m.descricao}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wide border ${getBadgeClass(m.tipo)}`}>
+                                                    {m.tipo}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-muted-foreground font-mono">{m.km} km</td>
+                                            <td className="px-6 py-4 font-bold text-glow-green text-primary font-mono">
+                                                R$ {m.valor.toFixed(2)}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button className="p-1.5 rounded-md hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors" title="Excluir">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </>
             )}
@@ -559,41 +302,44 @@ export default function VeiculosTabLegacy() {
             {subTab === "pneus" && (
                 <>
                     {/* Filtros Pneus */}
-                    <div style={styles.filtersCard}>
-                        <div style={styles.filtersHeader}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", fontWeight: "500" }}>
-                                <Filter size={16} opacity={0.5} />
+                    <div className="futuristic-card p-6 relative overflow-hidden group border-orange-500/30">
+                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                            <CircleDot size={80} className="text-orange-500" />
+                        </div>
+                        <div className="flex items-center justify-between mb-6 relative z-10">
+                            <div className="flex items-center gap-2 text-orange-500 font-display font-bold uppercase tracking-wider">
+                                <Filter size={18} />
                                 Filtros
                             </div>
                             <button
-                                style={styles.sortButton}
+                                className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-orange-500/30 text-orange-500 hover:bg-orange-500/10 transition-colors text-sm font-medium"
                                 onClick={() => setSortOrder(prev => prev === "desc" ? "asc" : "desc")}
                             >
                                 {sortOrder === "desc" ? <ArrowDown size={14} /> : <ArrowUp size={14} />}
-                                {sortOrder === "desc" ? "Mais Recentes" : "Mais Antigas"}
+                                {sortOrder === "desc" ? "Recentes" : "Antigas"}
                             </button>
                         </div>
 
-                        <div style={styles.filtersGrid}>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Veículo</label>
-                                <select style={styles.select}>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">Veículo</label>
+                                <select className="w-full bg-background/50 border border-border/50 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all outline-none">
                                     <option value="todos">Todos os Veículos</option>
                                     <option value="abc">ABC-1234 - Fiat Uno</option>
                                     <option value="xyz">XYZ-5678 - VW Gol</option>
                                 </select>
                             </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Ano</label>
-                                <select style={styles.select}>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">Ano</label>
+                                <select className="w-full bg-background/50 border border-border/50 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all outline-none">
                                     <option value="todos">Todos</option>
                                     <option value="2025">2025</option>
                                     <option value="2024">2024</option>
                                 </select>
                             </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Mês</label>
-                                <select style={styles.select}>
+                            <div className="flex flex-col gap-2">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">Mês</label>
+                                <select className="w-full bg-background/50 border border-border/50 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all outline-none">
                                     <option value="todos">Todos</option>
                                     <option value="12">Dezembro</option>
                                     <option value="11">Novembro</option>
@@ -603,46 +349,48 @@ export default function VeiculosTabLegacy() {
                     </div>
 
                     {/* Tabela Pneus */}
-                    <div style={styles.tableContainer}>
-                        <table style={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th style={styles.th}>Data Inst.</th>
-                                    <th style={styles.th}>Veículo</th>
-                                    <th style={styles.th}>Posição</th>
-                                    <th style={styles.th}>Marca/Modelo</th>
-                                    <th style={styles.th}>Estado</th>
-                                    <th style={styles.th}>KM Inst.</th>
-                                    <th style={styles.th}>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {MOCK_PNEUS.map((p) => (
-                                    <tr key={p.id}>
-                                        <td style={styles.td}>{p.data}</td>
-                                        <td style={styles.td}>{p.veiculo}</td>
-                                        <td style={styles.td}>{p.posicao}</td>
-                                        <td style={styles.td}>
-                                            <div style={{ display: "flex", flexDirection: "column" }}>
-                                                <span style={{ fontWeight: 500 }}>{p.marca} {p.modelo}</span>
-                                                <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>{p.dimensao}</span>
-                                            </div>
-                                        </td>
-                                        <td style={styles.td}>
-                                            <span style={styles.pneuBadge(p.estado)}>
-                                                {p.estado}
-                                            </span>
-                                        </td>
-                                        <td style={styles.td}>{p.kmInstalacao} km</td>
-                                        <td style={styles.td}>
-                                            <button style={styles.actionButton} title="Excluir">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
+                    <div className="futuristic-card p-0 overflow-hidden border-t-2 border-orange-500/50">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-muted/50 text-muted-foreground uppercase text-xs font-bold tracking-wider">
+                                    <tr>
+                                        <th className="px-6 py-4">Data Inst.</th>
+                                        <th className="px-6 py-4">Veículo</th>
+                                        <th className="px-6 py-4">Posição</th>
+                                        <th className="px-6 py-4">Marca/Modelo</th>
+                                        <th className="px-6 py-4">Estado</th>
+                                        <th className="px-6 py-4">KM Inst.</th>
+                                        <th className="px-6 py-4 text-right">Ações</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-border/20">
+                                    {MOCK_PNEUS.map((p) => (
+                                        <tr key={p.id} className="hover:bg-orange-500/5 transition-colors group">
+                                            <td className="px-6 py-4 text-white font-medium">{p.data}</td>
+                                            <td className="px-6 py-4 text-white">{p.veiculo}</td>
+                                            <td className="px-6 py-4 text-muted-foreground">{p.posicao}</td>
+                                            <td className="px-6 py-4 text-white">
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium">{p.marca} {p.modelo}</span>
+                                                    <span className="text-xs text-muted-foreground">{p.dimensao}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wide border ${getPneuBadgeClass(p.estado)}`}>
+                                                    {p.estado}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-muted-foreground font-mono">{p.kmInstalacao} km</td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button className="p-1.5 rounded-md hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors" title="Excluir">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </>
             )}

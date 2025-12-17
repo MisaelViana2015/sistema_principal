@@ -1,0 +1,72 @@
+[
+  {
+    "id": "5bd73070-c385-42ea-9cac-2f8710202bb2",
+    "nome": "zezu brocha",
+    "email": "zezus@gmail.com",
+    "senha": "$2b$10$riqYvYTJRic9oTp7W3yB2upvEC6C03rtlyPvRsMaiuPbO1RJMe1Ou",
+    "telefone": "51997283535",
+    "veiculo_favorito_id": null,
+    "is_active": true,
+    "role": "driver"
+  },
+  {
+    "id": "14f56eca-266d-4be7-8188-325de12c9260",
+    "nome": "Robson",
+    "email": "robson@frota.com",
+    "senha": "$2b$10$JvZA6DBWrkPFRiFNb2mOb.B5yhMeEAs.LHolpV3GnuGEaiLJLaFTC",
+    "telefone": "(11) 99999-0002",
+    "veiculo_favorito_id": "870dec1b-da4c-4e2e-89b9-638678dd864c",
+    "is_active": true,
+    "role": "driver"
+  },
+  {
+    "id": "a66dfd46-57e9-4d3f-aafe-b1233fc2a156",
+    "nome": "Luan",
+    "email": "luan@frota.com",
+    "senha": "$2b$10$JwwKCADbazUBbAUVwfDem.wcpfONrKMSQPAD.9Iok9XqFGnH0DH96",
+    "telefone": "(11) 99999-0003",
+    "veiculo_favorito_id": "47f4e640-f4ef-4636-9838-3e27c89bf839",
+    "is_active": true,
+    "role": "driver"
+  },
+  {
+    "id": "11ed32c1-1ff3-4d37-a821-2528d9036326",
+    "nome": "Gustavo",
+    "email": "gustavo@frota.com",
+    "senha": "$2b$10$4aXWV/P1JmTEutkUgceUCeviMGSQHYE3COglVhmYd8B27kZQNgGHy",
+    "telefone": "(11) 99999-0004",
+    "veiculo_favorito_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "is_active": true,
+    "role": "driver"
+  },
+  {
+    "id": "8d4ee11d-c63c-4ec1-b12b-abd125a73b77",
+    "nome": "Administrador",
+    "email": "admin@rotaverde.com",
+    "senha": "$2a$10$GdU7wmw2boqX5Z27E5ZffO1K5FKH3gNp1YaJDxJQDkh/uyocbFpAO",
+    "telefone": null,
+    "veiculo_favorito_id": null,
+    "is_active": true,
+    "role": "admin"
+  },
+  {
+    "id": "d3818cb2-0192-45e7-9527-93e82b1d39d2",
+    "nome": "Misael",
+    "email": "programacao1215@hotmail.com",
+    "senha": "$2a$10$NcmdjcwVR4EJOSmkcGJsJe9gT3UwrXGvPlDIq8VJv/O9TGJ5RMk16",
+    "telefone": "(11) 99999-0001",
+    "veiculo_favorito_id": "89146774-1d45-46c2-aa6c-abd1884d90c9",
+    "is_active": true,
+    "role": "admin"
+  },
+  {
+    "id": "fa6e946f-e89f-47cf-b8ae-948aaaaea4cb",
+    "nome": "Felipe",
+    "email": "felipe@rotaverde.com",
+    "senha": "$2b$10$WtxwGYZrjDOhTMV1gBTsH.Wk9ZKDV52KZAltytTG3Vp7tiCEWMs92",
+    "telefone": null,
+    "veiculo_favorito_id": null,
+    "is_active": true,
+    "role": "driver"
+  }
+]

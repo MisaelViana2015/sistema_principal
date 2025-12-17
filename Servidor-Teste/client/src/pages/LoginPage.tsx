@@ -1,15 +1,70 @@
 import { useState, FormEvent } from "react";
+import { motion } from "framer-motion";
+import { Eye, EyeOff, Zap, Shield, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import logoRotaVerde from "@/assets/logo-rota-verde.png";
 import { authService } from "../lib/api";
-import ThemeToggle from "../components/ThemeToggle";
+import { useAuth } from "../contexts/AuthContext";
+import { SYSTEM_VERSION } from "../../../shared/version";
+
+const FloatingParticles = () => (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+            <div
+                key={i}
+                className="particle absolute w-1 h-1 bg-primary/20 rounded-full"
+                style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
+                    animationDelay: `${Math.random() * 5}s`,
+                }}
+            />
+        ))}
+        <style>{`
+      @keyframes float {
+        0%, 100% { transform: translateY(0); opacity: 0.2; }
+        50% { transform: translateY(-20px); opacity: 0.8; }
+      }
+    `}</style>
+    </div>
+);
+
+const DataStreams = () => (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+        {[...Array(5)].map((_, i) => (
+            <div
+                key={i}
+                className="data-stream absolute top-0 w-[1px] h-full bg-gradient-to-b from-transparent via-primary/50 to-transparent"
+                style={{
+                    left: `${10 + i * 20}%`,
+                    animation: `stream 3s linear infinite`,
+                    animationDelay: `${i * 0.5}s`,
+                }}
+            />
+        ))}
+        <style>{`
+      @keyframes stream {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
+      }
+    `}</style>
+    </div>
+);
 
 export default function LoginPage() {
     const navigate = useNavigate();
+    const { setUser } = useAuth();
+
+    // Form and UI state
+    const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState("");
-    const [senha, setSenha] = useState("");
+    const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [isExpanded, setIsExpanded] = useState(false);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -17,464 +72,231 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const result = await authService.login(email, senha);
+            const result = await authService.login(email, password);
 
-            if (result.success) {
+            if (result.success && result.user) {
+                setUser(result.user as any);
                 navigate("/turno");
             } else {
                 setError(result.error || "Erro ao fazer login");
             }
         } catch (err: any) {
-            setError(
-                err.response?.data?.error || "Erro ao conectar com servidor"
-            );
+            setError(err.response?.data?.error || "Erro ao conectar com servidor");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <>
-            <style>{`
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
+        <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center">
+            {/* Background Effects */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+            <div className="absolute inset-0 bg-background/90" /> {/* Dim grid */}
 
-                .mainsection {
-                    position: absolute;
-                    height: 100%;
-                    width: 100%;
-                    background: linear-gradient(
-                        to right,
-                        rgba(255, 99, 8, 0.1),
-                        rgba(255, 99, 8, 0.1),
-                        rgba(189, 201, 230, 0.1),
-                        rgba(151, 196, 255, 0.1),
-                        rgba(151, 196, 255, 0.1)
-                    );
-                    mask: radial-gradient(ellipse at top, black, transparent 60%);
-                }
+            <FloatingParticles />
+            <DataStreams />
 
-                body {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 100vh;
-                    background: #131518;
-                }
+            {/* Gradient Orbs */}
+            <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
 
-                .login-container {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    min-height: 100vh;
-                    background: #131518;
-                }
-
-                .box {
-                    position: relative;
-                    width: 400px;
-                    height: ${isExpanded ? '300px' : '100px'};
-                    background: repeating-conic-gradient(
-                        from var(--a),
-                        #ff2770 0%,
-                        #ff2770 5%,
-                        transparent 5%,
-                        transparent 40%,
-                        #ff2770 50%
-                    );
-                    animation: animate 4s linear infinite;
-                    border-radius: 20px;
-                    transform: ${isExpanded ? 'translateY(0)' : 'translateY(-20px)'};
-                    transition: all 0.6s ease;
-                    z-index: 99;
-                    overflow: hidden;
-                    box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
-                    cursor: pointer;
-                }
-
-                @property --a {
-                    syntax: "<angle>";
-                    inherits: false;
-                    initial-value: 0deg;
-                }
-
-                @keyframes animate {
-                    0% {
-                        --a: 0deg;
-                    }
-                    100% {
-                        --a: 360deg;
-                    }
-                }
-
-                .box::before {
-                    content: "";
-                    position: absolute;
-                    width: 100%;
-                    height: 100%;
-                    background: repeating-conic-gradient(
-                        from var(--a),
-                        #45f3ff 0%,
-                        #45f3ff 5%,
-                        transparent 5%,
-                        transparent 40%,
-                        #45f3ff 50%
-                    );
-                    animation: animate 4s linear infinite;
-                    animation-delay: -1s;
-                    border-radius: 20px;
-                    filter: drop-shadow(0 15px 50px #000);
-                }
-
-                .box::after {
-                    content: "";
-                    position: absolute;
-                    inset: 4px;
-                    background: #0f0f0f;
-                    border-radius: 15px;
-                    border: 8px solid #0e171c;
-                }
-
-                .loginBox {
-                    position: relative;
-                    z-index: 99;
-                    height: 100%;
-                    width: 100%;
-                    padding: 20px;
-                }
-
-                .LoginTile {
-                    text-align: center;
-                    color: #49beff;
-                    font-size: 43px;
-                    font-family: monospace;
-                }
-
-                .login-form {
-                    opacity: ${isExpanded ? 1 : 0};
-                    visibility: ${isExpanded ? 'visible' : 'hidden'};
-                    transform: ${isExpanded ? 'translateY(0)' : 'translateY(20px)'};
-                    transition: all 0.4s ease 0.2s;
-                    width: 100%;
-                    text-align: center;
-                    z-index: 100;
-                }
-
-                .login-form input {
-                    width: 100%;
-                    padding: 12px;
-                    margin: 12px 0;
-                    background: #000000;
-                    border: 1px solid #ffffff26;
-                    border-radius: 5px;
-                    color: #fff;
-                    font-size: 14px;
-                    outline: none;
-                    transition: all 0.3s ease;
-                }
-
-                .login-form input:focus {
-                    border-color: #ff3333;
-                    box-shadow: 0 0 8px #00ccff;
-                }
-
-                .login-form button {
-                    width: 100%;
-                    padding: 12px;
-                    background: #c8f31d;
-                    border: 1px solid #000000;
-                    color: #000000;
-                    font-size: 14px;
-                    font-weight: bold;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    text-transform: uppercase;
-                    letter-spacing: 1px;
-                    transition: all 0.3s ease;
-                    margin-top: 14px;
-                }
-
-                .login-form button:hover {
-                    background: #00ccff;
-                    color: #222;
-                    box-shadow: 0 0 8px #00ccff;
-                }
-
-                .login-form button:disabled {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                }
-
-                .error-message {
-                    background-color: rgba(185, 28, 28, 0.3);
-                    border: 1px solid #991b1b;
-                    color: #fca5a5;
-                    padding: 0.75rem 1rem;
-                    border-radius: 0.5rem;
-                    margin-bottom: 1rem;
-                    font-size: 0.875rem;
-                }
-
-                .starsec {
-                    content: " ";
-                    position: absolute;
-                    width: 3px;
-                    height: 3px;
-                    background: transparent;
-                    box-shadow: 571px 173px #00bcd4, 1732px 143px #00bcd4, 1745px 454px #ff5722,
-                        234px 784px #00bcd4, 1793px 1123px #ff9800, 1076px 504px #03a9f4,
-                        633px 601px #ff5722, 350px 630px #ffeb3b, 1164px 782px #00bcd4,
-                        76px 690px #3f51b5, 1825px 701px #cddc39, 1646px 578px #ffeb3b,
-                        544px 293px #2196f3, 445px 1061px #673ab7, 928px 47px #00bcd4,
-                        168px 1410px #8bc34a, 777px 782px #9c27b0, 1235px 1941px #9c27b0,
-                        104px 1690px #8bc34a, 1167px 1338px #e91e63, 345px 1652px #009688,
-                        1682px 1196px #f44336, 1995px 494px #8bc34a, 428px 798px #ff5722,
-                        340px 1623px #f44336, 605px 349px #9c27b0, 1339px 1344px #673ab7,
-                        1102px 1745px #3f51b5, 1592px 1676px #2196f3, 419px 1024px #ff9800,
-                        630px 1033px #4caf50, 1995px 1644px #00bcd4, 1092px 712px #9c27b0,
-                        1355px 606px #f44336, 622px 1881px #cddc39, 1481px 621px #9e9e9e,
-                        19px 1348px #8bc34a, 864px 1780px #e91e63, 442px 1136px #2196f3,
-                        67px 712px #ff5722, 89px 1406px #f44336, 275px 321px #009688,
-                        592px 630px #e91e63, 1012px 1690px #9c27b0, 1749px 23px #673ab7,
-                        94px 1542px #ffeb3b, 1201px 1657px #3f51b5, 1505px 692px #2196f3,
-                        1799px 601px #03a9f4, 656px 811px #00bcd4, 701px 597px #00bcd4,
-                        1202px 46px #ff5722, 890px 569px #ff5722, 1613px 813px #2196f3,
-                        223px 252px #ff9800, 983px 1093px #f44336, 726px 1029px #ffc107,
-                        1764px 778px #cddc39, 622px 1643px #f44336, 174px 1559px #673ab7,
-                        212px 517px #00bcd4, 340px 505px #fff, 1700px 39px #fff,
-                        1768px 516px #f44336, 849px 391px #ff9800, 228px 1824px #fff,
-                        1119px 1680px #ffc107, 812px 1480px #3f51b5, 1438px 1585px #cddc39,
-                        137px 1397px #fff, 1080px 456px #673ab7, 1208px 1437px #03a9f4,
-                        857px 281px #f44336, 1254px 1306px #cddc39, 987px 990px #4caf50,
-                        1655px 911px #00bcd4, 1102px 1216px #ff5722, 1807px 1044px #fff,
-                        660px 435px #03a9f4, 299px 678px #4caf50, 1193px 115px #ff9800,
-                        918px 290px #cddc39, 1447px 1422px #ffeb3b, 91px 1273px #9c27b0,
-                        108px 223px #ffeb3b, 146px 754px #00bcd4, 461px 1446px #ff5722,
-                        1004px 391px #673ab7, 1529px 516px #f44336, 1206px 845px #cddc39,
-                        347px 583px #009688, 1102px 1332px #f44336, 709px 1756px #00bcd4,
-                        1972px 248px #fff, 1669px 1344px #ff5722, 1132px 406px #f44336,
-                        320px 1076px #cddc39, 126px 943px #ffeb3b, 263px 604px #ff5722,
-                        1546px 692px #f44336;
-                    animation: animStar 150s linear infinite;
-                }
-
-                .starthird {
-                    content: " ";
-                    position: absolute;
-                    width: 3px;
-                    height: 3px;
-                    background: transparent;
-                    box-shadow: 571px 173px #00bcd4, 1732px 143px #00bcd4, 1745px 454px #ff5722,
-                        234px 784px #00bcd4, 1793px 1123px #ff9800, 1076px 504px #03a9f4,
-                        633px 601px #ff5722, 350px 630px #ffeb3b, 1164px 782px #00bcd4,
-                        76px 690px #3f51b5, 1825px 701px #cddc39, 1646px 578px #ffeb3b,
-                        544px 293px #2196f3, 445px 1061px #673ab7, 928px 47px #00bcd4,
-                        168px 1410px #8bc34a, 777px 782px #9c27b0, 1235px 1941px #9c27b0,
-                        104px 1690px #8bc34a, 1167px 1338px #e91e63, 345px 1652px #009688,
-                        1682px 1196px #f44336, 1995px 494px #8bc34a, 428px 798px #ff5722,
-                        340px 1623px #f44336, 605px 349px #9c27b0, 1339px 1344px #673ab7,
-                        1102px 1745px #3f51b5, 1592px 1676px #2196f3, 419px 1024px #ff9800,
-                        630px 1033px #4caf50, 1995px 1644px #00bcd4, 1092px 712px #9c27b0,
-                        1355px 606px #f44336, 622px 1881px #cddc39, 1481px 621px #9e9e9e,
-                        19px 1348px #8bc34a, 864px 1780px #e91e63, 442px 1136px #2196f3,
-                        67px 712px #ff5722, 89px 1406px #f44336, 275px 321px #009688,
-                        592px 630px #e91e63, 1012px 1690px #9c27b0, 1749px 23px #673ab7,
-                        94px 1542px #ffeb3b, 1201px 1657px #3f51b5, 1505px 692px #2196f3,
-                        1799px 601px #03a9f4, 656px 811px #00bcd4, 701px 597px #00bcd4,
-                        1202px 46px #ff5722, 890px 569px #ff5722, 1613px 813px #2196f3,
-                        223px 252px #ff9800, 983px 1093px #f44336, 726px 1029px #ffc107,
-                        1764px 778px #cddc39, 622px 1643px #f44336, 174px 1559px #673ab7,
-                        212px 517px #00bcd4, 340px 505px #fff, 1700px 39px #fff,
-                        1768px 516px #f44336, 849px 391px #ff9800, 228px 1824px #fff,
-                        1119px 1680px #ffc107, 812px 1480px #3f51b5, 1438px 1585px #cddc39,
-                        137px 1397px #fff, 1080px 456px #673ab7, 1208px 1437px #03a9f4,
-                        857px 281px #f44336, 1254px 1306px #cddc39, 987px 990px #4caf50,
-                        1655px 911px #00bcd4, 1102px 1216px #ff5722, 1807px 1044px #fff,
-                        660px 435px #03a9f4, 299px 678px #4caf50, 1193px 115px #ff9800,
-                        918px 290px #cddc39, 1447px 1422px #ffeb3b, 91px 1273px #9c27b0,
-                        108px 223px #ffeb3b, 146px 754px #00bcd4, 461px 1446px #ff5722,
-                        1004px 391px #673ab7, 1529px 516px #f44336, 1206px 845px #cddc39,
-                        347px 583px #009688, 1102px 1332px #f44336, 709px 1756px #00bcd4,
-                        1972px 248px #fff, 1669px 1344px #ff5722, 1132px 406px #f44336,
-                        320px 1076px #cddc39, 126px 943px #ffeb3b, 263px 604px #ff5722,
-                        1546px 692px #f44336;
-                    animation: animStar 10s linear infinite;
-                }
-
-                .starfourth {
-                    content: " ";
-                    position: absolute;
-                    width: 2px;
-                    height: 2px;
-                    background: transparent;
-                    box-shadow: 571px 173px #00bcd4, 1732px 143px #00bcd4, 1745px 454px #ff5722,
-                        234px 784px #00bcd4, 1793px 1123px #ff9800, 1076px 504px #03a9f4,
-                        633px 601px #ff5722, 350px 630px #ffeb3b, 1164px 782px #00bcd4,
-                        76px 690px #3f51b5, 1825px 701px #cddc39, 1646px 578px #ffeb3b,
-                        544px 293px #2196f3, 445px 1061px #673ab7, 928px 47px #00bcd4,
-                        168px 1410px #8bc34a, 777px 782px #9c27b0, 1235px 1941px #9c27b0,
-                        104px 1690px #8bc34a, 1167px 1338px #e91e63, 345px 1652px #009688,
-                        1682px 1196px #f44336, 1995px 494px #8bc34a, 428px 798px #ff5722,
-                        340px 1623px #f44336, 605px 349px #9c27b0, 1339px 1344px #673ab7,
-                        1102px 1745px #3f51b5, 1592px 1676px #2196f3, 419px 1024px #ff9800,
-                        630px 1033px #4caf50, 1995px 1644px #00bcd4, 1092px 712px #9c27b0,
-                        1355px 606px #f44336, 622px 1881px #cddc39, 1481px 621px #9e9e9e,
-                        19px 1348px #8bc34a, 864px 1780px #e91e63, 442px 1136px #2196f3,
-                        67px 712px #ff5722, 89px 1406px #f44336, 275px 321px #009688,
-                        592px 630px #e91e63, 1012px 1690px #9c27b0, 1749px 23px #673ab7,
-                        94px 1542px #ffeb3b, 1201px 1657px #3f51b5, 1505px 692px #2196f3,
-                        1799px 601px #03a9f4, 656px 811px #00bcd4, 701px 597px #00bcd4,
-                        1202px 46px #ff5722, 890px 569px #ff5722, 1613px 813px #2196f3,
-                        223px 252px #ff9800, 983px 1093px #f44336, 726px 1029px #ffc107,
-                        1764px 778px #cddc39, 622px 1643px #f44336, 174px 1559px #673ab7,
-                        212px 517px #00bcd4, 340px 505px #fff, 1700px 39px #fff,
-                        1768px 516px #f44336, 849px 391px #ff9800, 228px 1824px #fff,
-                        1119px 1680px #ffc107, 812px 1480px #3f51b5, 1438px 1585px #cddc39,
-                        137px 1397px #fff, 1080px 456px #673ab7, 1208px 1437px #03a9f4,
-                        857px 281px #f44336, 1254px 1306px #cddc39, 987px 990px #4caf50,
-                        1655px 911px #00bcd4, 1102px 1216px #ff5722, 1807px 1044px #fff,
-                        660px 435px #03a9f4, 299px 678px #4caf50, 1193px 115px #ff9800,
-                        918px 290px #cddc39, 1447px 1422px #ffeb3b, 91px 1273px #9c27b0,
-                        108px 223px #ffeb3b, 146px 754px #00bcd4, 461px 1446px #ff5722,
-                        1004px 391px #673ab7, 1529px 516px #f44336, 1206px 845px #cddc39,
-                        347px 583px #009688, 1102px 1332px #f44336, 709px 1756px #00bcd4,
-                        1972px 248px #fff, 1669px 1344px #ff5722, 1132px 406px #f44336,
-                        320px 1076px #cddc39, 126px 943px #ffeb3b, 263px 604px #ff5722,
-                        1546px 692px #f44336;
-                    animation: animStar 50s linear infinite;
-                }
-
-                .starfifth {
-                    content: " ";
-                    position: absolute;
-                    width: 1px;
-                    height: 1px;
-                    background: transparent;
-                    box-shadow: 571px 173px #00bcd4, 1732px 143px #00bcd4, 1745px 454px #ff5722,
-                        234px 784px #00bcd4, 1793px 1123px #ff9800, 1076px 504px #03a9f4,
-                        633px 601px #ff5722, 350px 630px #ffeb3b, 1164px 782px #00bcd4,
-                        76px 690px #3f51b5, 1825px 701px #cddc39, 1646px 578px #ffeb3b,
-                        544px 293px #2196f3, 445px 1061px #673ab7, 928px 47px #00bcd4,
-                        168px 1410px #8bc34a, 777px 782px #9c27b0, 1235px 1941px #9c27b0,
-                        104px 1690px #8bc34a, 1167px 1338px #e91e63, 345px 1652px #009688,
-                        1682px 1196px #f44336, 1995px 494px #8bc34a, 428px 798px #ff5722,
-                        340px 1623px #f44336, 605px 349px #9c27b0, 1339px 1344px #673ab7,
-                        1102px 1745px #3f51b5, 1592px 1676px #2196f3, 419px 1024px #ff9800,
-                        630px 1033px #4caf50, 1995px 1644px #00bcd4, 1092px 712px #9c27b0,
-                        1355px 606px #f44336, 622px 1881px #cddc39, 1481px 621px #9e9e9e,
-                        19px 1348px #8bc34a, 864px 1780px #e91e63, 442px 1136px #2196f3,
-                        67px 712px #ff5722, 89px 1406px #f44336, 275px 321px #009688,
-                        592px 630px #e91e63, 1012px 1690px #9c27b0, 1749px 23px #673ab7,
-                        94px 1542px #ffeb3b, 1201px 1657px #3f51b5, 1505px 692px #2196f3,
-                        1799px 601px #03a9f4, 656px 811px #00bcd4, 701px 597px #00bcd4,
-                        1202px 46px #ff5722, 890px 569px #ff5722, 1613px 813px #2196f3,
-                        223px 252px #ff9800, 983px 1093px #f44336, 726px 1029px #ffc107,
-                        1764px 778px #cddc39, 622px 1643px #f44336, 174px 1559px #673ab7,
-                        212px 517px #00bcd4, 340px 505px #fff, 1700px 39px #fff,
-                        1768px 516px #f44336, 849px 391px #ff9800, 228px 1824px #fff,
-                        1119px 1680px #ffc107, 812px 1480px #3f51b5, 1438px 1585px #cddc39,
-                        137px 1397px #fff, 1080px 456px #673ab7, 1208px 1437px #03a9f4,
-                        857px 281px #f44336, 1254px 1306px #cddc39, 987px 990px #4caf50,
-                        1655px 911px #00bcd4, 1102px 1216px #ff5722, 1807px 1044px #fff,
-                        660px 435px #03a9f4, 299px 678px #4caf50, 1193px 115px #ff9800,
-                        918px 290px #cddc39, 1447px 1422px #ffeb3b, 91px 1273px #9c27b0,
-                        108px 223px #ffeb3b, 146px 754px #00bcd4, 461px 1446px #ff5722,
-                        1004px 391px #673ab7, 1529px 516px #f44336, 1206px 845px #cddc39,
-                        347px 583px #009688, 1102px 1332px #f44336, 709px 1756px #00bcd4,
-                        1972px 248px #fff, 1669px 1344px #ff5722, 1132px 406px #f44336,
-                        320px 1076px #cddc39, 126px 943px #ffeb3b, 263px 604px #ff5722,
-                        1546px 692px #f44336;
-                    animation: animStar 80s linear infinite;
-                }
-
-                @keyframes animStar {
-                    0% {
-                        transform: translateY(0px);
-                    }
-                    100% {
-                        transform: translateY(-2000px);
-                    }
-                }
-
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
-
-                @media (max-width: 400px) {
-                    .box {
-                        width: 85%;
-                    }
-                }
-            `}</style>
-
-            <div className="login-container">
-                <div className="mainsection"></div>
-                <div>
-                    <div className="starsec"></div>
-                    <div className="starthird"></div>
-                    <div className="starfourth"></div>
-                    <div className="starfifth"></div>
-                </div>
-                <ThemeToggle />
-
-                <div className="box" onClick={() => setIsExpanded(true)}>
-                    <div className="loginBox">
-                        <div className="LoginTile">Login</div>
-                        <form className="login-form" onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
-                            {error && (
-                                <div className="error-message">
-                                    {error}
-                                </div>
-                            )}
-
-                            <input
-                                type="email"
-                                placeholder="Email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                            <input
-                                type="password"
-                                placeholder="Senha"
-                                required
-                                value={senha}
-                                onChange={(e) => setSenha(e.target.value)}
-                            />
-                            <button type="submit" disabled={loading}>
-                                {loading ? (
-                                    <svg
-                                        style={{ animation: 'spin 1s linear infinite', height: '20px', width: '20px', color: '#000000', display: 'inline-block' }}
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <circle
-                                            style={{ opacity: 0.25 }}
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                        ></circle>
-                                        <path
-                                            style={{ opacity: 0.75 }}
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                        ></path>
-                                    </svg>
-                                ) : (
-                                    "Login"
-                                )}
-                            </button>
-                        </form>
+            <div className="relative z-10 w-full max-w-md px-6">
+                {/* Logo Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: -30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="text-center mb-8"
+                >
+                    <div className="relative inline-block mb-4">
+                        <img
+                            src={logoRotaVerde}
+                            alt="Rota Verde Logo"
+                            className="w-32 h-32 object-contain drop-shadow-[0_0_20px_rgba(34,197,94,0.5)]"
+                        />
+                        <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full animate-pulse" />
                     </div>
-                </div>
+
+                    <p className="text-muted-foreground text-sm tracking-widest uppercase font-medium">
+                        Sistema de Gestão de Frota
+                    </p>
+                </motion.div>
+
+                {/* Login Card */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="futuristic-card p-8 relative border border-white/10 shadow-2xl bg-black/40 backdrop-blur-xl"
+                >
+                    {/* Decorative Scan Line */}
+                    <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-50" />
+
+                    {/* Card Header */}
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 flex items-center justify-center">
+                            <Shield className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-white font-display uppercase tracking-wide">Acesso Seguro</h2>
+                            <p className="text-xs text-muted-foreground">Autenticação criptografada</p>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 flex items-start gap-2 text-destructive text-sm"
+                            >
+                                <AlertCircle size={16} className="mt-0.5" />
+                                <span>{error}</span>
+                            </motion.div>
+                        )}
+
+                        {/* Email Field */}
+                        <div className="space-y-2">
+                            <Label htmlFor="email" className="text-xs text-muted-foreground uppercase tracking-wider font-bold">
+                                E-mail
+                            </Label>
+                            <div className="relative group">
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="seu@email.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="bg-background/50 border-white/10 focus:border-primary/50 h-12 pl-4 pr-4 text-white placeholder:text-muted-foreground/50 transition-all duration-300 group-hover:border-white/20"
+                                    required
+                                />
+                                <div className="absolute inset-0 rounded-md bg-gradient-to-r from-primary/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                        </div>
+
+                        {/* Password Field */}
+                        <div className="space-y-2">
+                            <Label htmlFor="password" className="text-xs text-muted-foreground uppercase tracking-wider font-bold">
+                                Senha
+                            </Label>
+                            <div className="relative group">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="bg-background/50 border-white/10 focus:border-primary/50 h-12 pl-4 pr-12 text-white placeholder:text-muted-foreground/50 transition-all duration-300 group-hover:border-white/20"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors hover:bg-white/5 p-1 rounded-full"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                                <div className="absolute inset-0 rounded-md bg-gradient-to-r from-primary/5 to-transparent pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                        </div>
+
+                        {/* Remember & Forgot */}
+                        <div className="flex items-center justify-between text-sm">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <div className="w-4 h-4 rounded border border-white/20 bg-background/50 group-hover:border-primary/50 transition-colors flex items-center justify-center">
+                                    <div className="w-2 h-2 rounded-sm bg-primary opacity-0 group-hover:opacity-50 transition-opacity" />
+                                </div>
+                                <span className="text-muted-foreground group-hover:text-white transition-colors text-xs uppercase tracking-wide">Lembrar acesso</span>
+                            </label>
+                            <a href="#" className="text-primary hover:text-primary/80 transition-colors text-xs uppercase tracking-wide font-medium">
+                                Esqueceu a senha?
+                            </a>
+                        </div>
+
+                        {/* Submit Button */}
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <Button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full h-12 btn-futuristic text-base font-bold tracking-wider uppercase group relative overflow-hidden"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                                {loading ? (
+                                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                                ) : (
+                                    <>
+                                        <Zap className="w-5 h-5 mr-2 group-hover:text-yellow-300 transition-colors" />
+                                        Acessar Sistema
+                                        <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </>
+                                )}
+                            </Button>
+                        </motion.div>
+                    </form>
+
+                    {/* Divider */}
+                    <div className="relative my-8">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-white/10" />
+                        </div>
+                        <div className="relative flex justify-center text-[10px] uppercase font-bold">
+                            <span className="bg-[#0f1115] px-3 text-muted-foreground tracking-widest">ou continue com</span>
+                        </div>
+                    </div>
+
+                    {/* Social Login */}
+                    <div className="grid grid-cols-2 gap-3">
+                        <motion.button
+                            whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.05)" }}
+                            whileTap={{ scale: 0.98 }}
+                            className="h-10 rounded-lg border border-white/10 bg-background/30 transition-all duration-300 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-white"
+                        >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                            </svg>
+                            Google
+                        </motion.button>
+
+                        <motion.button
+                            whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.05)" }}
+                            whileTap={{ scale: 0.98 }}
+                            className="h-10 rounded-lg border border-white/10 bg-background/30 transition-all duration-300 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wide text-muted-foreground hover:text-white"
+                        >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+                            </svg>
+                            GitHub
+                        </motion.button>
+                    </div>
+                </motion.div>
+
+                {/* Status Bar */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 }}
+                    className="mt-8 flex items-center justify-center gap-6 text-xs text-muted-foreground font-mono"
+                >
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]" />
+                        <span>Sistema Online</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Shield className="w-3 h-3 text-primary" />
+                        <span>SSL Ativo</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Zap className="w-3 h-3 text-orange-400" />
+                        <span>{SYSTEM_VERSION}</span>
+                    </div>
+                </motion.div>
             </div>
-        </>
+        </div>
     );
 }

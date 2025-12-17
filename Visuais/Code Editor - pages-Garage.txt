@@ -1,0 +1,292 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '../utils';
+import {
+  Car, Zap, Star, TrendingUp, AlertCircle, CheckCircle,
+  Fuel, Gauge, DollarSign, Clock, Award, Wrench, Activity
+} from 'lucide-react';
+
+export default function Garage() {
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+
+  const vehicles = [
+    {
+      id: 1,
+      plate: 'TQQ0A07',
+      model: 'Dolphin Mini Azul',
+      image: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800',
+      favorite: true,
+      status: 'active',
+      inUse: false,
+      stats: {
+        revenue: 12450.50,
+        kmDriven: 4856,
+        efficiency: 92,
+        trips: 342,
+        costPerKm: 2.56,
+        avgTicket: 36.40,
+        lastMaintenance: '15 dias atrás',
+        nextMaintenance: '500 km'
+      },
+      color: 'from-blue-500 to-cyan-500'
+    },
+    {
+      id: 2,
+      plate: 'TQQ0725',
+      model: 'Maverique',
+      image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800',
+      favorite: false,
+      status: 'active',
+      inUse: true,
+      stats: {
+        revenue: 18230.80,
+        kmDriven: 6234,
+        efficiency: 88,
+        trips: 456,
+        costPerKm: 2.92,
+        avgTicket: 39.95,
+        lastMaintenance: '8 dias atrás',
+        nextMaintenance: '1200 km'
+      },
+      color: 'from-orange-500 to-red-500'
+    },
+    {
+      id: 3,
+      plate: 'TQS4C30',
+      model: 'Dolphin Mini BR',
+      image: 'https://images.unsplash.com/photo-1619405399517-d7fce0f13302?w=800',
+      favorite: false,
+      status: 'active',
+      inUse: false,
+      stats: {
+        revenue: 9876.20,
+        kmDriven: 3892,
+        efficiency: 85,
+        trips: 278,
+        costPerKm: 2.54,
+        avgTicket: 35.52,
+        lastMaintenance: '22 dias atrás',
+        nextMaintenance: '300 km'
+      },
+      color: 'from-green-500 to-emerald-500'
+    },
+    {
+      id: 4,
+      plate: 'TQU0H17',
+      model: 'Dolphin Mini BR',
+      image: 'https://images.unsplash.com/photo-1621839673705-6617adf9e890?w=800',
+      favorite: false,
+      status: 'maintenance',
+      inUse: false,
+      stats: {
+        revenue: 15623.45,
+        kmDriven: 5456,
+        efficiency: 90,
+        trips: 398,
+        costPerKm: 2.86,
+        avgTicket: 39.26,
+        lastMaintenance: 'Hoje',
+        nextMaintenance: '5000 km'
+      },
+      color: 'from-purple-500 to-pink-500'
+    },
+    {
+      id: 5,
+      plate: 'TQQ0A94',
+      model: 'Dolphin Mini PT',
+      image: 'https://images.unsplash.com/photo-1616455579100-2ceaa4eb2d37?w=800',
+      favorite: false,
+      status: 'active',
+      inUse: false,
+      stats: {
+        revenue: 11234.90,
+        kmDriven: 4123,
+        efficiency: 87,
+        trips: 312,
+        costPerKm: 2.73,
+        avgTicket: 36.01,
+        lastMaintenance: '12 dias atrás',
+        nextMaintenance: '800 km'
+      },
+      color: 'from-yellow-500 to-orange-500'
+    }
+  ];
+
+  return (
+    <div className="min-h-screen pb-20 md:pb-8">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700/50">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200')] bg-cover bg-center opacity-5"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 rounded-full border border-green-500/30 mb-4">
+              <Zap className="w-4 h-4 text-green-400" />
+              <span className="text-green-400 text-sm font-medium">Sistema Online</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
+              Sua <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500">Garagem</span>
+            </h1>
+            <p className="text-slate-400 text-lg">Selecione um veículo para iniciar ou ver detalhes</p>
+          </motion.div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
+            {[
+              { label: 'Veículos Ativos', value: '4', icon: Car, color: 'green' },
+              { label: 'Em Operação', value: '1', icon: Activity, color: 'blue' },
+              { label: 'Manutenção', value: '1', icon: Wrench, color: 'orange' },
+              { label: 'Eficiência Média', value: '88%', icon: TrendingUp, color: 'purple' }
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50"
+              >
+                <div className={`inline-flex p-2 rounded-lg bg-${stat.color}-500/20 mb-2`}>
+                  <stat.icon className={`w-4 h-4 text-${stat.color}-400`} />
+                </div>
+                <p className="text-2xl font-bold text-white">{stat.value}</p>
+                <p className="text-xs text-slate-400">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Vehicle Grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-white">Frota Disponível</h2>
+          <div className="flex gap-2">
+            <button className="px-4 py-2 bg-slate-800/50 text-slate-300 rounded-lg text-sm hover:bg-slate-700/50 transition-all">
+              Todos
+            </button>
+            <button className="px-4 py-2 bg-slate-800/50 text-slate-300 rounded-lg text-sm hover:bg-slate-700/50 transition-all">
+              Ativos
+            </button>
+            <button className="px-4 py-2 bg-slate-800/50 text-slate-300 rounded-lg text-sm hover:bg-slate-700/50 transition-all">
+              Favoritos
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {vehicles.map((vehicle, index) => (
+            <motion.div
+              key={vehicle.id}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              whileHover={{ scale: 1.02 }}
+              className="group relative"
+            >
+              <Link to={createPageUrl(`VehicleDetail?id=${vehicle.id}`)}>
+                <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl border border-slate-700/50 overflow-hidden hover:border-slate-600/50 transition-all">
+                  {/* Status Badge */}
+                  <div className="absolute top-4 left-4 z-10 flex gap-2">
+                    {vehicle.favorite && (
+                      <div className="flex items-center gap-1 px-3 py-1.5 bg-yellow-500/20 backdrop-blur-md rounded-full border border-yellow-500/30">
+                        <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                        <span className="text-xs font-medium text-yellow-400">Favorito</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="absolute top-4 right-4 z-10">
+                    {vehicle.inUse ? (
+                      <div className="flex items-center gap-1 px-3 py-1.5 bg-red-500/20 backdrop-blur-md rounded-full border border-red-500/30">
+                        <Activity className="w-3 h-3 text-red-400" />
+                        <span className="text-xs font-medium text-red-400">Em Uso</span>
+                      </div>
+                    ) : vehicle.status === 'maintenance' ? (
+                      <div className="flex items-center gap-1 px-3 py-1.5 bg-orange-500/20 backdrop-blur-md rounded-full border border-orange-500/30">
+                        <Wrench className="w-3 h-3 text-orange-400" />
+                        <span className="text-xs font-medium text-orange-400">Manutenção</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 px-3 py-1.5 bg-green-500/20 backdrop-blur-md rounded-full border border-green-500/30">
+                        <CheckCircle className="w-3 h-3 text-green-400" />
+                        <span className="text-xs font-medium text-green-400">Disponível</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Vehicle Image */}
+                  <div className="relative h-48 overflow-hidden bg-gradient-to-br from-slate-700 to-slate-800">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${vehicle.color} opacity-20`}></div>
+                    <img 
+                      src={vehicle.image} 
+                      alt={vehicle.model}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent"></div>
+                  </div>
+
+                  {/* Vehicle Info */}
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white mb-1">{vehicle.plate}</h3>
+                        <p className="text-sm text-slate-400">{vehicle.model}</p>
+                      </div>
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${vehicle.color} flex items-center justify-center shadow-lg`}>
+                        <Car className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+
+                    {/* Performance Bar */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <span className="text-slate-400">Eficiência</span>
+                        <span className="text-white font-medium">{vehicle.stats.efficiency}%</span>
+                      </div>
+                      <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${vehicle.stats.efficiency}%` }}
+                          transition={{ delay: index * 0.1 + 0.3, duration: 0.8 }}
+                          className={`h-full bg-gradient-to-r ${vehicle.color}`}
+                        ></motion.div>
+                      </div>
+                    </div>
+
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-slate-900/50 rounded-lg p-3">
+                        <DollarSign className="w-4 h-4 text-green-400 mb-1" />
+                        <p className="text-sm font-bold text-white">R$ {vehicle.stats.revenue.toLocaleString('pt-BR')}</p>
+                        <p className="text-xs text-slate-500">Receita</p>
+                      </div>
+                      <div className="bg-slate-900/50 rounded-lg p-3">
+                        <Gauge className="w-4 h-4 text-blue-400 mb-1" />
+                        <p className="text-sm font-bold text-white">{vehicle.stats.kmDriven}</p>
+                        <p className="text-xs text-slate-500">KM</p>
+                      </div>
+                      <div className="bg-slate-900/50 rounded-lg p-3">
+                        <Activity className="w-4 h-4 text-purple-400 mb-1" />
+                        <p className="text-sm font-bold text-white">{vehicle.stats.trips}</p>
+                        <p className="text-xs text-slate-500">Corridas</p>
+                      </div>
+                    </div>
+
+                    {/* CTA */}
+                    <button className="w-full mt-4 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white font-medium rounded-xl hover:shadow-lg hover:shadow-green-500/30 transition-all">
+                      Ver Detalhes
+                    </button>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

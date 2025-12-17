@@ -1,0 +1,132 @@
+
+VISÃO DO SISTEMA – ROTA VERDE (CONCEITO GAMIFICADO)
+
+OBJETIVO
+Transformar o sistema Rota Verde em uma experiência de gestão de frota no estilo videogame, onde cada veículo é tratado como um “ativo jogável”, com status, desempenho, penalidades e recompensas baseadas em dados reais de operação.
+
+CONCEITO CENTRAL
+O sistema não é apenas um dashboard.
+Ele funciona como um jogo de gestão:
+- Cada carro é um personagem
+- Cada corrida gera pontos (receita)
+- Cada km gera desgaste
+- Manutenção gera penalidade ou bônus
+- A garagem é o hub principal
+
+TELA PRINCIPAL – GARAGEM
+A garagem é a tela mais importante do sistema.
+
+Função:
+- Visão geral da frota
+- Decisão rápida: qual carro usar
+- Leitura instantânea de status
+
+Elementos:
+- Cards grandes com imagem do veículo
+- Status visual: Disponível / Em uso / Manutenção
+- Indicador de eficiência (barra)
+- Métricas principais:
+  - Ganhos do carro (receita)
+  - Desgaste (km rodados)
+  - Performance (eficiência)
+
+Ajustes semânticos:
+- Receita → Ganhos do carro
+- KM → Desgaste
+- Eficiência → Performance
+
+DETALHE DO VEÍCULO
+Cada veículo possui uma tela própria com abas.
+
+ABAS DO VEÍCULO
+
+1. DESEMPENHO
+Função:
+Mostrar o “status de jogo” do carro.
+
+Indicadores:
+- Ganhos totais
+- KM rodados
+- Total de corridas
+- Performance (%)
+
+Tradução de métricas:
+- Receita/km → Eficiência de pista
+- Receita/hora → Potencial de ganho
+- Bilheteria → Ticket médio
+
+Feedback visual:
+- Acima da média da frota
+- Carro destaque da semana
+- Carro subutilizado
+
+2. MANUTENÇÃO
+Função:
+Criar penalidade e recompensa.
+
+Indicadores:
+- Status: Em dia / Atenção / Crítico
+- Próxima manutenção (km restantes)
+- Custo total de manutenção
+
+Regras conceituais:
+- Manutenção em dia = bônus visual
+- Manutenção atrasada = alerta visual
+- Manutenção vencida = queda de performance
+
+Não altera banco, apenas leitura e visual.
+
+3. CORRIDAS
+Função:
+Histórico operacional.
+
+Conteúdo:
+- Lista de corridas
+- Tipo: Aplicativo / Particular
+- Valor
+- Horário
+
+Resumo:
+- Total aplicativo
+- Total particular
+- Total geral
+- Lucro do motorista
+
+4. ANÁLISE
+Função:
+Inteligência e decisão.
+
+Conteúdo futuro:
+- Ranking de veículos por lucro
+- Ranking custo/km
+- Ranking eficiência
+- Comparação entre veículos
+
+Essa aba responde:
+“Qual carro devo colocar para rodar hoje?”
+
+NARRATIVA DO PRODUTO
+O sistema deve comunicar implicitamente:
+
+- Você não gerencia carros
+- Você joga com ativos
+- Cada decisão impacta o resultado
+
+FRASE DE POSICIONAMENTO
+“Você não gerencia uma frota. Você joga com ela.”
+
+DIRETRIZES TÉCNICAS
+- Não refatorar o código gerado pelo Base44
+- Trabalhar por ajustes incrementais
+- Alterar apenas:
+  - textos
+  - rótulos
+  - ícones
+  - hierarquia visual
+- Backend permanece o mesmo
+
+PRÓXIMOS PASSOS SUGERIDOS
+1. Consolidar essa visão como documento-base
+2. Ajustar copy das telas principais
+3. Inserir rankings e alertas visuais
+4. Evoluir análise sem quebrar estrutura existente

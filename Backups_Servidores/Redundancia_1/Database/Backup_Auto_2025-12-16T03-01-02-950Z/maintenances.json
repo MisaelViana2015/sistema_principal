@@ -1,0 +1,42 @@
+[
+  {
+    "id": "52ca312b-9934-44b5-b2c5-6c2cd2567507",
+    "vehicle_id": "47f4e640-f4ef-4636-9838-3e27c89bf839",
+    "tipo": "20 Mil KM",
+    "descricao": "Manutenção de Garantia ",
+    "valor": "0.01",
+    "km_atual": null,
+    "data": "2025-11-08 00:00:00",
+    "observacao": null
+  },
+  {
+    "id": "66ee0877-9142-4dd4-a45a-9c1bfd336ca1",
+    "vehicle_id": "47f4e640-f4ef-4636-9838-3e27c89bf839",
+    "tipo": "revisao_BYD",
+    "descricao": "Revisão BYD preventiva",
+    "valor": "360.00",
+    "km_atual": 21000,
+    "data": "2025-11-13 00:00:00",
+    "observacao": null
+  },
+  {
+    "id": "5f451d59-2a03-4371-a7ad-9048ea629e76",
+    "vehicle_id": "870dec1b-da4c-4e2e-89b9-638678dd864c",
+    "tipo": "rodizio_pneus",
+    "descricao": "Rodízio de pneus preventivo",
+    "valor": "360.00",
+    "km_atual": 20000,
+    "data": "2025-08-13 00:00:00",
+    "observacao": null
+  },
+  {
+    "id": "d0bce625-3be1-4b63-8a2e-2c8b3baaa5fd",
+    "vehicle_id": "870dec1b-da4c-4e2e-89b9-638678dd864c",
+    "tipo": "Revisão",
+    "descricao": "Revisão BYD",
+    "valor": "360.00",
+    "km_atual": 20000,
+    "data": "2025-09-23 00:00:00",
+    "observacao": null
+  }
+]

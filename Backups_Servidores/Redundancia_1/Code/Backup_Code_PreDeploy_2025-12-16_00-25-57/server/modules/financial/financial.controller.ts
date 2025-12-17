@@ -1,0 +1,119 @@
+
+import { Request, Response } from "express";
+import * as service from "./financial.service.js";
+
+export async function getExpenses(req: Request, res: Response) {
+    try {
+        const shiftId = req.query.shiftId as string;
+        const expenses = await service.getAllExpenses({ shiftId });
+        res.json(expenses);
+    } catch (error) {
+        console.error("Erro ao buscar despesas:", error);
+        res.status(500).json({ error: "Erro interno ao buscar despesas" });
+    }
+}
+
+export async function getLegacyMaintenances(req: Request, res: Response) {
+    try {
+        const maintenances = await service.getAllLegacyMaintenances();
+        res.json(maintenances);
+    } catch (error) {
+        console.error("Erro ao buscar manutenções legadas:", error);
+        res.status(500).json({ error: "Erro interno ao buscar manutenções legadas" });
+    }
+}
+
+export async function getCostTypes(req: Request, res: Response) {
+    try {
+        const types = await service.getAllCostTypes();
+        res.json(types);
+    } catch (error) {
+        console.error("Erro ao buscar tipos de custo:", error);
+        res.status(500).json({ error: "Erro interno ao buscar tipos de custo" });
+    }
+}
+
+export async function getFixedCosts(req: Request, res: Response) {
+    try {
+        const costs = await service.getAllFixedCosts();
+        res.json(costs);
+    } catch (error) {
+        console.error("Erro ao buscar custos fixos:", error);
+        res.status(500).json({ error: "Erro interno ao buscar custos fixos" });
+    }
+}
+
+
+export async function createExpense(req: Request, res: Response) {
+    try {
+        const { driverId, shiftId, costTypeId, value, date, notes } = req.body;
+
+        if (!costTypeId || !value || !date) {
+            return res.status(400).json({ message: "Dados incompletos (costTypeId, value, date)" });
+        }
+
+        const newExpense = await service.createExpense({
+            driverId: driverId || (req as any).user?.userId, // Allow explicit or implicit
+            shiftId,
+            costTypeId,
+            value: String(value),
+            date: new Date(date),
+            notes,
+        });
+
+        res.status(201).json(newExpense);
+    } catch (error) {
+        console.error("Erro ao criar despesa:", error);
+        res.status(500).json({ error: "Erro interno ao criar despesa" });
+    }
+}
+
+export async function createCostType(req: Request, res: Response) {
+    try {
+        const { name, category, description, icon, color } = req.body;
+        if (!name) return res.status(400).json({ error: "Nome é obrigatório" });
+
+        const newType = await service.createCostType({
+            name,
+            category: category || 'Variável',
+            description: description || 'Padrão',
+            icon: icon || 'dollar-sign',
+            color: color || 'orange'
+        });
+        res.status(201).json(newType);
+    } catch (error) {
+        console.error("Erro ao criar tipo de custo:", error);
+        res.status(500).json({ error: "Erro interno" });
+    }
+}
+
+export async function updateCostType(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const data = req.body;
+        const updated = await service.updateCostType(id, data);
+        res.json(updated);
+    } catch (error) {
+        console.error("Erro ao atualizar tipo de custo:", error);
+        res.status(500).json({ error: "Erro interno" });
+    }
+}
+
+export async function deleteCostType(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        await service.deleteCostType(id);
+        res.json({ message: "Tipo de custo removido" });
+    } catch (error: any) {
+        console.error("Erro ao deletar tipo de custo:", error);
+
+        // Postgres Foreign Key Violation
+        if (error.code === '23503') {
+            return res.status(409).json({
+                error: "Não é possível excluir. Este tipo de custo já está sendo usado em lançamentos."
+            });
+        }
+
+        res.status(500).json({ error: "Erro interno ao excluir: " + (error.message || "Erro desconhecido") });
+    }
+}

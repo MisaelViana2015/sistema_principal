@@ -1,0 +1,13 @@
+import { Router } from "express";
+import { vehiclesController } from "./vehicles.controller.js";
+import { requireAuth, requireAdmin } from "../../core/middlewares/authMiddleware.js";
+
+const router = Router();
+
+// 1. Exige login para qualquer rota
+router.use(requireAuth);
+
+// 2. Exige admin para listar todos
+router.get("/", requireAdmin, vehiclesController.getAll);
+
+export default router;

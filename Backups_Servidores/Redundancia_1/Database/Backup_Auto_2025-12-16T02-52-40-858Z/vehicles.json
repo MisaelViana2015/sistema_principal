@@ -1,0 +1,47 @@
+[
+  {
+    "id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "plate": "TQU0H17",
+    "modelo": "Dolphi Mini BR",
+    "motorista_padrao_id": "11ed32c1-1ff3-4d37-a821-2528d9036326",
+    "is_active": true,
+    "current_shift_id": null,
+    "km_inicial": 0
+  },
+  {
+    "id": "89146774-1d45-46c2-aa6c-abd1884d90c9",
+    "plate": "TQQ0A07",
+    "modelo": "Dolphi Mini Azul",
+    "motorista_padrao_id": "d3818cb2-0192-45e7-9527-93e82b1d39d2",
+    "is_active": true,
+    "current_shift_id": null,
+    "km_inicial": 0
+  },
+  {
+    "id": "47f4e640-f4ef-4636-9838-3e27c89bf839",
+    "plate": "TQS4C30",
+    "modelo": "Dolphi Mini BR",
+    "motorista_padrao_id": "a66dfd46-57e9-4d3f-aafe-b1233fc2a156",
+    "is_active": true,
+    "current_shift_id": "c7bfe285-970b-45aa-81fd-8e867277fd83",
+    "km_inicial": 0
+  },
+  {
+    "id": "870dec1b-da4c-4e2e-89b9-638678dd864c",
+    "plate": "TQQ0A94",
+    "modelo": "Dolphi Mini PT",
+    "motorista_padrao_id": "14f56eca-266d-4be7-8188-325de12c9260",
+    "is_active": true,
+    "current_shift_id": "1424fd09-fb83-4851-9635-c8689459f172",
+    "km_inicial": 0
+  },
+  {
+    "id": "9029c228-f3d1-4a90-9368-7488489e73d8",
+    "plate": "TQQ0725",
+    "modelo": "MAVERIQUE",
+    "motorista_padrao_id": null,
+    "is_active": true,
+    "current_shift_id": null,
+    "km_inicial": 0
+  }
+]
