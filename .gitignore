@@ -16,3 +16,6 @@ dist/
 SISTEMA_OFICIAL/**/.env
 SISTEMA_OFICIAL/**/node_modules
 SISTEMA_OFICIAL/**/dist
+
+# Global ignore for secrets
+**/.env

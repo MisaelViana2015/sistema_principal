@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+.cache
+.vscode
+.git
+*.log
+.env
+.env.*
+coverage
+tomcat
