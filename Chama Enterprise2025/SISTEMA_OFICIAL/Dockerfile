@@ -41,8 +41,9 @@ COPY package*.json ./
 COPY server/package*.json ./server/
 COPY shared/package*.json ./shared/
 
-# Install production dependencies
-RUN npm ci --production --workspace=server --workspace=shared
+# Remove lockfile and install production dependencies
+RUN rm -f package-lock.json
+RUN npm install --production --workspace=server --workspace=shared
 
 # Copy built files
 COPY --from=builder /app/server/dist ./server/dist
