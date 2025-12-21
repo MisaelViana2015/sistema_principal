@@ -121,6 +121,24 @@ if (process.env.NODE_ENV === "production") {
     // Se app.js está em dist/server/app.js, então ../client deve ser dist/client
     const clientBuildPath = path.join(__dirname, "../client");
 
+    console.log("📂 Static files path:", clientBuildPath);
+    try {
+        const fs = await import("fs");
+        if (fs.existsSync(clientBuildPath)) {
+            console.log("📂 Files in static path (root):", fs.readdirSync(clientBuildPath));
+            const assetsPath = path.join(clientBuildPath, "assets");
+            if (fs.existsSync(assetsPath)) {
+                console.log("📂 Files in assets:", fs.readdirSync(assetsPath));
+            } else {
+                console.log("⚠️ Assets folder not found at:", assetsPath);
+            }
+        } else {
+            console.error("❌ Static path does not exist:", clientBuildPath);
+        }
+    } catch (e) {
+        console.error("❌ Error debug listing:", e);
+    }
+
     // Serve arquivos estáticos
     app.use(express.static(clientBuildPath));
 
