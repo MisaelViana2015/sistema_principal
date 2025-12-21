@@ -52,15 +52,15 @@ export async function recalculateAllShifts() {
 
             // Calcular totais
             const totalApp = ridesData
-                .filter(r => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || ''))
-                .reduce((sum, r) => sum + Number(r.valor || 0), 0);
+                .filter((r: any) => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || ''))
+                .reduce((sum: number, r: any) => sum + Number(r.valor || 0), 0);
 
             const totalParticular = ridesData
-                .filter(r => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || ''))
-                .reduce((sum, r) => sum + Number(r.valor || 0), 0);
+                .filter((r: any) => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || ''))
+                .reduce((sum: number, r: any) => sum + Number(r.valor || 0), 0);
 
-            const totalCorridasApp = ridesData.filter(r => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length;
-            const totalCorridasParticular = ridesData.filter(r => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length;
+            const totalCorridasApp = ridesData.filter((r: any) => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length;
+            const totalCorridasParticular = ridesData.filter((r: any) => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length;
 
             const totalBruto = totalApp + totalParticular;
             const totalCorridas = ridesData.length;

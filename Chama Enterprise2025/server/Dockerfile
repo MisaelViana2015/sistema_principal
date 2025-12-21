@@ -5,19 +5,20 @@ WORKDIR /app
 # Argumentos
 ENV NODE_ENV=development
 
-# Copia package files primeiro
-COPY package*.json ./
+# 1. Copiar package files para a RAIZ (para node_modules ficar em /app/node_modules)
+COPY server/package.json ./
+# Ignorar package-lock.json da pasta server se quisermos usar o linux, mas o comando abaixo sobrescreve
+COPY server/package-lock.linux.json ./package-lock.json
 
-# Sobrescreve lockfile com versão Linux (Reprodutibilidade - C1)
-COPY package-lock.linux.json ./package-lock.json
+# 2. Instalar dependências (na raiz)
+RUN npm install
 
-# Instalação Limpa (Reprodutibilidade - C1)
-RUN npm ci
+# 3. Copiar código fonte
+COPY server/ ./server/
+COPY shared/ ./shared/
 
-# Copia código fonte
-COPY . .
-
-# Build
+# 4. Build (agora o TSC acha dependências em ../node_modules)
+WORKDIR /app/server
 RUN npm run build
 
 # --- STAGE 2: Runtime ---
@@ -31,14 +32,14 @@ USER node
 # Timezone UTC (A2)
 ENV TZ=UTC
 
-# Copia node_modules e build artifacts
+# Copia node_modules (da raiz) e build artifacts
 COPY --from=builder --chown=node:node /app/node_modules ./node_modules
-COPY --from=builder --chown=node:node /app/dist ./dist
-
-# Copia package.json para validação
-COPY --from=builder --chown=node:node /app/package.json ./
+COPY --from=builder --chown=node:node /app/server/dist ./server/dist
+COPY --from=builder --chown=node:node /app/server/package.json ./server/
 
 EXPOSE 5000
 
-# Execução Direta (M3 - Menos overhead)
-CMD ["node", "dist/server/index.js"]
+# Execução Direta
+# O TSC com rootDir '..' gera dist/server/index.js e dist/shared/schema.js
+# Como copiamos 'server/dist' para 'server/dist', o caminho final é server/dist/server/index.js
+CMD ["node", "server/dist/server/index.js"]
