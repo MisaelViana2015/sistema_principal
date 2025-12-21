@@ -24,7 +24,7 @@ ENV JWT_SECRET=rota-verde-super-secret-key-2024
 # Build the server (this will also compile shared if needed)
 # Generate migrations files (ensure meta/_journal.json exists)
 ENV DATABASE_URL="postgres://dummy:dummy@localhost:5432/dummy"
-RUN cd server && npx drizzle-kit generate:pg --config=drizzle.config.ts
+RUN cd server && npx drizzle-kit generate:pg
 RUN npm run build:server
 # Build the client
 RUN npm run build:client
