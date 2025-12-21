@@ -90,32 +90,17 @@ async function startServer() {
         // Conecta ao banco de dados em background (apenas teste de conexão)
         console.log("\n🔍 Conectando ao banco de dados...");
 
-        // Executar migrações ANTES de aceitar conexões reais (ou em paralelo se safe)
-        // Em produção, queremos garantir que o banco esteja pronto
-        if (ENV === 'production') {
-            // Tenta migrar, mas não derruba o servidor se falhar
-            runMigrations().then(async () => {
-                // HOTFIX: Garante colunas manualmente
-                await ensureSchemaIntegrity();
+        // Conecta ao banco de dados em background (apenas teste de conexão)
+        console.log("\n🔍 Conectando ao banco de dados...");
 
-                testConnection().then((connected) => {
-                    if (connected) console.log("✅ Banco de dados conectado e sincronizado!");
-                });
-            }).catch(async err => {
-                console.error("⚠️  AVISO CRÍTICO: Falha na auto-migração. O servidor continuará rodando para permitir reparos via API.", err);
-                // Mesmo com erro, tenta hotfix e conectar
-                await ensureSchemaIntegrity();
-                testConnection();
-            });
-        } else {
-            testConnection().then(async (connected) => {
-                if (connected) {
-                    console.log("✅ Banco de dados conectado!");
-                    // Dev mode também roda pra garantir
-                    await ensureSchemaIntegrity();
-                }
-            });
-        }
+        // MODELO B: Migrations são manuais. Apenas verifique a conexão.
+        testConnection().then((connected) => {
+            if (connected) {
+                console.log("✅ Banco de dados conectado!");
+            } else {
+                console.error("⚠️ Banco de dados não conectado. Verifique as credenciais.");
+            }
+        });
 
         // Graceful shutdown
         const shutdown = async () => {
