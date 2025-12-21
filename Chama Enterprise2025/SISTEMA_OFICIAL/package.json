@@ -1,0 +1,26 @@
+{
+    "name": "rota-verde-monorepo",
+    "private": true,
+    "workspaces": [
+        "client",
+        "server",
+        "shared"
+    ],
+    "dependencies": {
+        "drizzle-orm": "^0.29.1",
+        "drizzle-zod": "^0.5.1",
+        "pg": "^8.11.3",
+        "zod": "^3.22.4"
+    },
+    "scripts": {
+        "install:all": "npm install",
+        "dev:server": "npm run dev --workspace=server",
+        "dev:client": "npm run dev --workspace=client",
+        "build": "npm run build --workspace=server && npm run build --workspace=client",
+        "start": "npm run start --workspace=server",
+        "build:server": "npm run build --workspace=server",
+        "build:client": "npm run build --workspace=client",
+        "db:bootstrap": "npm run db:bootstrap --workspace=server",
+        "db:migrate": "npm run db:migrate --workspace=server"
+    }
+}
