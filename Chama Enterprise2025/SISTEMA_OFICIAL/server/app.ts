@@ -22,11 +22,30 @@ import { apiLimiter } from "./core/middlewares/rateLimit.js";
  * NÃO inicia o servidor (isso é feito no index.ts)
  */
 
+import helmet from "helmet";
+
 const app = express();
 
 // ============================================
 // MIDDLEWARES GLOBAIS
 // ============================================
+
+// Security Headers (Helmet) - Com CSP relaxada para evitar quebra de UI
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // unsafe-eval para Vite/React dev calls
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            imgSrc: ["'self'", "data:", "https:", "http:"], // Permitir imagens externas
+            connectSrc: ["'self'", "https:", "http:"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+        },
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // Importante para carregar assets corretamente
+}));
 
 // CORS - permitir requisições do frontend
 const corsOptions = {
