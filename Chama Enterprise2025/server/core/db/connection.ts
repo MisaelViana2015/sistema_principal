@@ -25,6 +25,17 @@ const appEnv = process.env.APP_ENV || "local";
 console.log(`🔌 Conectando ao banco de dados...`);
 console.log(`📍 Ambiente: ${env} (${appEnv})`);
 
+// DEBUG: Verificar se DATABASE_URL está sendo lida
+const dbUrl = process.env.DATABASE_URL;
+if (dbUrl) {
+    const urlParts = dbUrl.split('@');
+    const host = urlParts[1]?.split(':')[0] || 'UNKNOWN';
+    console.log(`🔍 DATABASE_URL detectada. Host: ${host}`);
+} else {
+    console.log(`❌ DATABASE_URL está VAZIA ou UNDEFINED!`);
+}
+
+
 // Configuração do Pool PostgreSQL
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
