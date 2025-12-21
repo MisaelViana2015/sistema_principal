@@ -52,6 +52,11 @@ const corsOptions = {
                 return callback(new Error("CORS_ORIGIN configuration missing on server"), false);
             }
 
+            // Permitir wildcard (*)
+            if (allowedOrigin === "*") {
+                return callback(null, true);
+            }
+
             if (origin === allowedOrigin) {
                 return callback(null, true);
             }
