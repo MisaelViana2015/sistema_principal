@@ -22,6 +22,9 @@ router.put("/cost-types/:id", requireAdmin, controller.updateCostType);
 router.delete("/cost-types/:id", requireAdmin, controller.deleteCostType);
 
 router.get("/fixed-costs", requireAdmin, controller.getFixedCosts);
+router.post("/fixed-costs", requireAdmin, controller.createFixedCost);
+router.put("/fixed-costs/:id", requireAdmin, controller.updateFixedCost);
+router.delete("/fixed-costs/:id", requireAdmin, controller.deleteFixedCost);
 
 // Rota de Emergência para corrigir Schema (executar uma vez e remover depois)
 router.get("/fix-db-emergency", async (req, res) => {

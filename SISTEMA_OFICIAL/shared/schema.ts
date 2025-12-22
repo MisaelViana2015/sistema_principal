@@ -112,6 +112,25 @@ export const fixedCosts = pgTable("fixed_costs", {
     value: numeric("valor", { precision: 12, scale: 2 }).notNull(),
     frequency: text("frequency").default('Mensal').notNull(),
     dueDay: integer("due_day").default(5), // Day of month
+    costTypeId: varchar("cost_type_id").references(() => costTypes.id),
+    vehicleId: uuid("vehicle_id").references(() => vehicles.id),
+    vendor: text("vendor"),
+    totalInstallments: integer("total_installments"), // 60, 96, etc.
+    startDate: timestamp("start_date"),
+    description: text("description"),
+    isActive: boolean("is_active").default(true),
+});
+
+export const fixedCostInstallments = pgTable("fixed_cost_installments", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    fixedCostId: varchar("fixed_cost_id").references(() => fixedCosts.id).notNull(),
+    installmentNumber: integer("installment_number").notNull(),
+    dueDate: timestamp("due_date").notNull(),
+    value: numeric("valor", { precision: 12, scale: 2 }).notNull(),
+    status: text("status").default('Pendente').notNull(), // 'Pendente', 'Pago', 'Atrasado'
+    paidAmount: numeric("paid_amount", { precision: 12, scale: 2 }),
+    paidDate: timestamp("paid_date"),
+    notes: text("notes"),
 });
 
 export const tires = pgTable("tires", {

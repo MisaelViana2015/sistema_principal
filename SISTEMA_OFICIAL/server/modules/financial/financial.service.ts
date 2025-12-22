@@ -17,6 +17,22 @@ export async function getAllFixedCosts() {
     return await repository.findAllFixedCosts();
 }
 
+export async function getFixedCostInstallments(filters?: { month?: string, year?: string, status?: string }) {
+    return await repository.getFixedCostInstallments(filters);
+}
+
+export async function createFixedCost(data: any) {
+    return await repository.createFixedCost(data);
+}
+
+export async function updateFixedCost(id: string, data: any) {
+    return await repository.updateFixedCost(id, data);
+}
+
+export async function deleteFixedCost(id: string) {
+    return await repository.deleteFixedCost(id);
+}
+
 export async function restoreDefaultCostTypes() {
     return await repository.restoreDefaultCostTypes();
 }

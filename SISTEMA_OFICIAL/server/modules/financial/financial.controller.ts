@@ -43,6 +43,49 @@ export async function getFixedCosts(req: Request, res: Response) {
     }
 }
 
+export async function createFixedCost(req: Request, res: Response) {
+    try {
+        const { name, value, frequency, dueDay } = req.body;
+        if (!name || !value) return res.status(400).json({ error: "Nome e Valor são obrigatórios" });
+
+        const newCost = await service.createFixedCost({
+            name,
+            value: String(value),
+            frequency: frequency || 'Mensal',
+            dueDay: dueDay || 5
+        });
+        res.status(201).json(newCost);
+    } catch (error) {
+        console.error("Erro ao criar custo fixo:", error);
+        res.status(500).json({ error: "Erro interno" });
+    }
+}
+
+export async function updateFixedCost(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const data = req.body;
+        if (data.value) data.value = String(data.value);
+
+        const updated = await service.updateFixedCost(id, data);
+        res.json(updated);
+    } catch (error) {
+        console.error("Erro ao atualizar custo fixo:", error);
+        res.status(500).json({ error: "Erro interno" });
+    }
+}
+
+export async function deleteFixedCost(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        await service.deleteFixedCost(id);
+        res.json({ message: "Custo fixo removido" });
+    } catch (error) {
+        console.error("Erro ao remover custo fixo:", error);
+        res.status(500).json({ error: "Erro interno" });
+    }
+}
+
 
 export async function createExpense(req: Request, res: Response) {
     try {
