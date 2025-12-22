@@ -3,8 +3,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import helmet from "helmet";
+import { db } from "./core/db/connection.js";
+import { sql } from "drizzle-orm";
 import { errorHandler, notFoundHandler } from "./core/errors/errorHandler.js";
-
 // Importar rotas dos módulos
 import authRoutes from "./modules/auth/auth.routes.js";
 import vehiclesRoutes from "./modules/vehicles/vehicles.routes.js";
@@ -38,6 +40,21 @@ const corsOptions = {
     allowedHeaders: ["Content-Type", "Authorization"],
 };
 
+// HELMET (Security Headers)
+// Configurado com CSP para permitir imagens de S3/Data e Scripts inline (se necessário)
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                imgSrc: ["'self'", "data:", "https:", "blob:"], // Permite imagens externas HTTPS e Data URIs
+                scriptSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline pode ser necessário para scripts do Vite/React
+                connectSrc: ["'self'", "https:", "wss:"], // Permite conexões WebSocket e externas
+            },
+        },
+    })
+);
+
 app.use(cors(corsOptions));
 
 // Parse JSON (Limite aumentado para Restore de grandes arquivos)
@@ -57,25 +74,58 @@ app.set("trust proxy", 1);
 app.use("/api", apiLimiter);
 
 // Log de requisições (apenas em desenvolvimento)
-if (process.env.NODE_ENV === "development") {
-    app.use((req, res, next) => {
-        console.log(`${req.method} ${req.path}`);
-        next();
+// JSON Logger Middleware (Estruturado para Railway)
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on("finish", () => {
+        const duration = Date.now() - start;
+        const log = {
+            level: res.statusCode >= 400 ? "warn" : "info",
+            timestamp: new Date().toISOString(),
+            method: req.method,
+            path: req.path,
+            status: res.statusCode,
+            duration: `${duration}ms`,
+            ip: req.ip,
+            userAgent: req.get("user-agent"),
+        };
+        // Evitar logar healthcheck para nao poluir (opcional, mas bom pra prod)
+        if (req.path !== "/health" && req.path !== "/api/health") {
+            console.log(JSON.stringify(log));
+        }
     });
-}
+    next();
+});
 
 // ============================================
 // ROTAS
 // ============================================
 
-// Health check
-app.get("/health", (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "Sistema Rota Verde - API funcionando",
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || "development",
-    });
+// Health check Profundo (Deep Healthcheck)
+app.get("/health", async (req, res) => {
+    try {
+        // Testa conexão real com query simples
+        await db.execute(sql`SELECT 1`);
+        
+        res.status(200).json({
+            status: "healthy",
+            db: "ok",
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV || "development"
+        });
+    } catch (error: any) {
+        console.error(JSON.stringify({
+            level: "error",
+            message: "Healthcheck Failed",
+            error: error.message
+        }));
+        
+        res.status(503).json({
+            status: "unhealthy",
+            db: "failed", // Isso alerta o monitoramento
+            error: error.message
+        });
+    }
 });
 
 app.get("/api/health", (req, res) => {

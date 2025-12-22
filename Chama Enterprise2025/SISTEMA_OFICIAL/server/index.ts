@@ -19,6 +19,8 @@ import { sql } from "drizzle-orm";
 const PORT = process.env.PORT || 5000;
 const ENV = process.env.NODE_ENV || "development";
 
+
+
 /**
  * Emergency Schema Fixer
  * Garante que as colunas novas existam mesmo se a migração falhar

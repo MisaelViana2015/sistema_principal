@@ -19,13 +19,15 @@ export function errorHandler(
     const env = process.env.NODE_ENV || "development";
 
     if (env === "development") {
-        console.error("❌ Erro capturado:", {
+        console.error(JSON.stringify({
+            level: "error",
+            message: "Erro capturado",
             name: err.name,
-            message: err.message,
+            error: err.message,
             stack: err.stack,
             path: req.path,
             method: req.method,
-        });
+        }));
     }
 
     // Erro de validação Zod
@@ -51,14 +53,20 @@ export function errorHandler(
     }
 
     // Erro desconhecido (não operacional)
-    console.error("❌ ERRO NÃO TRATADO:", err);
+    console.error(JSON.stringify({
+        level: "critical",
+        message: "ERRO NÃO TRATADO",
+        error: err.message || "Erro desconhecido",
+        stack: err.stack,
+        type: err.constructor.name
+    }));
 
     return res.status(500).json({
         success: false,
         // DEBUG TEMPORÁRIO: Exibir erro real em produção para diagnóstico
         error: err.message || "Erro desconhecido",
-        stack: err.stack,
-        type: err.constructor.name, // Ver se é AppError
+        stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+        type: err.constructor.name,
         setup_hint: "Verifique os logs do servidor para ver se o bootstrap do banco falhou."
     });
 }

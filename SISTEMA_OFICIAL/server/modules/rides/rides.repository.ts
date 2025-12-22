@@ -27,8 +27,13 @@ export async function getWithPagination(
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     // Get total count for pagination
+    // Get total count and sums for pagination/totals
     const totalResult = await db
-        .select({ count: count() })
+        .select({
+            count: count(),
+            totalApp: sql<number>`COALESCE(SUM(CASE WHEN UPPER(TRIM(${rides.tipo})) = 'APP' OR UPPER(TRIM(${rides.tipo})) = 'APLICATIVO' THEN ${rides.valor} ELSE 0 END), 0)`,
+            totalParticular: sql<number>`COALESCE(SUM(CASE WHEN UPPER(TRIM(${rides.tipo})) != 'APP' AND UPPER(TRIM(${rides.tipo})) != 'APLICATIVO' THEN ${rides.valor} ELSE 0 END), 0)`
+        })
         .from(rides)
         .leftJoin(shifts, eq(rides.shiftId, shifts.id))
         .where(whereClause);
@@ -65,6 +70,10 @@ export async function getWithPagination(
             currentPage: page,
             itemsPerPage: limit,
         },
+        totals: {
+            totalApp: Number(totalResult[0]?.totalApp || 0),
+            totalPrivate: Number(totalResult[0]?.totalParticular || 0)
+        }
     };
 }
 

@@ -35,7 +35,7 @@ export default function AdminLegacy() {
         },
         {
             title: "Financeiro Completo",
-            status: "waiting",
+            status: "completed",
             desc: "Custos, análises e relatórios."
         }
     ];
@@ -80,10 +80,10 @@ export default function AdminLegacy() {
                                         <div
                                             key={index}
                                             className={`flex items-start gap-4 p-4 rounded-lg border transition-all ${step.status === 'completed'
-                                                    ? 'bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900/30'
-                                                    : step.status === 'pending'
-                                                        ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 ring-1 ring-blue-500/20'
-                                                        : 'bg-slate-50/50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-800'
+                                                ? 'bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900/30'
+                                                : step.status === 'pending'
+                                                    ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30 ring-1 ring-blue-500/20'
+                                                    : 'bg-slate-50/50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-800'
                                                 }`}
                                         >
                                             <div className="mt-1">
@@ -93,8 +93,8 @@ export default function AdminLegacy() {
                                             </div>
                                             <div>
                                                 <h4 className={`font-medium ${step.status === 'completed' ? 'text-green-700 dark:text-green-300' :
-                                                        step.status === 'pending' ? 'text-blue-700 dark:text-blue-300' :
-                                                            'text-slate-500 dark:text-slate-400'
+                                                    step.status === 'pending' ? 'text-blue-700 dark:text-blue-300' :
+                                                        'text-slate-500 dark:text-slate-400'
                                                     }`}>
                                                     {step.title}
                                                 </h4>
