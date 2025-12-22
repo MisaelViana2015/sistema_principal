@@ -97,8 +97,27 @@ app.get("/health", (req, res) => {
     });
 });
 
-app.get("/api/health", (req, res) => {
-    res.status(200).send("OK");
+app.get("/api/health", async (req, res) => {
+    const health = {
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        database: 'unknown'
+    };
+
+    try {
+        const { db } = await import('./core/db/connection.js');
+        const { sql } = await import("drizzle-orm");
+        await db.execute(sql`SELECT 1`);
+        health.database = 'connected';
+        health.status = 'ok';
+        res.status(200).json(health);
+    } catch (error) {
+        console.error("Healthcheck DB Error:", error);
+        health.database = 'disconnected';
+        health.status = 'degraded';
+        res.status(503).json(health);
+    }
 });
 
 // EMERGÊNCIA: Rota Manual de Correção do Banco (Definida ANTES do frontend catch-all)

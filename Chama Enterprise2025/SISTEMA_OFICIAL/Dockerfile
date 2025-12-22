@@ -1,65 +1,70 @@
-# Build stage
-FROM node:18-alpine AS builder
+# ================================================================
+# STAGE 1: Builder
+# ================================================================
+FROM node:20.18.1-alpine AS builder
 
 WORKDIR /app
 
-# Copy root package files
-COPY package*.json ./
-COPY server/package*.json ./server/
-COPY client/package*.json ./client/
-COPY shared/package*.json ./shared/
+# Copiar package files (SEM LOCKFILE para Cross-Platform)
+COPY package.json ./
+# Workspaces
+COPY client/package.json ./client/
+COPY server/package.json ./server/
+COPY shared/package.json ./shared/
 
-# Install dependencies (workspaces handle this)
-# Remove package-lock.json to avoid platform-specific optional dependency issues (rollup-linux-x64-musl)
-RUN rm -f package-lock.json
-RUN npm install
+# Instalar TODAS as dependências (fresco)
+RUN npm install --include=dev
 
-# Copy source code
+# Copiar código
 COPY . .
 
-# Default env vars for test deployment
-ENV NODE_ENV=production
-ENV JWT_SECRET=rota-verde-super-secret-key-2024
+# Build (TypeScript → JavaScript)
+RUN npm run build
 
-# Build the server (this will also compile shared if needed)
-# Generate migrations files (ensure meta/_journal.json exists)
-ENV DATABASE_URL="postgres://dummy:dummy@localhost:5432/dummy"
-RUN cd server && npx drizzle-kit generate:pg
-RUN npm run build:server
-# Build the client
-RUN npm run build:client
-# DEBUG: List built client files to confirm structure
-RUN ls -R client/dist || echo "client/dist not found"
+# ================================================================
+# STAGE 2: Production
+# ================================================================
+FROM node:20.18.1-alpine
 
-# Production stage
-FROM node:18-alpine
+# Instalar PostgreSQL client
+RUN apk add --no-cache postgresql-client
+
+# Criar usuário não-root
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
 WORKDIR /app
 
-# Copy root package files for production
-COPY package*.json ./
-COPY server/package*.json ./server/
-COPY shared/package*.json ./shared/
+# Copiar node_modules de produção (reinstalação limpa)
+COPY package.json ./
+COPY server/package.json ./server/
+COPY client/package.json ./client/
+COPY shared/package.json ./shared/
 
-# Remove lockfile and install production dependencies
-RUN rm -f package-lock.json
-RUN npm install --production --workspace=server --workspace=shared
+# Instalar LIMPO
+RUN npm install --omit=dev
 
-# Copy built files
-COPY --from=builder /app/server/dist ./server/dist
-COPY --from=builder /app/shared ./shared
-# Copy migrations (SQL files are not compiled, so they need to be copied explicitly)
-COPY --from=builder /app/server/scripts/db/migrations ./server/scripts/db/migrations
-# Copy client build to where server expects it (dist/client relative to dist/server/app.js)
-COPY --from=builder /app/client/dist ./server/dist/client
-# DEBUG: Confirm files were copied correctly
-RUN ls -R ./server/dist/client || echo "server/dist/client not found"
+# Copiar artefatos compilados
+COPY --from=builder --chown=nodejs:nodejs /app/server/dist ./server/dist
+COPY --from=builder --chown=nodejs:nodejs /app/client/dist ./client/dist
 
-# Expose port (ajustado para o padrão do Railway)
+# Trocar para usuário não-root
+USER nodejs
+
+# Expor porta
 EXPOSE 5000
 
-ENV NODE_ENV=production
-ENV JWT_SECRET=rota-verde-super-secret-key-2024
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:5000/api/health', (r) => { \
+    let data = ''; \
+    r.on('data', chunk => data += chunk); \
+    r.on('end', () => { \
+    try { \
+    const result = JSON.parse(data); \
+    process.exit(result.status === 'ok' && result.database === 'connected' ? 0 : 1); \
+    } catch(e) { process.exit(1); } \
+    }); \
+    }).on('error', () => process.exit(1))" || exit 1
 
-# Start command
-CMD ["npm", "start", "--workspace=server"]
+# Start
+CMD ["node", "server/dist/server/index.js"]
