@@ -3,8 +3,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import helmet from "helmet";
+import { db } from "./core/db/connection.js";
+import { sql } from "drizzle-orm";
 import { errorHandler, notFoundHandler } from "./core/errors/errorHandler.js";
-
 // Importar rotas dos módulos
 import authRoutes from "./modules/auth/auth.routes.js";
 import vehiclesRoutes from "./modules/vehicles/vehicles.routes.js";
@@ -22,30 +24,11 @@ import { apiLimiter } from "./core/middlewares/rateLimit.js";
  * NÃO inicia o servidor (isso é feito no index.ts)
  */
 
-import helmet from "helmet";
-
 const app = express();
 
 // ============================================
 // MIDDLEWARES GLOBAIS
 // ============================================
-
-// Security Headers (Helmet) - Com CSP relaxada para evitar quebra de UI
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // unsafe-eval para Vite/React dev calls
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            imgSrc: ["'self'", "data:", "https:", "http:"], // Permitir imagens externas
-            connectSrc: ["'self'", "https:", "http:"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-            objectSrc: ["'none'"],
-            upgradeInsecureRequests: [],
-        },
-    },
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // Importante para carregar assets corretamente
-}));
 
 // CORS - permitir requisições do frontend
 const corsOptions = {
@@ -56,6 +39,21 @@ const corsOptions = {
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
 };
+
+// HELMET (Security Headers)
+// Configurado com CSP para permitir imagens de S3/Data e Scripts inline (se necessário)
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                imgSrc: ["'self'", "data:", "https:", "blob:"], // Permite imagens externas HTTPS e Data URIs
+                scriptSrc: ["'self'", "'unsafe-inline'"], // unsafe-inline pode ser necessário para scripts do Vite/React
+                connectSrc: ["'self'", "https:", "wss:"], // Permite conexões WebSocket e externas
+            },
+        },
+    })
+);
 
 app.use(cors(corsOptions));
 
@@ -76,48 +74,62 @@ app.set("trust proxy", 1);
 app.use("/api", apiLimiter);
 
 // Log de requisições (apenas em desenvolvimento)
-if (process.env.NODE_ENV === "development") {
-    app.use((req, res, next) => {
-        console.log(`${req.method} ${req.path}`);
-        next();
+// JSON Logger Middleware (Estruturado para Railway)
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on("finish", () => {
+        const duration = Date.now() - start;
+        const log = {
+            level: res.statusCode >= 400 ? "warn" : "info",
+            timestamp: new Date().toISOString(),
+            method: req.method,
+            path: req.path,
+            status: res.statusCode,
+            duration: `${duration}ms`,
+            ip: req.ip,
+            userAgent: req.get("user-agent"),
+        };
+        // Evitar logar healthcheck para nao poluir (opcional, mas bom pra prod)
+        if (req.path !== "/health" && req.path !== "/api/health") {
+            console.log(JSON.stringify(log));
+        }
     });
-}
+    next();
+});
 
 // ============================================
 // ROTAS
 // ============================================
 
-// Health check
-app.get("/health", (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "Sistema Rota Verde - API funcionando",
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || "development",
-    });
+// Health check Profundo (Deep Healthcheck)
+app.get("/health", async (req, res) => {
+    try {
+        // Testa conexão real com query simples
+        await db.execute(sql`SELECT 1`);
+        
+        res.status(200).json({
+            status: "healthy",
+            db: "ok",
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV || "development"
+        });
+    } catch (error: any) {
+        console.error(JSON.stringify({
+            level: "error",
+            message: "Healthcheck Failed",
+            error: error.message
+        }));
+        
+        res.status(503).json({
+            status: "unhealthy",
+            db: "failed", // Isso alerta o monitoramento
+            error: error.message
+        });
+    }
 });
 
-app.get("/api/health", async (req, res) => {
-    const health = {
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        database: 'unknown'
-    };
-
-    try {
-        const { db } = await import('./core/db/connection.js');
-        const { sql } = await import("drizzle-orm");
-        await db.execute(sql`SELECT 1`);
-        health.database = 'connected';
-        health.status = 'ok';
-        res.status(200).json(health);
-    } catch (error) {
-        console.error("Healthcheck DB Error:", error);
-        health.database = 'disconnected';
-        health.status = 'degraded';
-        res.status(503).json(health);
-    }
+app.get("/api/health", (req, res) => {
+    res.status(200).send("OK");
 });
 
 // EMERGÊNCIA: Rota Manual de Correção do Banco (Definida ANTES do frontend catch-all)
@@ -158,24 +170,6 @@ if (process.env.NODE_ENV === "production") {
     // Caminho para a pasta dist/client (ajustar conforme estrutura de build)
     // Se app.js está em dist/server/app.js, então ../client deve ser dist/client
     const clientBuildPath = path.join(__dirname, "../client");
-
-    console.log("📂 Static files path:", clientBuildPath);
-    try {
-        const fs = await import("fs");
-        if (fs.existsSync(clientBuildPath)) {
-            console.log("📂 Files in static path (root):", fs.readdirSync(clientBuildPath));
-            const assetsPath = path.join(clientBuildPath, "assets");
-            if (fs.existsSync(assetsPath)) {
-                console.log("📂 Files in assets:", fs.readdirSync(assetsPath));
-            } else {
-                console.log("⚠️ Assets folder not found at:", assetsPath);
-            }
-        } else {
-            console.error("❌ Static path does not exist:", clientBuildPath);
-        }
-    } catch (e) {
-        console.error("❌ Error debug listing:", e);
-    }
 
     // Serve arquivos estáticos
     app.use(express.static(clientBuildPath));

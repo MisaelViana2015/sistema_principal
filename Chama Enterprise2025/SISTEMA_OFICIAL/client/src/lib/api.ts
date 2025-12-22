@@ -55,8 +55,8 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // Se erro 401 e não é uma tentativa de retry
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Se erro 401 e não é uma tentativa de retry e nem login
+        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes("/login")) {
 
             // Se o request que falhou JÁ ERA o refresh, então logout direto
             // (evita loop infinito)

@@ -1,70 +1,44 @@
-# ================================================================
-# STAGE 1: Builder
-# ================================================================
-FROM node:20.18.1-alpine AS builder
+# Build stage
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copiar package files (SEM LOCKFILE para Cross-Platform)
-COPY package.json ./
-# Workspaces
-COPY client/package.json ./client/
-COPY server/package.json ./server/
-COPY shared/package.json ./shared/
+# Copy root package files
+COPY package*.json ./
+COPY server/package*.json ./server/
+COPY client/package*.json ./client/
+COPY shared/package*.json ./shared/
 
-# Instalar TODAS as dependências (fresco)
-RUN npm install --include=dev
+# Install dependencies (workspaces handle this)
+RUN npm install
 
-# Copiar código
+# Copy source code
 COPY . .
 
-# Build (TypeScript → JavaScript)
-RUN npm run build
+# Build the server (this will also compile shared if needed)
+RUN npm run build:server
 
-# ================================================================
-# STAGE 2: Production
-# ================================================================
-FROM node:20.18.1-alpine
-
-# Instalar PostgreSQL client
-RUN apk add --no-cache postgresql-client
-
-# Criar usuário não-root
-RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+# Production stage
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiar node_modules de produção (reinstalação limpa)
-COPY package.json ./
-COPY server/package.json ./server/
-COPY client/package.json ./client/
-COPY shared/package.json ./shared/
+# Copy root package files for production
+COPY package*.json ./
+COPY server/package*.json ./server/
+COPY shared/package*.json ./shared/
 
-# Instalar LIMPO
-RUN npm install --omit=dev
+# Install production dependencies
+RUN npm ci --production --workspace=server --workspace=shared
 
-# Copiar artefatos compilados
-COPY --from=builder --chown=nodejs:nodejs /app/server/dist ./server/dist
-COPY --from=builder --chown=nodejs:nodejs /app/client/dist ./client/dist
+# Copy built files
+COPY --from=builder /app/server/dist ./server/dist
+COPY --from=builder /app/shared ./shared
 
-# Trocar para usuário não-root
-USER nodejs
-
-# Expor porta
+# Expose port (ajustado para o padrão do Railway)
 EXPOSE 5000
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:5000/api/health', (r) => { \
-    let data = ''; \
-    r.on('data', chunk => data += chunk); \
-    r.on('end', () => { \
-    try { \
-    const result = JSON.parse(data); \
-    process.exit(result.status === 'ok' && result.database === 'connected' ? 0 : 1); \
-    } catch(e) { process.exit(1); } \
-    }); \
-    }).on('error', () => process.exit(1))" || exit 1
+ENV NODE_ENV=production
 
-# Start
-CMD ["node", "server/dist/server/index.js"]
+# Start command
+CMD ["npm", "start", "--workspace=server"]

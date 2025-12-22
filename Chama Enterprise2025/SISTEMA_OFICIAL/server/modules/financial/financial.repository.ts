@@ -1,6 +1,6 @@
 
 import { db } from "../../core/db/connection.js";
-import { expenses, costTypes, fixedCosts, drivers, shifts, vehicles, legacyMaintenances, legacyShiftCostTypes } from "../../../shared/schema.js";
+import { expenses, costTypes, fixedCosts, fixedCostInstallments, drivers, shifts, vehicles, legacyMaintenances, legacyShiftCostTypes } from "../../../shared/schema.js";
 import { eq, desc, and } from "drizzle-orm";
 
 export async function findAllExpenses(filters?: { shiftId?: string }) {
@@ -17,9 +17,12 @@ export async function findAllExpenses(filters?: { shiftId?: string }) {
             categoria: costTypes.category,
             tipoCor: costTypes.description,
             shiftId: expenses.shiftId,
+            motoristaNome: drivers.nome, // Add driver name
         })
         .from(expenses)
         .leftJoin(costTypes, eq(expenses.costTypeId, costTypes.id))
+        .leftJoin(shifts, eq(expenses.shiftId, shifts.id)) // Join shifts
+        .leftJoin(drivers, eq(shifts.driverId, drivers.id)) // Join drivers via shift
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
         .orderBy(desc(expenses.date));
 }
@@ -30,6 +33,90 @@ export async function findAllCostTypes() {
 
 export async function findAllFixedCosts() {
     return await db.select().from(fixedCosts);
+}
+
+export async function createFixedCost(data: typeof fixedCosts.$inferInsert) {
+    const [newCost] = await db.insert(fixedCosts).values(data).returning();
+
+    // Generate Installments if totalInstallments > 0
+    if (newCost.totalInstallments && newCost.totalInstallments > 0 && newCost.startDate) {
+        const installments = [];
+        const start = new Date(newCost.startDate);
+        const day = newCost.dueDay || 5;
+
+        for (let i = 0; i < newCost.totalInstallments; i++) {
+            const dueDate = new Date(start);
+            dueDate.setMonth(dueDate.getMonth() + i);
+            dueDate.setDate(Math.min(day, 28)); // Safe day to avoid Feb 30 issues
+
+            installments.push({
+                fixedCostId: newCost.id,
+                installmentNumber: i + 1,
+                dueDate: dueDate,
+                value: newCost.value,
+                status: 'Pendente',
+            });
+        }
+
+        // Batch insert might need loop if too big, but 60-96 is fine
+        if (installments.length > 0) {
+            await db.insert(fixedCostInstallments).values(installments);
+        }
+    } else {
+        // If recurring forever (no totalInstallments), we might create just the next 12 months for dashboard visibility
+        // For now, let's just stick to specific finite loans or handle indefinite later.
+        // Or create 12 months ahead for visual.
+        const installments = [];
+        const now = new Date();
+        const day = newCost.dueDay || 5;
+
+        for (let i = 0; i < 12; i++) {
+            const dueDate = new Date(now.getFullYear(), now.getMonth() + i, Math.min(day, 28));
+            installments.push({
+                fixedCostId: newCost.id,
+                installmentNumber: i + 1,
+                dueDate: dueDate,
+                value: newCost.value,
+                status: 'Pendente',
+            });
+        }
+        await db.insert(fixedCostInstallments).values(installments);
+    }
+
+    return newCost;
+}
+
+export async function updateFixedCost(id: string, data: Partial<typeof fixedCosts.$inferInsert>) {
+    const [updated] = await db.update(fixedCosts).set(data).where(eq(fixedCosts.id, id)).returning();
+    // Logic to update future installments if value changed? Complex. 
+    // For now, just update the template.
+    return updated;
+}
+
+export async function deleteFixedCost(id: string) {
+    // Delete installments first
+    await db.delete(fixedCostInstallments).where(eq(fixedCostInstallments.fixedCostId, id));
+    const [deleted] = await db.delete(fixedCosts).where(eq(fixedCosts.id, id)).returning();
+    return deleted;
+}
+
+export async function getFixedCostInstallments(filters?: { month?: string, year?: string, status?: string }) {
+    // Basic fetch, can elaborate filters later
+    return await db.select({
+        id: fixedCostInstallments.id,
+        fixedCostId: fixedCostInstallments.fixedCostId,
+        costName: fixedCosts.name,
+        vendor: fixedCosts.vendor,
+        vehicleId: fixedCosts.vehicleId,
+        installmentNumber: fixedCostInstallments.installmentNumber,
+        totalInstallments: fixedCosts.totalInstallments,
+        dueDate: fixedCostInstallments.dueDate,
+        value: fixedCostInstallments.value,
+        status: fixedCostInstallments.status,
+    })
+        .from(fixedCostInstallments)
+        .leftJoin(fixedCosts, eq(fixedCostInstallments.fixedCostId, fixedCosts.id))
+        .orderBy(fixedCostInstallments.dueDate);
 }
 
 export async function getExpenseById(id: string) {

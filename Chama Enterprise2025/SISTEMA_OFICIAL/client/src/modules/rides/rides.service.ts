@@ -19,6 +19,10 @@ export interface PaginatedResponse<T> {
         currentPage: number;
         itemsPerPage: number;
     };
+    totals?: {
+        totalApp: number;
+        totalPrivate: number;
+    };
 }
 
 export interface RideWithDetails extends Ride {

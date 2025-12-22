@@ -1,24 +1,61 @@
 
-import React, { useState } from "react";
-import { DollarSign, Trash2, PieChart } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { DollarSign, Trash2, PieChart, RefreshCw } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { financialService, Expense } from "../../../modules/financial/financial.service";
 
-const MOCK_COSTS = [
-    { id: "1", data: "09/12/2025", motorista: "João Silva", tipo: "Combustível", valor: 150.00, cor: "blue" },
-    { id: "2", data: "09/12/2025", motorista: "João Silva", tipo: "Alimentação", valor: 35.00, cor: "green" },
-    { id: "3", data: "08/12/2025", motorista: "Maria Oliveira", tipo: "Manutenção", valor: 450.00, cor: "red" },
-    { id: "4", data: "08/12/2025", motorista: "Maria Oliveira", tipo: "Lavagem", valor: 50.00, cor: "cyan" },
-    { id: "5", data: "07/12/2025", motorista: "Carlos Santos", tipo: "Combustível", valor: 200.00, cor: "blue" },
-];
 
 export default function CustosTabLegacy() {
     const { theme } = useTheme();
     const isDark = theme === "dark";
 
+
+    const [expenses, setExpenses] = useState<Expense[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [drivers, setDrivers] = useState<string[]>([]);
+    const [costTypes, setCostTypes] = useState<string[]>([]);
+
+    // Filter states
+    const [selectedYear, setSelectedYear] = useState("todos");
+    const [selectedMonth, setSelectedMonth] = useState("todos");
     const [selectedType, setSelectedType] = useState("todos");
     const [selectedDriver, setSelectedDriver] = useState("todos");
 
-    const totalCosts = MOCK_COSTS.reduce((acc, cost) => acc + cost.valor, 0);
+    useEffect(() => {
+        loadExpenses();
+    }, []);
+
+    const loadExpenses = async () => {
+        try {
+            setLoading(true);
+            const data = await financialService.getExpenses();
+            setExpenses(data);
+
+            // Extract unique values for filters
+            const uniqueDrivers = Array.from(new Set(data.map(d => d.motoristaNome).filter(Boolean))) as string[];
+            const uniqueTypes = Array.from(new Set(data.map(d => d.tipo).filter(Boolean))) as string[];
+
+            setDrivers(uniqueDrivers.sort());
+            setCostTypes(uniqueTypes.sort());
+        } catch (error) {
+            console.error("Erro ao carregar custos:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Filter logic
+    const filteredExpenses = expenses.filter(cost => {
+        const date = new Date(cost.data);
+        const yearMatch = selectedYear === "todos" || date.getFullYear().toString() === selectedYear;
+        const monthMatch = selectedMonth === "todos" || (date.getMonth() + 1).toString() === selectedMonth;
+        const driverMatch = selectedDriver === "todos" || cost.motoristaNome === selectedDriver;
+        const typeMatch = selectedType === "todos" || cost.tipo === selectedType;
+
+        return yearMatch && monthMatch && driverMatch && typeMatch;
+    });
+
+    const totalCosts = filteredExpenses.reduce((acc, cost) => acc + Number(cost.valor), 0);
 
     const getBadgeStyle = (color: string) => {
         const isDarkTheme = theme === "dark";
@@ -27,11 +64,13 @@ export default function CustosTabLegacy() {
             case "green": return { bg: isDarkTheme ? "#14532d" : "#dcfce7", text: isDarkTheme ? "#86efac" : "#166534" };
             case "red": return { bg: isDarkTheme ? "#7f1d1d" : "#fee2e2", text: isDarkTheme ? "#fca5a5" : "#991b1b" };
             case "cyan": return { bg: isDarkTheme ? "#164e63" : "#cffafe", text: isDarkTheme ? "#67e8f9" : "#155e75" };
+            case "orange": return { bg: isDarkTheme ? "#7c2d12" : "#ffedd5", text: isDarkTheme ? "#fdba74" : "#c2410c" };
             default: return { bg: isDarkTheme ? "#1f2937" : "#f3f4f6", text: isDarkTheme ? "#9ca3af" : "#4b5563" };
         }
     };
 
     const styles = {
+        // ... (keep styles) ...
         container: {
             display: "flex",
             flexDirection: "column" as const,
@@ -127,7 +166,7 @@ export default function CustosTabLegacy() {
             color: isDark ? "#e2e8f0" : "#1e293b",
         },
         badge: (color: string) => {
-            const style = getBadgeStyle(color);
+            const style = getBadgeStyle(color || 'gray');
             return {
                 padding: "0.15rem 0.5rem",
                 borderRadius: "0.25rem",
@@ -151,34 +190,65 @@ export default function CustosTabLegacy() {
         <div style={styles.container}>
             <div style={styles.header}>
                 <h2 style={styles.title}>Gestão de Custos</h2>
-                <button
-                    style={{
-                        display: "flex", alignItems: "center", gap: "0.5rem",
-                        padding: "0.5rem 1rem", borderRadius: "0.375rem", border: "none",
-                        color: "white", background: "#ef4444", fontSize: "0.875rem", cursor: "pointer", fontWeight: "500"
-                    }}
-                >
-                    <DollarSign size={16} />
-                    Novo Custo
-                </button>
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button
+                        onClick={loadExpenses}
+                        style={{
+                            display: "flex", alignItems: "center", gap: "0.5rem",
+                            padding: "0.5rem 1rem", borderRadius: "0.375rem", border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+                            color: isDark ? "white" : "#334155", background: "transparent", fontSize: "0.875rem", cursor: "pointer", fontWeight: "500"
+                        }}
+                    >
+                        <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+                        Atualizar
+                    </button>
+                    <button
+                        style={{
+                            display: "flex", alignItems: "center", gap: "0.5rem",
+                            padding: "0.5rem 1rem", borderRadius: "0.375rem", border: "none",
+                            color: "white", background: "#ef4444", fontSize: "0.875rem", cursor: "pointer", fontWeight: "500"
+                        }}
+                    >
+                        <DollarSign size={16} />
+                        Novo Custo
+                    </button>
+                </div>
             </div>
 
             {/* Filtros */}
             <div style={styles.filtersCard}>
                 <div style={styles.inputGroup}>
                     <label style={styles.label}>Ano</label>
-                    <select style={styles.select}>
+                    <select
+                        style={styles.select}
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(e.target.value)}
+                    >
                         <option value="todos">Todos</option>
                         <option value="2025">2025</option>
-                        <option value="2024">2024</option>
+                        <option value="2026">2026</option>
                     </select>
                 </div>
                 <div style={styles.inputGroup}>
                     <label style={styles.label}>Mês</label>
-                    <select style={styles.select}>
+                    <select
+                        style={styles.select}
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(e.target.value)}
+                    >
                         <option value="todos">Todos</option>
-                        <option value="12">Dezembro</option>
+                        <option value="1">Janeiro</option>
+                        <option value="2">Fevereiro</option>
+                        <option value="3">Março</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Maio</option>
+                        <option value="6">Junho</option>
+                        <option value="7">Julho</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Setembro</option>
+                        <option value="10">Outubro</option>
                         <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
                     </select>
                 </div>
                 <div style={styles.inputGroup}>
@@ -189,8 +259,9 @@ export default function CustosTabLegacy() {
                         onChange={(e) => setSelectedDriver(e.target.value)}
                     >
                         <option value="todos">Todos</option>
-                        <option value="joao">João Silva</option>
-                        <option value="maria">Maria Oliveira</option>
+                        {drivers.map(driver => (
+                            <option key={driver} value={driver}>{driver}</option>
+                        ))}
                     </select>
                 </div>
                 <div style={styles.inputGroup}>
@@ -201,8 +272,9 @@ export default function CustosTabLegacy() {
                         onChange={(e) => setSelectedType(e.target.value)}
                     >
                         <option value="todos">Todos</option>
-                        <option value="combustivel">Combustível</option>
-                        <option value="manutencao">Manutenção</option>
+                        {costTypes.map(type => (
+                            <option key={type} value={type}>{type}</option>
+                        ))}
                     </select>
                 </div>
             </div>
@@ -210,12 +282,12 @@ export default function CustosTabLegacy() {
             {/* KPIs */}
             <div style={styles.kpiContainer}>
                 <div style={styles.kpiCard}>
-                    <span style={styles.kpiLabel}><DollarSign size={16} /> Total de Custos</span>
+                    <span style={styles.kpiLabel}><DollarSign size={16} /> Total de Custos (Real)</span>
                     <span style={styles.kpiValue}>R$ {totalCosts.toFixed(2)}</span>
                 </div>
                 <div style={styles.kpiCard}>
-                    <span style={styles.kpiLabel}><PieChart size={16} /> Média por Registro</span>
-                    <span style={styles.kpiValue}>R$ {(totalCosts / MOCK_COSTS.length).toFixed(2)}</span>
+                    <span style={styles.kpiLabel}><PieChart size={16} /> Registros</span>
+                    <span style={styles.kpiValue}>{filteredExpenses.length}</span>
                 </div>
             </div>
 
@@ -232,25 +304,38 @@ export default function CustosTabLegacy() {
                         </tr>
                     </thead>
                     <tbody>
-                        {MOCK_COSTS.map((cost) => (
-                            <tr key={cost.id}>
-                                <td style={styles.td}>{cost.data}</td>
-                                <td style={styles.td}>{cost.motorista}</td>
-                                <td style={styles.td}>
-                                    <span style={styles.badge(cost.cor)}>
-                                        {cost.tipo}
-                                    </span>
-                                </td>
-                                <td style={{ ...styles.td, fontWeight: "600" }}>
-                                    R$ {cost.valor.toFixed(2)}
-                                </td>
-                                <td style={styles.td}>
-                                    <button style={styles.actionButton} title="Excluir">
-                                        <Trash2 size={16} />
-                                    </button>
+                        {loading ? (
+                            <tr>
+                                <td colSpan={5} style={{ padding: "2rem", textAlign: "center", color: isDark ? "#94a3b8" : "#64748b" }}>
+                                    Carregando dados do servidor...
                                 </td>
                             </tr>
-                        ))}
+                        ) : (
+                            filteredExpenses.map((cost) => (
+                                <tr key={cost.id}>
+                                    <td style={styles.td}>
+                                        {new Date(cost.data).toLocaleString('pt-BR', {
+                                            day: '2-digit', month: '2-digit', year: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
+                                        })}
+                                    </td>
+                                    <td style={styles.td}>{cost.motoristaNome || "N/A"}</td>
+                                    <td style={styles.td}>
+                                        <span style={styles.badge(cost.tipoCor || 'gray')}>
+                                            {cost.tipo}
+                                        </span>
+                                    </td>
+                                    <td style={{ ...styles.td, fontWeight: "600" }}>
+                                        R$ {Number(cost.valor).toFixed(2)}
+                                    </td>
+                                    <td style={styles.td}>
+                                        <button style={styles.actionButton} title="Excluir">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
