@@ -17,6 +17,7 @@ COPY . .
 
 # Build the server (this will also compile shared if needed)
 RUN npm run build:server
+RUN npm run build:client
 
 # Production stage
 FROM node:18-alpine
@@ -33,6 +34,7 @@ RUN npm ci --production --workspace=server --workspace=shared
 
 # Copy built files
 COPY --from=builder /app/server/dist ./server/dist
+COPY --from=builder /app/client/dist ./client/dist
 COPY --from=builder /app/shared ./shared
 
 # Expose port (ajustado para o padrão do Railway)

@@ -106,7 +106,7 @@ app.get("/health", async (req, res) => {
     try {
         // Testa conexão real com query simples
         await db.execute(sql`SELECT 1`);
-        
+
         res.status(200).json({
             status: "healthy",
             db: "ok",
@@ -119,7 +119,7 @@ app.get("/health", async (req, res) => {
             message: "Healthcheck Failed",
             error: error.message
         }));
-        
+
         res.status(503).json({
             status: "unhealthy",
             db: "failed", // Isso alerta o monitoramento
@@ -167,9 +167,8 @@ if (process.env.NODE_ENV === "production") {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
-    // Caminho para a pasta dist/client (ajustar conforme estrutura de build)
-    // Se app.js está em dist/server/app.js, então ../client deve ser dist/client
-    const clientBuildPath = path.join(__dirname, "../client");
+    // Caminho para a pasta dist/client (baseado no WORKDIR /app do Docker)
+    const clientBuildPath = path.join(process.cwd(), "client/dist");
 
     // Serve arquivos estáticos
     app.use(express.static(clientBuildPath));
