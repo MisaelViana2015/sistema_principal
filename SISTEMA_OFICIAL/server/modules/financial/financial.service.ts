@@ -21,6 +21,10 @@ export async function getFixedCostInstallments(filters?: { month?: string, year?
     return await repository.getFixedCostInstallments(filters);
 }
 
+export async function updateFixedCostInstallment(id: string, data: any) {
+    return await repository.updateFixedCostInstallment(id, data);
+}
+
 export async function createFixedCost(data: any) {
     return await repository.createFixedCost(data);
 }

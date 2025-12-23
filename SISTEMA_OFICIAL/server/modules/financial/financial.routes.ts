@@ -21,6 +21,10 @@ router.post("/cost-types", requireAdmin, controller.createCostType);
 router.put("/cost-types/:id", requireAdmin, controller.updateCostType);
 router.delete("/cost-types/:id", requireAdmin, controller.deleteCostType);
 
+// Installments (Must be before /:id)
+router.get("/fixed-costs/installments", requireAdmin, controller.getFixedCostInstallments);
+router.put("/fixed-costs/installments/:id", requireAdmin, controller.updateFixedCostInstallment);
+
 router.get("/fixed-costs", requireAdmin, controller.getFixedCosts);
 router.post("/fixed-costs", requireAdmin, controller.createFixedCost);
 router.put("/fixed-costs/:id", requireAdmin, controller.updateFixedCost);

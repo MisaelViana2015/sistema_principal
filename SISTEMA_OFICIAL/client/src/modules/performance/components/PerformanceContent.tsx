@@ -49,6 +49,12 @@ async function fetchVehicles() {
     return response.data;
 }
 
+async function fetchFixedCostInstallments(filters?: any) {
+    const params = new URLSearchParams(filters).toString();
+    const response = await api.get(`/financial/fixed-costs/installments?${params}`);
+    return response.data;
+}
+
 // --- MAIN CONTENT COMPONENT ---
 
 export default function PerformanceContent() {
@@ -76,6 +82,22 @@ export default function PerformanceContent() {
     const { data: shifts = [] } = useQuery({ queryKey: ["shifts"], queryFn: fetchShifts });
     const { data: legacyMaintenances = [] } = useQuery({ queryKey: ["legacyMaintenances"], queryFn: fetchLegacyMaintenances });
     const { data: vehicles = [] } = useQuery({ queryKey: ["vehicles"], queryFn: fetchVehicles });
+
+    // Fetch Installments (filtered by year/month if selected)
+    const { data: installments = [], refetch: refetchInstallments } = useQuery({
+        queryKey: ["fixedCostInstallments", selectedYear, selectedMonth],
+        queryFn: () => fetchFixedCostInstallments({ year: selectedYear, month: selectedMonth })
+    });
+
+    // Mutations
+    const updateInstallmentMutation = useMutation({
+        mutationFn: (data: { id: string, status?: string, value?: number, dueDate?: Date }) =>
+            api.put(`/financial/fixed-costs/installments/${data.id}`, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["fixedCostInstallments"] });
+            queryClient.invalidateQueries({ queryKey: ["fixedCosts"] }); // Update totals maybe
+        }
+    });
 
     // --- CALCULATIONS (Financeiro) ---
     // 1. Filter Data based on selection
@@ -778,13 +800,8 @@ export default function PerformanceContent() {
             {
                 activeSubTab === "custos-fixos" && (
                     <FixedCostsManager
-                        costs={fixedCosts.map((c: any) => ({
-                            ...c,
-                            description: c.name, // Map existing 'name' to 'description' for the component
-                            date: c.createdAt || new Date().toISOString(),
-                            isPaid: false,
-                            isRecurring: c.frequency === "monthly"
-                        }))}
+                        costs={fixedCosts}
+                        installments={installments}
                         vehicles={vehicles}
                         onSave={(data) => {
                             createFixedCostMutation.mutate({
@@ -792,10 +809,13 @@ export default function PerformanceContent() {
                                 name: data.description,
                                 value: Number(data.value),
                                 frequency: data.isRecurring ? "monthly" : "one_time",
-                                dueDay: data.specificDate ? new Date(data.specificDate).getDate() : 1
+                                dueDay: data.specificDate ? new Date(data.specificDate).getDate() : 1,
+                                totalInstallments: data.totalInstallments || 1, // New field support
+                                startDate: data.specificDate || new Date().toISOString()
                             });
                         }}
                         onDelete={(id) => deleteFixedCostMutation.mutate(id)}
+                        onUpdateInstallment={(id, data) => updateInstallmentMutation.mutate({ id, ...data })}
                     />
                 )
             }

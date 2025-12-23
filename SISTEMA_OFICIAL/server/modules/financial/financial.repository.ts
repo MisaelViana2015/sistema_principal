@@ -1,7 +1,7 @@
 
 import { db } from "../../core/db/connection.js";
 import { expenses, costTypes, fixedCosts, fixedCostInstallments, drivers, shifts, vehicles, legacyMaintenances, legacyShiftCostTypes } from "../../../shared/schema.js";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 export async function findAllExpenses(filters?: { shiftId?: string }) {
     const whereConditions = [];
@@ -100,8 +100,47 @@ export async function deleteFixedCost(id: string) {
     return deleted;
 }
 
+export async function updateFixedCostInstallment(id: string, data: { status?: string, value?: number, dueDate?: Date }) {
+    const updateData: any = { ...data };
+    if (data.value !== undefined) updateData.value = String(data.value);
+
+    const [updated] = await db.update(fixedCostInstallments)
+        .set(updateData)
+        .where(eq(fixedCostInstallments.id, id))
+        .returning();
+    return updated;
+}
+
 export async function getFixedCostInstallments(filters?: { month?: string, year?: string, status?: string }) {
-    // Basic fetch, can elaborate filters later
+    const conditions = [];
+
+    if (filters?.year && filters.year !== 'todos') {
+        conditions.push(sql`EXTRACT(YEAR FROM ${fixedCostInstallments.dueDate}) = ${filters.year}`);
+    }
+
+    if (filters?.month && filters.month !== 'todos') {
+        // Handle month name or number
+        const monthMap: Record<string, number> = {
+            'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 'June': 6,
+            'July': 7, 'August': 8, 'September': 9, 'October': 10, 'November': 11, 'December': 12,
+            'Janeiro': 1, 'Fevereiro': 2, 'Março': 3, 'Abril': 4, 'Maio': 5, 'Junho': 6,
+            'Julho': 7, 'Agosto': 8, 'Setembro': 9, 'Outubro': 10, 'Novembro': 11, 'Dezembro': 12
+        };
+
+        let monthNum = parseInt(filters.month);
+        if (isNaN(monthNum)) {
+            monthNum = monthMap[filters.month] || 0;
+        }
+
+        if (monthNum > 0) {
+            conditions.push(sql`EXTRACT(MONTH FROM ${fixedCostInstallments.dueDate}) = ${monthNum}`);
+        }
+    }
+
+    if (filters?.status && filters.status !== 'todos') {
+        conditions.push(eq(fixedCostInstallments.status, filters.status));
+    }
+
     return await db.select({
         id: fixedCostInstallments.id,
         fixedCostId: fixedCostInstallments.fixedCostId,
@@ -116,6 +155,7 @@ export async function getFixedCostInstallments(filters?: { month?: string, year?
     })
         .from(fixedCostInstallments)
         .leftJoin(fixedCosts, eq(fixedCostInstallments.fixedCostId, fixedCosts.id))
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(fixedCostInstallments.dueDate);
 }
 

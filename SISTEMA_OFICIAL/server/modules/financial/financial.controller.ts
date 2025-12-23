@@ -87,6 +87,34 @@ export async function deleteFixedCost(req: Request, res: Response) {
 }
 
 
+
+export async function getFixedCostInstallments(req: Request, res: Response) {
+    try {
+        const filters = {
+            month: req.query.month as string,
+            year: req.query.year as string,
+            status: req.query.status as string
+        };
+        const installments = await service.getFixedCostInstallments(filters);
+        res.json(installments);
+    } catch (error) {
+        console.error("Erro ao buscar parcelas:", error);
+        res.status(500).json({ error: "Erro interno" });
+    }
+}
+
+export async function updateFixedCostInstallment(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const data = req.body;
+        const updated = await service.updateFixedCostInstallment(id, data);
+        res.json(updated);
+    } catch (error) {
+        console.error("Erro ao atualizar parcela:", error);
+        res.status(500).json({ error: "Erro interno" });
+    }
+}
+
 export async function createExpense(req: Request, res: Response) {
     try {
         const { driverId, shiftId, costTypeId, value, date, notes, isParticular } = req.body;
