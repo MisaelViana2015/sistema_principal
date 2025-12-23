@@ -135,6 +135,19 @@ export async function recalculateShiftTotals(shiftId: string) {
     return updatedShift;
 }
 
+export async function getShiftById(id: string) {
+    const shift = await shiftsRepository.findShiftById(id);
+    if (shift) {
+        // Optional: Recalculate to ensure freshness?
+        // await recalculateShiftTotals(shift.id);
+        // Better return as is, explicit recalc is expensive.
+        // But for editing, maybe we want fresh data?
+        // Let's just return it.
+        return shift;
+    }
+    return null;
+}
+
 export async function getOpenShift(driverId: string) {
     const shift = await shiftsRepository.findOpenShiftByDriver(driverId);
     // Auto-heal: Recalcula totais ao carregar para garantir consistência

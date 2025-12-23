@@ -37,6 +37,11 @@ export const shiftsService = {
         return response.data;
     },
 
+    async getById(id: string) {
+        const response = await api.get<Shift>(`/shifts/${id}`);
+        return response.data;
+    },
+
     async getCurrentShift(driverId?: string) {
         const query = driverId ? `?driverId=${driverId}` : '';
         const response = await api.get<Shift | null>(`/shifts/current${query}`);

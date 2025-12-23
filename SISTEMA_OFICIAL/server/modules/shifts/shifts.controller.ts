@@ -32,6 +32,18 @@ export async function getAllShiftsController(req: Request, res: Response) {
     }
 }
 
+export async function getShiftByIdController(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const shift = await shiftsService.getShiftById(id);
+        if (!shift) return res.status(404).json({ message: "Turno não encontrado" });
+        return res.json(shift);
+    } catch (error) {
+        console.error("Error getting shift by id:", error);
+        return res.status(500).json({ message: "Erro ao buscar turno" });
+    }
+}
+
 
 export async function startShiftController(req: Request, res: Response) {
     try {
@@ -107,6 +119,7 @@ export async function updateShiftController(req: Request, res: Response) {
 
 export const shiftsController = {
     getAll: getAllShiftsController,
+    getById: getShiftByIdController,
     start: startShiftController,
     finish: finishShiftController,
     getOpen: getOpenShiftController,

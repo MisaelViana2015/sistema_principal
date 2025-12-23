@@ -23,6 +23,14 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
     const [loading, setLoading] = useState(false);
     const [shift, setShift] = useState<any>(null);
 
+    const [formData, setFormData] = useState({
+        kmInicial: "",
+        kmFinal: "",
+        inicio: "",
+        fim: ""
+    });
+    const [saving, setSaving] = useState(false);
+
     useEffect(() => {
         if (open && shiftId) {
             loadShift();
@@ -32,15 +40,37 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
     const loadShift = async () => {
         setLoading(true);
         try {
-            // TODO: Implement getShiftById in filters or dedicated endpoint
-            // For now assuming we have passed the full object or need to fetch it
-            // Let's assume we filter getAll by ID for simplicity in this MVP step
-            const data = await shiftsService.getAll({ page: 1, limit: 1 }); // Mock fetch
-            // In reality we need a getById. Implementing a getById in service is recommended.
+            const data = await shiftsService.getById(shiftId!);
+            setShift(data);
+            setFormData({
+                kmInicial: String(data.kmInicial),
+                kmFinal: data.kmFinal ? String(data.kmFinal) : "",
+                inicio: data.inicio ? new Date(data.inicio).toISOString().slice(0, 16) : "",
+                fim: data.fim ? new Date(data.fim).toISOString().slice(0, 16) : ""
+            });
         } catch (error) {
             console.error("Error loading shift", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        if (!shiftId) return;
+        setSaving(true);
+        try {
+            await shiftsService.update(shiftId, {
+                kmInicial: Number(formData.kmInicial),
+                kmFinal: formData.kmFinal ? Number(formData.kmFinal) : undefined,
+                inicio: formData.inicio ? new Date(formData.inicio) : undefined,
+                fim: formData.fim ? new Date(formData.fim) : undefined
+            });
+            if (onSuccess) onSuccess();
+            onOpenChange(false);
+        } catch (error) {
+            console.error("Error updating shift", error);
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -65,24 +95,49 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <Label>KM Inicial</Label>
-                                    <Input placeholder="0" className="bg-gray-800 border-gray-700" disabled />
+                                    <Input
+                                        type="number"
+                                        className="bg-gray-800 border-gray-700"
+                                        value={formData.kmInicial}
+                                        onChange={e => setFormData({ ...formData, kmInicial: e.target.value })}
+                                    />
                                 </div>
                                 <div>
                                     <Label>KM Final</Label>
-                                    <Input placeholder="0" className="bg-gray-800 border-gray-700" disabled />
+                                    <Input
+                                        type="number"
+                                        className="bg-gray-800 border-gray-700"
+                                        value={formData.kmFinal}
+                                        onChange={e => setFormData({ ...formData, kmFinal: e.target.value })}
+                                    />
                                 </div>
                                 <div>
                                     <Label>Início</Label>
-                                    <Input type="datetime-local" className="bg-gray-800 border-gray-700" disabled />
+                                    <Input
+                                        type="datetime-local"
+                                        className="bg-gray-800 border-gray-700"
+                                        value={formData.inicio}
+                                        onChange={e => setFormData({ ...formData, inicio: e.target.value })}
+                                    />
                                 </div>
                                 <div>
                                     <Label>Fim</Label>
-                                    <Input type="datetime-local" className="bg-gray-800 border-gray-700" disabled />
+                                    <Input
+                                        type="datetime-local"
+                                        className="bg-gray-800 border-gray-700"
+                                        value={formData.fim}
+                                        onChange={e => setFormData({ ...formData, fim: e.target.value })}
+                                    />
                                 </div>
                             </div>
                             <div className="pt-4">
-                                <Button disabled className="w-full bg-gray-700 text-gray-400">
-                                    Salvar Alterações (Em breve)
+                                <Button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                                >
+                                    {saving ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : null}
+                                    Salvar Alterações
                                 </Button>
                             </div>
                         </div>

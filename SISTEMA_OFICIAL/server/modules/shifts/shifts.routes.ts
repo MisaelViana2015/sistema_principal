@@ -13,6 +13,9 @@ router.get("/", shiftsController.getAll);
 // Turno atual (o próprio) -> Qualquer logado
 router.get("/current", shiftsController.getOpen);
 
+// Get by ID
+router.get("/:id", shiftsController.getById);
+
 // Ações operacionais -> Qualquer logado
 router.post("/", shiftsController.start);
 router.post("/:id/finish", shiftsController.finish);
