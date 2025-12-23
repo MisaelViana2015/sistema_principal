@@ -229,7 +229,8 @@ export default function GaragePage() {
                                     </div>
 
                                     <div className="mt-auto">
-                                        <button
+                                        <Button
+                                            onClick={() => handleAccessVehicle(vehicle)}
                                             className="w-full h-12 btn-futuristic rounded-xl font-bold uppercase tracking-wider flex items-center justify-center gap-2 group-hover:bg-primary/20 transition-all"
                                         >
                                             {hasActiveShiftHere ? 'Continuar Turno' : 'Acessar Veículo'}
