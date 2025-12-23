@@ -495,35 +495,32 @@ Esta seção complementa o documento principal com especificações técnicas co
 
 **Validação:** Abrir DevTools → Network → Ver se requests retornam `Access-Control-Allow-Origin`
 
-#### A2. Monorepo no Railway (Dois Serviços)
+#### A2. Monorepo no Railway (Monolito Unificado)
 
-**Configuração:**
-1. Criar **dois serviços** no mesmo projeto Railway
-2. Ambos conectados ao mesmo repositório GitHub
-3. **Serviço 1 (Backend):**
-   - Source: **Docker Image** (Registry) ou GitHub Repo (Backup)
-   - Dockerfile: `SISTEMA_OFICIAL/server/Dockerfile`
-   - Start Command: `npm start`
-4. **Serviço 2 (Frontend):**
-   - Source: **Docker Image** (Registry) ou GitHub Repo (Backup)
-   - Dockerfile: `SISTEMA_OFICIAL/client/Dockerfile`
-   - Runtime: **Nginx** (Obrigatório)
+**Configuração Simplificada (Atualizada 2025):**
+O sistema roda como um **Monolito Dockerizado** em um único serviço Railway.
 
+**Serviço Único: `endpoint-api`**
+1. **Source:** GitHub Repo
+2. **Root Directory:** `/SISTEMA_OFICIAL` (Obrigatório)
+3. **Branch:** `main`
+4. **Build:**
+   - **Dockerfile Path:** `Dockerfile` (na raiz do Root Directory)
+   - O Dockerfile constrói tanto o `client` (Vite) quanto o `server` (Node).
+   - O build do frontend é salvo em `/app/client/dist`.
+5. **Runtime:**
+   - O comando de start é `npm start --workspace=server`.
+   - O servidor Node.js (Express) serve a API em `/api` e os arquivos estáticos do frontend no resto.
 
-**Variáveis de Ambiente:**
-- Backend: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGIN`
-- Frontend: `VITE_API_URL` (URL pública do Backend)
+**Variáveis de Ambiente (Mínimas):**
+- `DATABASE_URL`: Conexão com Postgres
+- `JWT_SECRET`: Para autenticação
+- `PORT`: Opcional (Railway injeta, padrão 5000 ou 8080)
 
-#### A3. Ordem de Deploy (Backend → Frontend)
+**IMPORTANTE:**
+- Não há serviço separado para o Frontend.
+- O serviço antigo `rota-verde-deploy-test` deve ser apagado.
 
-**Regra:**
-1. Deploy Backend primeiro
-2. Aguardar healthcheck passar
-3. Deploy Frontend
-
-**Por quê:** Evita que Frontend novo tente chamar endpoint inexistente enquanto Backend antigo ainda roda.
-
-**Implementação no Railway:** Deploy manual de cada serviço na ordem, ou usar CI/CD workflow com dependência explícita.
 
 #### A5. Arquivo .dockerignore (Obrigatório)
 
@@ -797,6 +794,34 @@ railway logs --service backend --since 7d > logs_backend_$(date +%Y%m%d).txt
 #### D2. Alertas: Playbook de Resposta
 
 **Criar playbook simples (exemplo):**
+1. Receber alerta
+2. Verificar logs no Railway
+3. Se for banco: checar status do Postgres
+4. Se for aplicação: rollback imediato para versão anterior
+
+---
+
+## ANEXO B — HISTÓRICO DE IMPLEMENTAÇÃO: CUSTOS FIXOS
+
+*Conteúdo consolidado de DEPLOY_FIXED_COSTS.md*
+
+### Mudanças Realizadas
+- ✅ Tabela `fixed_costs` aprimorada com rastreamento de parcelas
+- ✅ Nova tabela `fixed_cost_installments`
+- ✅ Lógica de backend para geração automática de parcelas
+- ✅ Novo endpoint: `GET /api/financial/fixed-cost-installments`
+
+### Validação Pós-Deploy
+Para garantir que a feature funciona em produção:
+
+1. **Verificar Instalação:**
+   ```sql
+   SELECT table_name FROM information_schema.tables WHERE table_name = 'fixed_cost_installments';
+   ```
+
+2. **Testar Criação (Exemplo):**
+   Criar um custo fixo com `totalInstallments: 12` e verificar se 12 registros foram criados na tabela `fixed_cost_installments`.
+
 
 | Alerta | Ação Imediata | Investigação | Resolução |
 |--------|---------------|--------------|-----------|
