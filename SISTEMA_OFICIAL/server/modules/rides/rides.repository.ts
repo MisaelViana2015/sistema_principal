@@ -21,8 +21,9 @@ export async function getWithPagination(
     if (filters?.driverId) conditions.push(eq(shifts.driverId, filters.driverId));
     if (filters?.vehicleId) conditions.push(eq(shifts.vehicleId, filters.vehicleId)); // Rides linked via shift
     if (filters?.shiftId) conditions.push(eq(rides.shiftId, filters.shiftId));
-    if (filters?.startDate) conditions.push(sql`${rides.hora} >= ${filters.startDate}`);
-    if (filters?.endDate) conditions.push(sql`${rides.hora} <= ${filters.endDate}`);
+    // Fix: Convert local input date (Brazil) to UTC for comparison with stored UTC data
+    if (filters?.startDate) conditions.push(sql`${rides.hora} >= (${filters.startDate}::timestamp AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'UTC'`);
+    if (filters?.endDate) conditions.push(sql`${rides.hora} <= (${filters.endDate}::timestamp AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'UTC'`);
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
