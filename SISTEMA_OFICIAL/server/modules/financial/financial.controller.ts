@@ -1,6 +1,12 @@
 
 import { Request, Response } from "express";
 import * as service from "./financial.service.js";
+import {
+    createFixedCostSchema, updateFixedCostSchema,
+    createExpenseSchema, updateExpenseSchema,
+    createCostTypeSchema, updateCostTypeSchema,
+    updateInstallmentSchema
+} from "./financial.validators.js";
 
 export async function getExpenses(req: Request, res: Response) {
     try {
@@ -45,18 +51,18 @@ export async function getFixedCosts(req: Request, res: Response) {
 
 export async function createFixedCost(req: Request, res: Response) {
     try {
-        const { name, value, frequency, dueDay } = req.body;
-        if (!name || !value) return res.status(400).json({ error: "Nome e Valor são obrigatórios" });
+        const validatedData = createFixedCostSchema.parse(req.body);
 
         const newCost = await service.createFixedCost({
-            name,
-            value: String(value),
-            frequency: frequency || 'Mensal',
-            dueDay: dueDay || 5
+            name: validatedData.name,
+            value: validatedData.value,
+            frequency: validatedData.frequency,
+            dueDay: validatedData.dueDay
         });
         res.status(201).json(newCost);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Erro ao criar custo fixo:", error);
+        if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
         res.status(500).json({ error: "Erro interno" });
     }
 }
@@ -64,13 +70,13 @@ export async function createFixedCost(req: Request, res: Response) {
 export async function updateFixedCost(req: Request, res: Response) {
     try {
         const { id } = req.params;
-        const data = req.body;
-        if (data.value) data.value = String(data.value);
+        const validatedData = updateFixedCostSchema.parse(req.body);
 
-        const updated = await service.updateFixedCost(id, data);
+        const updated = await service.updateFixedCost(id, validatedData);
         res.json(updated);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Erro ao atualizar custo fixo:", error);
+        if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
         res.status(500).json({ error: "Erro interno" });
     }
 }
@@ -106,36 +112,37 @@ export async function getFixedCostInstallments(req: Request, res: Response) {
 export async function updateFixedCostInstallment(req: Request, res: Response) {
     try {
         const { id } = req.params;
-        const data = req.body;
-        const updated = await service.updateFixedCostInstallment(id, data);
+        const validatedData = updateInstallmentSchema.parse(req.body);
+        const updated = await service.updateFixedCostInstallment(id, validatedData);
         res.json(updated);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Erro ao atualizar parcela:", error);
+        if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
         res.status(500).json({ error: "Erro interno" });
     }
 }
 
 export async function createExpense(req: Request, res: Response) {
     try {
-        const { driverId, shiftId, costTypeId, value, date, notes, isParticular } = req.body;
+        const driverId = req.body.driverId || (req as any).user?.userId;
+        const data = { ...req.body, driverId };
 
-        if (!costTypeId || !value || !date) {
-            return res.status(400).json({ message: "Dados incompletos (costTypeId, value, date)" });
-        }
+        const validatedData = createExpenseSchema.parse(data);
 
         const newExpense = await service.createExpense({
-            driverId: driverId || (req as any).user?.userId, // Allow explicit or implicit
-            shiftId,
-            costTypeId,
-            value: String(value),
-            date: new Date(date),
-            notes,
-            isParticular: Boolean(isParticular),
+            driverId: validatedData.driverId,
+            shiftId: validatedData.shiftId,
+            costTypeId: validatedData.costTypeId,
+            value: validatedData.value,
+            date: validatedData.date,
+            notes: validatedData.notes,
+            isParticular: validatedData.isParticular,
         });
 
         res.status(201).json(newExpense);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Erro ao criar despesa:", error);
+        if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
         res.status(500).json({ error: "Erro interno ao criar despesa" });
     }
 }
@@ -143,15 +150,13 @@ export async function createExpense(req: Request, res: Response) {
 export async function updateExpenseController(req: Request, res: Response) {
     try {
         const { id } = req.params;
-        const data = req.body;
+        const validatedData = updateExpenseSchema.parse(req.body);
 
-        if (data.date) data.date = new Date(data.date);
-        if (data.value) data.value = String(data.value); // Ensure string format
-
-        const updated = await service.updateExpense(id, data);
+        const updated = await service.updateExpense(id, validatedData);
         res.json(updated);
     } catch (error: any) {
         console.error("Erro ao atualizar despesa:", error);
+        if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
         res.status(500).json({ error: error.message || "Erro interno ao atualizar despesa" });
     }
 }
@@ -169,19 +174,13 @@ export async function deleteExpenseController(req: Request, res: Response) {
 
 export async function createCostType(req: Request, res: Response) {
     try {
-        const { name, category, description, icon, color } = req.body;
-        if (!name) return res.status(400).json({ error: "Nome é obrigatório" });
+        const validatedData = createCostTypeSchema.parse(req.body);
 
-        const newType = await service.createCostType({
-            name,
-            category: category || 'Variável',
-            description: description || 'Padrão',
-            icon: icon || 'dollar-sign',
-            color: color || 'orange'
-        });
+        const newType = await service.createCostType(validatedData);
         res.status(201).json(newType);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Erro ao criar tipo de custo:", error);
+        if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
         res.status(500).json({ error: "Erro interno" });
     }
 }
@@ -189,11 +188,12 @@ export async function createCostType(req: Request, res: Response) {
 export async function updateCostType(req: Request, res: Response) {
     try {
         const { id } = req.params;
-        const data = req.body;
-        const updated = await service.updateCostType(id, data);
+        const validatedData = updateCostTypeSchema.parse(req.body);
+        const updated = await service.updateCostType(id, validatedData);
         res.json(updated);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Erro ao atualizar tipo de custo:", error);
+        if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
         res.status(500).json({ error: "Erro interno" });
     }
 }

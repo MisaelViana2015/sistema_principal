@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as driversService from "./drivers.service.js";
+import { createDriverSchema, updateDriverSchema } from "./drivers.validators.js";
 
 export const driversController = {
     async getAll(req: Request, res: Response) {
@@ -14,16 +15,23 @@ export const driversController = {
 
     async create(req: Request, res: Response) {
         try {
-            const data = req.body;
-            // Validações básicas
-            if (!data.nome || !data.email || !data.senha) {
-                return res.status(400).json({ error: "Campos obrigatórios: nome, email, senha" });
-            }
+            const data = createDriverSchema.parse(req.body); // Validate
 
-            const newDriver = await driversService.createDriver(data);
+            // Map keys
+            const newDriver = await driversService.createDriver({
+                nome: data.name,
+                email: data.email,
+                senha: data.password,
+                telefone: data.phone || null,
+                role: data.role
+            });
+
             res.status(201).json(newDriver);
         } catch (error: any) {
             console.error("Error creating driver:", error);
+            if (error.issues) { // Zod error
+                return res.status(400).json({ error: "Validation error", details: error.issues });
+            }
             res.status(400).json({ error: error.message });
         }
     },
@@ -31,11 +39,23 @@ export const driversController = {
     async update(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const data = req.body;
-            const updatedDriver = await driversService.updateDriver(id, data);
+            const data = updateDriverSchema.parse(req.body); // Validate
+
+            // Map keys partial
+            const updateData: any = {};
+            if (data.name) updateData.nome = data.name;
+            // email update not allowed by schema
+            if (data.password) updateData.senha = data.password;
+            if (data.phone) updateData.telefone = data.phone;
+            if (data.role) updateData.role = data.role;
+
+            const updatedDriver = await driversService.updateDriver(id, updateData);
             res.json(updatedDriver);
         } catch (error: any) {
             console.error("Error updating driver:", error);
+            if (error.issues) {
+                return res.status(400).json({ error: "Validation error", details: error.issues });
+            }
             res.status(400).json({ error: error.message });
         }
     },

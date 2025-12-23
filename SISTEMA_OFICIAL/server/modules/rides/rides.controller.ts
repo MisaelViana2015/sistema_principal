@@ -1,6 +1,7 @@
 
 import { Request, Response } from "express";
 import * as ridesService from "./rides.service.js";
+import { createRideSchema, updateRideSchema } from "./rides.validators.js";
 
 export async function getAllRidesController(req: Request, res: Response) {
     try {
@@ -25,22 +26,19 @@ export async function getAllRidesController(req: Request, res: Response) {
 
 export async function createRideController(req: Request, res: Response) {
     try {
-        const { shiftId, tipo, valor, hora } = req.body;
-
-        if (!shiftId || !tipo || !valor) {
-            return res.status(400).json({ message: "Dados incompletos (shiftId, tipo, valor)" });
-        }
+        const validatedData = createRideSchema.parse(req.body);
 
         const newRide = await ridesService.createRide({
-            shiftId,
-            tipo, // 'APP' | 'PARTICULAR'
-            valor: String(valor), // Ensure it's string for numeric/decimal field if needed, or number if schema allows. Schema says numeric -> string/number.
-            hora: hora ? new Date(hora) : new Date()
+            shiftId: validatedData.shiftId,
+            tipo: validatedData.tipo,
+            valor: validatedData.valor,
+            hora: validatedData.hora
         });
 
         return res.status(201).json(newRide);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Erro ao criar corrida:", error);
+        if (error.issues) return res.status(400).json({ message: "Validation error", details: error.issues });
         return res.status(500).json({ message: "Erro ao registrar corrida" });
     }
 
@@ -49,14 +47,13 @@ export async function createRideController(req: Request, res: Response) {
 export async function updateRideController(req: Request, res: Response) {
     try {
         const { id } = req.params;
-        const data = req.body;
+        const validatedData = updateRideSchema.parse(req.body);
 
-        if (data.hora) data.hora = new Date(data.hora);
-
-        const updated = await ridesService.updateRide(id, data);
+        const updated = await ridesService.updateRide(id, validatedData);
         return res.json(updated);
     } catch (error: any) {
         console.error("Erro ao atualizar corrida:", error);
+        if (error.issues) return res.status(400).json({ message: "Validation error", details: error.issues });
         return res.status(500).json({ message: error.message || "Erro ao atualizar corrida" });
     }
 }

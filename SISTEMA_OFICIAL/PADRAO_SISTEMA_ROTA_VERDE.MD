@@ -12374,3 +12374,9 @@ otes, km_atual -> campo customizado em expenses ou tabela auxiliar).
   - Checkpoint de versão antes do deploy da funcionalidade de pneus.
   - Garantia de rollback caso necessário.
 
+
+
+## 4. Auditoria de Segurança (Dez 2025)
+- [x] .gitignore configurado
+- [x] Validators implementados em todos os módulos críticos
+- [x] Arquivos de build removidos do Git
