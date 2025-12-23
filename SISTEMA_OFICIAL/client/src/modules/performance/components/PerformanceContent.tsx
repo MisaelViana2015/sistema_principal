@@ -10,6 +10,7 @@ import { api } from "../../../lib/api";
 // Components
 import { KPICard } from "../../../components/kpi/KPICard";
 import { CostTypesManager } from "./CostTypesManager";
+import { FixedCostsManager } from "./FixedCostsManager";
 
 // --- FETCHERS ---
 async function fetchExpenses() {
@@ -776,49 +777,26 @@ export default function PerformanceContent() {
 
             {
                 activeSubTab === "custos-fixos" && (
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-                            <button style={styles.primaryButton} onClick={() => handleOpenFixedCostModal()}>
-                                <Plus size={16} /> Novo Custo Fixo
-                            </button>
-                        </div>
-                        <div style={styles.tableContainer}>
-                            <table style={styles.table}>
-                                <thead>
-                                    <tr>
-                                        <th style={styles.th}>Nome</th>
-                                        <th style={styles.th}>Valor</th>
-                                        <th style={styles.th}>Frequência</th>
-                                        <th style={styles.th}>Vencimento</th>
-                                        <th style={styles.th}>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {fixedCosts.map((cost: any) => (
-                                        <tr key={cost.id}>
-                                            <td style={styles.td}>{cost.name}</td>
-                                            <td style={{ ...styles.td, fontWeight: 'bold' }}>R$ {Number(cost.value).toFixed(2)}</td>
-                                            <td style={styles.td}>{cost.frequency}</td>
-                                            <td style={styles.td}>Dia {cost.dueDay}</td>
-                                            <td style={styles.td}>
-                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                    <button style={styles.actionButton} onClick={() => handleOpenFixedCostModal(cost)}><Edit size={16} /></button>
-                                                    <button style={{ ...styles.actionButton, color: '#ef4444' }} onClick={() => { if (confirm('Tem certeza?')) deleteFixedCostMutation.mutate(cost.id); }}><Trash2 size={16} /></button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {fixedCosts.length === 0 && (
-                                        <tr>
-                                            <td colSpan={5} style={{ ...styles.td, textAlign: "center", padding: "2rem", color: styles.label.color }}>
-                                                Nenhum custo fixo cadastrado.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <FixedCostsManager
+                        costs={fixedCosts.map((c: any) => ({
+                            ...c,
+                            description: c.name, // Map existing 'name' to 'description' for the component
+                            date: c.createdAt || new Date().toISOString(),
+                            isPaid: false,
+                            isRecurring: c.frequency === "monthly"
+                        }))}
+                        vehicles={vehicles}
+                        onSave={(data) => {
+                            createFixedCostMutation.mutate({
+                                ...data,
+                                name: data.description,
+                                value: Number(data.value),
+                                frequency: data.isRecurring ? "monthly" : "one_time",
+                                dueDay: data.specificDate ? new Date(data.specificDate).getDate() : 1
+                            });
+                        }}
+                        onDelete={(id) => deleteFixedCostMutation.mutate(id)}
+                    />
                 )
             }
 
