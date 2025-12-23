@@ -92,10 +92,24 @@ export async function deleteShiftController(req: Request, res: Response) {
     }
 }
 
+// Add update controller
+export async function updateShiftController(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const data = req.body;
+        const updated = await shiftsService.updateShift(id, data);
+        return res.json(updated);
+    } catch (error) {
+        console.error("Error updating shift:", error);
+        return res.status(500).json({ message: "Erro ao atualizar turno" });
+    }
+}
+
 export const shiftsController = {
     getAll: getAllShiftsController,
     start: startShiftController,
     finish: finishShiftController,
     getOpen: getOpenShiftController,
+    update: updateShiftController,
     delete: deleteShiftController
 };

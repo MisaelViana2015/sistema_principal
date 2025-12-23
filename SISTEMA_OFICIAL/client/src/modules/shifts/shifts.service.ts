@@ -53,6 +53,11 @@ export const shiftsService = {
         return response.data;
     },
 
+    async update(shiftId: string, data: Partial<Shift>) {
+        const response = await api.patch<Shift>(`/shifts/${shiftId}`, data);
+        return response.data;
+    },
+
     async delete(shiftId: string) {
         await api.delete(`/shifts/${shiftId}`);
     }

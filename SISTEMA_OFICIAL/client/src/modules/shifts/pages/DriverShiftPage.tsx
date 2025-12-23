@@ -6,7 +6,7 @@ import {
     Car, Clock, Play, RotateCcw, CheckCircle2,
     Plus, DollarSign, TrendingUp, Building, User, Wallet, History, X,
     Zap, Tag, Home, ShoppingCart, Package, Wifi, Phone, Users, Fuel, Utensils, Smartphone, Wrench,
-    ArrowLeft, LogOut
+    ArrowLeft, LogOut, Edit
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -57,13 +57,16 @@ export default function DriverShiftPage() {
 
     // Finish Shift State
     const [finishPassword, setFinishPassword] = useState("");
+    const [isEditingKmInitial, setIsEditingKmInitial] = useState(false);
+    const [newKmInitial, setNewKmInitial] = useState("");
 
     useEffect(() => {
         loadData();
         loadCostTypes();
     }, [user]);
 
-    // Cooldown Timer
+    // Cooldown Timer - DISABLED per user request
+    /*
     useEffect(() => {
         let interval: NodeJS.Timeout;
         if (rideCooldown > 0) {
@@ -73,6 +76,7 @@ export default function DriverShiftPage() {
         }
         return () => clearInterval(interval);
     }, [rideCooldown]);
+    */
 
     // Work Timer
     useEffect(() => {
@@ -200,6 +204,22 @@ export default function DriverShiftPage() {
         }
     }
 
+    async function handleUpdateKmInitial() {
+        if (!activeShift || !newKmInitial) return setIsEditingKmInitial(false);
+
+        try {
+            setIsSubmitting(true);
+            await shiftsService.update(activeShift.id, { kmInicial: Number(newKmInitial) });
+            await loadData();
+            setIsEditingKmInitial(false);
+        } catch (error) {
+            console.error(error);
+            setError("Erro ao atualizar KM Inicial");
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
     async function handleSaveRide() {
         if (!rideValue) return;
         if (rideCooldown > 0 || isSubmitting) return;
@@ -213,7 +233,7 @@ export default function DriverShiftPage() {
                 hora: new Date().toISOString()
             });
 
-            setRideCooldown(300); // 5 min cooldown
+            // setRideCooldown(300); // DISABLED per user request
             setRideValue("");
             setViewMode("dashboard");
             loadData();
@@ -794,7 +814,36 @@ export default function DriverShiftPage() {
                         <div className="bg-gray-800/30 rounded-xl p-4 mb-8 border border-gray-700/50">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-gray-400 text-xs uppercase font-bold">KM Inicial</span>
-                                <span className="text-white font-mono">{activeShift.kmInicial} km</span>
+                                {isEditingKmInitial ? (
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            className="w-24 bg-black border border-emerald-500 rounded px-2 py-1 text-white font-mono text-sm"
+                                            value={newKmInitial}
+                                            onChange={e => setNewKmInitial(e.target.value)}
+                                            autoFocus
+                                        />
+                                        <button onClick={handleUpdateKmInitial} className="p-1 bg-emerald-600 rounded text-white">
+                                            <CheckCircle2 size={16} />
+                                        </button>
+                                        <button onClick={() => setIsEditingKmInitial(false)} className="p-1 bg-red-600 rounded text-white">
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-white font-mono">{activeShift.kmInicial} km</span>
+                                        <button
+                                            onClick={() => {
+                                                setNewKmInitial(String(activeShift.kmInicial));
+                                                setIsEditingKmInitial(true);
+                                            }}
+                                            className="text-gray-500 hover:text-emerald-400 transition-colors"
+                                        >
+                                            <Edit size={14} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-400 text-xs uppercase font-bold">Início</span>

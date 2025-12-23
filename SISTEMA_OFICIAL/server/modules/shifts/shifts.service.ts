@@ -149,6 +149,10 @@ export async function getOpenShift(driverId: string) {
     return shift;
 }
 
+export async function updateShift(id: string, data: any) {
+    return await shiftsRepository.updateShift(id, data);
+}
+
 export async function deleteShift(id: string) {
     return await shiftsRepository.deleteShift(id);
 }

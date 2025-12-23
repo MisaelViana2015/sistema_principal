@@ -16,6 +16,7 @@ router.get("/current", shiftsController.getOpen);
 // Ações operacionais -> Qualquer logado
 router.post("/", shiftsController.start);
 router.post("/:id/finish", shiftsController.finish);
+router.patch("/:id", shiftsController.update);
 router.delete("/:id", requireAdmin, shiftsController.delete);
 
 export default router;
