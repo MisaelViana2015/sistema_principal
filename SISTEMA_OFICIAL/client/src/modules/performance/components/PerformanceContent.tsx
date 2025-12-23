@@ -38,6 +38,16 @@ async function fetchShifts() {
     return response.data.data || response.data; // Handle pagination structure
 }
 
+async function fetchLegacyMaintenances() {
+    const response = await api.get("/financial/legacy-maintenances");
+    return response.data;
+}
+
+async function fetchVehicles() {
+    const response = await api.get("/vehicles");
+    return response.data;
+}
+
 // --- MAIN CONTENT COMPONENT ---
 
 export default function PerformanceContent() {
@@ -63,6 +73,44 @@ export default function PerformanceContent() {
     const { data: fixedCosts = [] } = useQuery({ queryKey: ["fixedCosts"], queryFn: fetchFixedCosts });
     const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
     const { data: shifts = [] } = useQuery({ queryKey: ["shifts"], queryFn: fetchShifts });
+    const { data: legacyMaintenances = [] } = useQuery({ queryKey: ["legacyMaintenances"], queryFn: fetchLegacyMaintenances });
+    const { data: vehicles = [] } = useQuery({ queryKey: ["vehicles"], queryFn: fetchVehicles });
+
+    // --- CALCULATIONS (Financeiro) ---
+    // 1. Filter Data based on selection
+    const filteredShifts = (shifts || []).filter((s: any) => {
+        const d = new Date(s.inicio);
+        const yearMatch = selectedYear === "todos" || d.getFullYear().toString() === selectedYear;
+        const monthMatch = selectedMonth === "todos" || (d.getMonth() + 1).toString() === selectedMonth;
+        return yearMatch && monthMatch;
+    });
+
+    const filteredExpenses = (costs || []).filter((c: any) => {
+        const d = new Date(c.data);
+        const yearMatch = selectedYear === "todos" || d.getFullYear().toString() === selectedYear;
+        const monthMatch = selectedMonth === "todos" || (d.getMonth() + 1).toString() === selectedMonth;
+        return yearMatch && monthMatch;
+    });
+
+    // 2. Totals
+    const totalBruto = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.totalBruto) || 0), 0);
+    const totalRepasseEmpresa = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.repasseEmpresa) || 0), 0);
+    const totalRepasseMotorista = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.repasseMotorista) || 0), 0);
+    const totalTurnos = filteredShifts.length;
+
+    // Costs
+    const totalCustosVariaveis = filteredExpenses.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0);
+    const totalCustosFixos = (fixedCosts || []).reduce((acc: number, c: any) => acc + (Number(c.value) || 0), 0);
+    const appliedFixedCosts = selectedMonth !== "todos" ? totalCustosFixos : (selectedYear !== "todos" ? totalCustosFixos * 12 : 0);
+    const totalCustos = totalCustosVariaveis + appliedFixedCosts;
+
+    const lucroLiquido = totalRepasseEmpresa - totalCustos;
+    const margemLucro = totalRepasseEmpresa > 0 ? (lucroLiquido / totalRepasseEmpresa) * 100 : 0;
+
+    const targetReceitaEmpresa = totalCustos;
+    const targetReceitaBruta = targetReceitaEmpresa / 0.60;
+    const peTotalPercent = targetReceitaBruta > 0 ? (totalBruto / targetReceitaBruta) * 100 : 0;
+    const faltaParaPE = Math.max(0, targetReceitaBruta - totalBruto);
 
     // Mutations
     const createFixedCostMutation = useMutation({
@@ -315,106 +363,93 @@ export default function PerformanceContent() {
 
             {activeSubTab === "financeiro" && (
                 <>
-                    {(() => {
-                        // --- CALCULATIONS ---
-                        // 1. Filter Data based on selection
-                        const filteredShifts = (shifts || []).filter((s: any) => {
-                            const d = new Date(s.inicio);
-                            const yearMatch = selectedYear === "todos" || d.getFullYear().toString() === selectedYear;
-                            const monthMatch = selectedMonth === "todos" || (d.getMonth() + 1).toString() === selectedMonth;
-                            return yearMatch && monthMatch;
-                        });
-
-                        const filteredExpenses = (costs || []).filter((c: any) => {
-                            const d = new Date(c.data);
-                            const yearMatch = selectedYear === "todos" || d.getFullYear().toString() === selectedYear;
-                            const monthMatch = selectedMonth === "todos" || (d.getMonth() + 1).toString() === selectedMonth;
-                            return yearMatch && monthMatch;
-                        });
-
-                        // 2. Totals
-                        const totalBruto = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.totalBruto) || 0), 0);
-                        const totalRepasseEmpresa = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.repasseEmpresa) || 0), 0);
-                        const totalRepasseMotorista = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.repasseMotorista) || 0), 0);
-                        const totalTurnos = filteredShifts.length;
-
-                        // Costs
-                        const totalCustosVariaveis = filteredExpenses.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0);
-                        const totalCustosFixos = (fixedCosts || []).reduce((acc: number, c: any) => acc + (Number(c.value) || 0), 0);
-                        const appliedFixedCosts = selectedMonth !== "todos" ? totalCustosFixos : (selectedYear !== "todos" ? totalCustosFixos * 12 : 0);
-                        const totalCustos = totalCustosVariaveis + appliedFixedCosts;
-
-                        const lucroLiquido = totalRepasseEmpresa - totalCustos;
-                        const margemLucro = totalRepasseEmpresa > 0 ? (lucroLiquido / totalRepasseEmpresa) * 100 : 0;
-
-                        const targetReceitaEmpresa = totalCustos;
-                        const targetReceitaBruta = targetReceitaEmpresa / 0.60;
-                        const peTotalPercent = targetReceitaBruta > 0 ? (totalBruto / targetReceitaBruta) * 100 : 0;
-                        const faltaParaPE = Math.max(0, targetReceitaBruta - totalBruto);
-
-
-                        return (
-                            <div style={styles.gridKPI}>
-                                <KPICard
-                                    title="Lucro Líquido"
-                                    value={`R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                                    sublabel="Receita Empresa (60%) - Custos"
-                                    icon={TrendingUp}
-                                    gradient={lucroLiquido >= 0 ? "green" : "red"}
-                                />
-                                <KPICard
-                                    title="Margem de Lucro"
-                                    value={`${margemLucro.toFixed(1)}%`}
-                                    sublabel="Lucro / Receita Empresa"
-                                    icon={DollarSign}
-                                    gradient={margemLucro >= 0 ? "blue" : "red"}
-                                />
-                                <KPICard
-                                    title="Receita Empresa"
-                                    value={`R$ ${totalRepasseEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                                    sublabel={`60% de R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                                    icon={DollarSign}
-                                    gradient="blue"
-                                />
-                                <KPICard
-                                    title="Repasse Motoristas"
-                                    value={`R$ ${totalRepasseMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                                    sublabel={`40% de R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                                    icon={Users}
-                                    gradient="purple"
-                                />
-                                <KPICard
-                                    title="Turnos"
-                                    value={totalTurnos.toString()}
-                                    sublabel="Total no período"
-                                    icon={Clock}
-                                    gradient="orange"
-                                />
-                                <KPICard
-                                    title="Custo Total"
-                                    value={`R$ ${totalCustos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                                    sublabel={`Fixos: ${appliedFixedCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + Var: ${totalCustosVariaveis.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                                    icon={TrendingDown}
-                                    gradient="red" // Or Orange
-                                />
-                                <KPICard
-                                    title="P.E. Total (100%)"
-                                    value={`${peTotalPercent.toFixed(1)}%`}
-                                    sublabel={peTotalPercent >= 100 ? "Meta Atingida!" : `Faltam R$ ${faltaParaPE.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                                    icon={TrendingUp}
-                                    gradient={peTotalPercent >= 100 ? "green" : "orange"}
-                                />
-                            </div>
-                        );
-                    })()}
+                    <div style={styles.gridKPI}>
+                        <KPICard
+                            title="Lucro Líquido"
+                            value={`R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            sublabel="Receita Empresa (60%) - Custos"
+                            icon={TrendingUp}
+                            gradient={lucroLiquido >= 0 ? "green" : "red"}
+                        />
+                        <KPICard
+                            title="Margem de Lucro"
+                            value={`${margemLucro.toFixed(1)}%`}
+                            sublabel="Lucro / Receita Empresa"
+                            icon={DollarSign}
+                            gradient={margemLucro >= 0 ? "blue" : "red"}
+                        />
+                        <KPICard
+                            title="Receita Empresa"
+                            value={`R$ ${totalRepasseEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            sublabel={`60% de R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            icon={DollarSign}
+                            gradient="blue"
+                        />
+                        <KPICard
+                            title="Repasse Motoristas"
+                            value={`R$ ${totalRepasseMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            sublabel={`40% de R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            icon={Users}
+                            gradient="purple"
+                        />
+                        <KPICard
+                            title="Turnos"
+                            value={totalTurnos.toString()}
+                            sublabel="Total no período"
+                            icon={Clock}
+                            gradient="orange"
+                        />
+                        <KPICard
+                            title="Custo Total"
+                            value={`R$ ${totalCustos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            sublabel={`Fixos: ${appliedFixedCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + Var: ${totalCustosVariaveis.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            icon={TrendingDown}
+                            gradient="red" // Or Orange
+                        />
+                        <KPICard
+                            title="P.E. Total (100%)"
+                            value={`${peTotalPercent.toFixed(1)}%`}
+                            sublabel={peTotalPercent >= 100 ? "Meta Atingida!" : `Faltam R$ ${faltaParaPE.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            icon={TrendingUp}
+                            gradient={peTotalPercent >= 100 ? "green" : "orange"}
+                        />
+                    </div>
 
                     <div style={styles.chartPlaceholder}>
                         <div style={{ width: "80%", height: "200px", display: "flex", alignItems: "flex-end", justifyContent: "space-around", gap: "10px" }}>
-                            <div style={{ width: "15%", height: "80%", background: "#22c55e", borderRadius: "4px 4px 0 0", position: "relative" }} title="Receita"><span style={{ position: "absolute", bottom: "-25px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem" }}>Receita</span></div>
-                            <div style={{ width: "15%", height: "40%", background: "#eab308", borderRadius: "4px 4px 0 0", position: "relative" }} title="Custos"><span style={{ position: "absolute", bottom: "-25px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem" }}>Custos</span></div>
-                            <div style={{ width: "15%", height: "30%", background: "#3b82f6", borderRadius: "4px 4px 0 0", position: "relative" }} title="Lucro"><span style={{ position: "absolute", bottom: "-25px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem" }}>Lucro</span></div>
+                            {/* Revenue Bar */}
+                            <div style={{ width: "15%", height: "80%", background: "#3b82f6", borderRadius: "4px 4px 0 0", position: "relative", transition: "height 0.5s ease" }} title={`Receita: R$ ${totalRepasseEmpresa.toLocaleString('pt-BR')}`}>
+                                <span style={{ position: "absolute", bottom: "-25px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem" }}>Receita</span>
+                                <span style={{ position: "absolute", top: "-20px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem", fontWeight: "bold" }}>R$ {(totalRepasseEmpresa / 1000).toFixed(1)}k</span>
+                            </div>
+
+                            {/* Costs Bar */}
+                            <div style={{
+                                width: "15%",
+                                height: `${Math.min((totalCustos / (totalRepasseEmpresa || 1)) * 80, 80)}%`,
+                                background: "#ef4444",
+                                borderRadius: "4px 4px 0 0",
+                                position: "relative",
+                                transition: "height 0.5s ease"
+                            }} title={`Custos: R$ ${totalCustos.toLocaleString('pt-BR')}`}>
+                                <span style={{ position: "absolute", bottom: "-25px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem" }}>Custos</span>
+                                <span style={{ position: "absolute", top: "-20px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem", fontWeight: "bold" }}>R$ {(totalCustos / 1000).toFixed(1)}k</span>
+                            </div>
+
+                            {/* Profit Bar */}
+                            <div style={{
+                                width: "15%",
+                                height: `${Math.max(Math.min((lucroLiquido / (totalRepasseEmpresa || 1)) * 80, 80), 2)}%`, // Min 2% visibility
+                                background: lucroLiquido >= 0 ? "#22c55e" : "#ef4444",
+                                borderRadius: "4px 4px 0 0",
+                                position: "relative",
+                                transition: "height 0.5s ease"
+                            }} title={`Lucro: R$ ${lucroLiquido.toLocaleString('pt-BR')}`}>
+                                <span style={{ position: "absolute", bottom: "-25px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem" }}>Lucro</span>
+                                <span style={{ position: "absolute", top: "-20px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem", fontWeight: "bold" }}>R$ {(lucroLiquido / 1000).toFixed(1)}k</span>
+                            </div>
                         </div>
-                        <p style={{ marginTop: "2rem" }}>Gráfico Financeiro (Conectado)</p>
+                        <p style={{ marginTop: "2rem", fontSize: "0.9rem", color: styles.label.color }}>Visão Geral Financeira</p>
                     </div>
                 </>
             )}
@@ -678,6 +713,58 @@ export default function PerformanceContent() {
             }
 
             {
+                activeSubTab === "manutencao" && (
+                    <div style={styles.tableContainer}>
+                        <div style={{ padding: "1rem", borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <h3 style={styles.title}>Histórico de Manutenções</h3>
+                            <span style={{ fontSize: "0.875rem", color: styles.label.color }}>Total: R$ {legacyMaintenances.reduce((acc: number, m: any) => acc + Number(m.valor), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <table style={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th style={styles.th}>Data</th>
+                                    <th style={styles.th}>Veículo</th>
+                                    <th style={styles.th}>Tipo</th>
+                                    <th style={styles.th}>Descrição</th>
+                                    <th style={styles.th}>KM</th>
+                                    <th style={styles.th}>Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {legacyMaintenances.map((m: any) => (
+                                    <tr key={m.id}>
+                                        <td style={styles.td}>
+                                            {new Date(m.data).toLocaleDateString('pt-BR')}
+                                        </td>
+                                        <td style={styles.td}>
+                                            {m.veiculoPlate ? `${m.veiculoModelo} (${m.veiculoPlate})` : "N/A"}
+                                        </td>
+                                        <td style={styles.td}>
+                                            <span style={styles.badge(m.tipo === "Corretiva" ? "red" : "blue")}>
+                                                {m.tipo}
+                                            </span>
+                                        </td>
+                                        <td style={styles.td}>{m.notes}</td>
+                                        <td style={styles.td}>{m.km?.toLocaleString('pt-BR')} km</td>
+                                        <td style={{ ...styles.td, fontWeight: "600" }}>
+                                            R$ {Number(m.valor).toFixed(2)}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {legacyMaintenances.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} style={{ ...styles.td, textAlign: "center", padding: "2rem", color: styles.label.color }}>
+                                            Nenhuma manutenção encontrada.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )
+            }
+
+            {
                 activeSubTab === "tipos-custo" && (
                     <CostTypesManager
                         costTypes={costTypes}
@@ -731,6 +818,52 @@ export default function PerformanceContent() {
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                )
+            }
+
+            {
+                activeSubTab === "veiculos" && (
+                    <div style={styles.tableContainer}>
+                        <div style={{ padding: "1rem", borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <h3 style={styles.title}>Frota Ativa</h3>
+                            <span style={{ fontSize: "0.875rem", color: styles.label.color }}>Total: {vehicles.length} Veículos</span>
+                        </div>
+                        <table style={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th style={styles.th}>Placa</th>
+                                    <th style={styles.th}>Modelo</th>
+                                    <th style={styles.th}>Ano</th>
+                                    <th style={styles.th}>Status</th>
+                                    <th style={styles.th}>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {vehicles.map((v: any) => (
+                                    <tr key={v.id}>
+                                        <td style={{ ...styles.td, fontWeight: "bold" }}>{v.plate}</td>
+                                        <td style={styles.td}>{v.model}</td>
+                                        <td style={styles.td}>{v.year || "-"}</td>
+                                        <td style={styles.td}>
+                                            <span style={styles.badge(v.status === "active" ? "green" : "red")}>
+                                                {v.status === "active" ? "Ativo" : "Inativo"}
+                                            </span>
+                                        </td>
+                                        <td style={styles.td}>
+                                            <button style={styles.actionButton}><Edit size={16} /></button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {vehicles.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} style={{ ...styles.td, textAlign: "center", padding: "2rem", color: styles.label.color }}>
+                                            Nenhum veículo encontrado.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 )
             }
@@ -793,7 +926,7 @@ export default function PerformanceContent() {
             )}
 
             {
-                activeSubTab !== "financeiro" && activeSubTab !== "repasses" && activeSubTab !== "tipos-custo" && activeSubTab !== "custos-fixos" && activeSubTab !== "motoristas" && (
+                activeSubTab !== "financeiro" && activeSubTab !== "repasses" && activeSubTab !== "tipos-custo" && activeSubTab !== "custos-fixos" && activeSubTab !== "motoristas" && activeSubTab !== "manutencao" && activeSubTab !== "veiculos" && (
                     <div style={styles.chartPlaceholder}>
                         <p>Conteúdo da aba <strong>{activeSubTab.charAt(0).toUpperCase() + activeSubTab.slice(1)}</strong> em desenvolvimento.</p>
                     </div>
