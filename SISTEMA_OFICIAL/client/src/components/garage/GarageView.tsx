@@ -1,32 +1,9 @@
-import { useState, useEffect } from "react";
-import { Car, TrendingUp, TrendingDown, Wrench, CheckCircle, Star, DollarSign, Gauge, Activity, Cpu, Shield, Flame } from "lucide-react";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { TrendingUp, TrendingDown, Wrench, CheckCircle, Star, DollarSign, Gauge, Activity, Cpu, Shield, Flame } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { vehiclesService } from "../../modules/vehicles/vehicles.service";
-import { Vehicle } from "../../../../shared/schema";
-
-// Import vehicle images - BYD Dolphins
-import dolphinAzul from "@/assets/vehicles/dolphin-azul.png";
-import dolphinBranco from "@/assets/vehicles/dolphin-mini-branco.png";
-import dolphinPreto from "@/assets/vehicles/dolphin-preto.png";
-
-const vehicleImages = [dolphinAzul, dolphinBranco, dolphinPreto];
-
-interface VehicleWithUI extends Vehicle {
-    image: string;
-    isFavorite: boolean;
-    status: "disponivel" | "manutencao" | "em_uso";
-    stats: {
-        revenue: number;
-        kmTotal: number;
-        corridas: number;
-        meta: number;
-        metaLastMonth: number;
-    };
-}
-
-type FilterType = "todos" | "ativos" | "favoritos";
+import { useVehicles, VehicleWithUI } from "../../hooks/useVehicles";
+import { VehicleCard } from "./VehicleCard";
 
 // Floating particles component
 const FloatingParticles = () => (
@@ -64,44 +41,12 @@ const DataStreams = () => (
     </div>
 );
 
+type FilterType = "todos" | "ativos" | "favoritos";
+
 const GarageView = () => {
     const [filter, setFilter] = useState<FilterType>("todos");
-    const [vehicles, setVehicles] = useState<VehicleWithUI[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { vehicles, isLoading } = useVehicles();
     const navigate = useNavigate();
-
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    async function loadData() {
-        setIsLoading(true);
-        try {
-            const data = await vehiclesService.getAll();
-            const adoptedVehicles: VehicleWithUI[] = data.map((v, index) => ({
-                ...v,
-                // Logic for Image: Pick based on ID char or rotating index
-                image: vehicleImages[index % vehicleImages.length],
-                // Logic for Favorite: Mocked for now (could be local storage)
-                isFavorite: false,
-                // Logic for Status
-                status: !v.isActive ? "manutencao" : (v.currentShiftId ? "em_uso" : "disponivel"),
-                // Logic for Stats (Placeholder until we have aggregation endpoint)
-                stats: {
-                    revenue: 0,
-                    kmTotal: v.kmInicial || 0,
-                    corridas: 0,
-                    meta: 0, // Mock: Meta de eficiência
-                    metaLastMonth: 0
-                }
-            }));
-            setVehicles(adoptedVehicles);
-        } catch (error) {
-            console.error("Failed to load vehicles", error);
-        } finally {
-            setIsLoading(false);
-        }
-    }
 
     const fleetStats = {
         recipientesAtivos: vehicles.filter(v => v.status !== "manutencao").length,
@@ -114,30 +59,6 @@ const GarageView = () => {
         if (filter === "favoritos") return v.isFavorite;
         return true;
     });
-
-    const getStatusConfig = (status: VehicleWithUI["status"]) => {
-        const configs = {
-            disponivel: {
-                label: "ONLINE",
-                color: "bg-primary/20 text-primary border-primary/40",
-                icon: CheckCircle,
-                glow: "shadow-[0_0_15px_hsl(var(--primary)/0.5)]"
-            },
-            em_uso: {
-                label: "EM OPERAÇÃO",
-                color: "bg-racing-orange/20 text-racing-orange border-racing-orange/40",
-                icon: Activity,
-                glow: "shadow-[0_0_15px_hsl(var(--racing-orange)/0.5)]"
-            },
-            manutencao: {
-                label: "MANUTENÇÃO",
-                color: "bg-warning/20 text-warning border-warning/40",
-                icon: Wrench,
-                glow: "shadow-[0_0_15px_hsl(var(--warning)/0.5)]"
-            },
-        };
-        return configs[status];
-    };
 
     if (isLoading) {
         return (
@@ -282,153 +203,34 @@ const GarageView = () => {
             </motion.div>
 
             {/* Vehicle Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                {filteredVehicles.length === 0 ? (
-                    <div className="col-span-full py-12 text-center text-muted-foreground font-display">
-                        <p>Nenhum veículo encontrado com os filtros atuais.</p>
-                    </div>
-                ) : (
-                    filteredVehicles.map((vehicle, index) => {
-                        const statusConfig = getStatusConfig(vehicle.status);
-                        const StatusIcon = statusConfig.icon;
-
-                        return (
-                            <motion.div
+            <motion.div
+                layout
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6"
+            >
+                <AnimatePresence mode="popLayout">
+                    {filteredVehicles.length === 0 ? (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="col-span-full py-12 text-center text-muted-foreground font-display"
+                        >
+                            <p>Nenhum veículo encontrado com os filtros atuais.</p>
+                        </motion.div>
+                    ) : (
+                        filteredVehicles.map((vehicle, index) => (
+                            <VehicleCard
                                 key={vehicle.id}
-                                initial={{ opacity: 0, y: 40, scale: 0.95 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                transition={{ delay: index * 0.15, type: "spring", stiffness: 100 }}
-                                className="group futuristic-card hover-glow overflow-hidden"
-                            >
-                                {/* Vehicle Image with Overlay */}
-                                <div className="relative h-56 overflow-hidden">
-                                    <motion.img
-                                        src={vehicle.image}
-                                        alt={vehicle.modelo}
-                                        className="w-full h-full object-cover"
-                                        whileHover={{ scale: 1.1 }}
-                                        transition={{ duration: 0.6 }}
-                                    />
-
-                                    {/* Gradient Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
-
-                                    {/* Scan lines on image */}
-                                    <div className="absolute inset-0 scan-lines opacity-30" />
-
-                                    {/* Status Badge */}
-                                    <div className={`absolute top-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full border ${statusConfig.color} ${statusConfig.glow} backdrop-blur-sm`}>
-                                        <StatusIcon className="w-4 h-4" />
-                                        <span className="text-xs font-display font-bold tracking-wider">{statusConfig.label}</span>
-                                    </div>
-
-                                    {/* Favorite Badge */}
-                                    {vehicle.isFavorite && (
-                                        <div className="absolute top-4 left-4 flex items-center gap-2 px-4 py-2 rounded-full bg-racing-gold/20 text-racing-gold border border-racing-gold/40 shadow-[0_0_15px_hsl(var(--racing-gold)/0.5)] backdrop-blur-sm">
-                                            <Star className="w-4 h-4 fill-current" />
-                                            <span className="text-xs font-display font-bold tracking-wider">FAVORITO</span>
-                                        </div>
-                                    )}
-
-                                    {/* Holographic overlay on hover */}
-                                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 holographic" />
-                                </div>
-
-                                {/* Vehicle Info */}
-                                <div className="p-6 space-y-5">
-                                    {/* Plate & Model */}
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <h3 className="font-display text-3xl font-black tracking-[0.1em] text-white glitch">
-                                                {vehicle.plate}
-                                            </h3>
-                                            <p className="text-sm text-white/60 font-display tracking-wide mt-1">
-                                                {vehicle.modelo}
-                                            </p>
-                                        </div>
-                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border ${vehicle.status === "disponivel" ? "bg-primary/10 border-primary/30 text-primary" :
-                                            vehicle.status === "em_uso" ? "bg-racing-orange/10 border-racing-orange/30 text-racing-orange" :
-                                                "bg-warning/10 border-warning/30 text-warning"
-                                            }`}>
-                                            <Car className="w-7 h-7" />
-                                        </div>
-                                    </div>
-
-                                    {/* Meta Bar with Month Comparison */}
-                                    <div className="space-y-2">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="text-white/60 font-display tracking-wide">META</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-display font-bold text-lg text-primary">{vehicle.stats.meta}%</span>
-                                                {(() => {
-                                                    const diff = vehicle.stats.meta - vehicle.stats.metaLastMonth;
-                                                    if (diff > 0) {
-                                                        return (
-                                                            <span className="flex items-center gap-1 text-xs text-success font-display font-bold">
-                                                                <TrendingUp className="w-3 h-3" />
-                                                                +{diff}%
-                                                            </span>
-                                                        );
-                                                    } else if (diff < 0) {
-                                                        return (
-                                                            <span className="flex items-center gap-1 text-xs text-destructive font-display font-bold">
-                                                                <TrendingDown className="w-3 h-3" />
-                                                                {diff}%
-                                                            </span>
-                                                        );
-                                                    }
-                                                    return (
-                                                        <span className="text-xs text-muted-foreground font-display">
-                                                            =
-                                                        </span>
-                                                    );
-                                                })()}
-                                            </div>
-                                        </div>
-                                        <div className="stat-bar">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${vehicle.stats.meta}%` }}
-                                                transition={{ delay: index * 0.15 + 0.5, duration: 1, ease: "easeOut" }}
-                                                className="stat-bar-fill"
-                                            />
-                                        </div>
-                                        <p className="text-[10px] text-white/40 font-display">
-                                            Mês anterior: {vehicle.stats.metaLastMonth}%
-                                        </p>
-                                    </div>
-
-                                    {/* Stats Grid */}
-                                    <div className="grid grid-cols-3 gap-4 py-4 border-t border-b border-white/10">
-                                        {[
-                                            { icon: DollarSign, value: `R$ ${(vehicle.stats.revenue / 1000).toFixed(1)}k`, label: "RECEITA" },
-                                            { icon: Gauge, value: `${(vehicle.stats.kmTotal / 1000).toFixed(1)}k`, label: "KM TOTAL" },
-                                            { icon: TrendingUp, value: vehicle.stats.corridas, label: "CORRIDAS" },
-                                        ].map((stat) => (
-                                            <div key={stat.label} className="text-center">
-                                                <stat.icon className="w-5 h-5 mx-auto mb-2 text-accent" />
-                                                <p className="font-display text-lg font-bold text-white">{stat.value}</p>
-                                                <p className="text-[10px] text-white/50 font-display tracking-[0.1em]">{stat.label}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    {/* Action Button */}
-                                    <Button
-                                        onClick={() => navigate(`/vehicle/${vehicle.id}`)}
-                                        className="w-full h-14 btn-futuristic rounded-xl text-primary-foreground"
-                                    >
-                                        <span className="relative z-10 flex items-center gap-2">
-                                            <Cpu className="w-5 h-5" />
-                                            ACESSAR VEÍCULO
-                                        </span>
-                                    </Button>
-                                </div>
-                            </motion.div>
-                        );
-                    })
-                )}
-            </div>
+                                vehicle={vehicle}
+                                index={index}
+                                onAction={(v) => navigate(`/veiculos/${v.id}`)}
+                                actionLabel="ACESSAR VEÍCULO"
+                                actionIcon={Cpu}
+                            />
+                        ))
+                    )}
+                </AnimatePresence>
+            </motion.div>
         </div>
     );
 };

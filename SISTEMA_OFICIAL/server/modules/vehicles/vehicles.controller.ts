@@ -1,44 +1,51 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { vehiclesService } from "./vehicles.service.js";
+import { createVehicleSchema, updateVehicleSchema } from "./vehicles.validators.js";
+
+/**
+ * CONTROLLER - VEHICLES
+ * 
+ * REGRA: Controller é apenas ponte entre HTTP e Service
+ * Recebe req/res, valida entrada, chama service, retorna resposta
+ */
 
 export const vehiclesController = {
-    async getAll(req: Request, res: Response) {
+    async getAll(req: Request, res: Response, next: NextFunction) {
         try {
             const vehicles = await vehiclesService.getAllVehicles();
             res.json(vehicles);
         } catch (error) {
-            console.error("Error fetching vehicles:", error);
-            res.status(500).json({ message: "Internal error fetching vehicles" });
+            next(error);
         }
     },
 
-    async create(req: Request, res: Response) {
+    async create(req: Request, res: Response, next: NextFunction) {
         try {
-            const newVehicle = await vehiclesService.createVehicle(req.body);
+            const data = createVehicleSchema.parse(req.body);
+            // @ts-ignore - Tipo do Zod compatível com Drizzle, mas TS reclama de optional vs null
+            const newVehicle = await vehiclesService.createVehicle(data);
             res.status(201).json(newVehicle);
         } catch (error) {
-            console.error("Error creating vehicle:", error);
-            res.status(500).json({ message: "Internal error creating vehicle" });
+            next(error);
         }
     },
 
-    async update(req: Request, res: Response) {
+    async update(req: Request, res: Response, next: NextFunction) {
         try {
-            const updatedVehicle = await vehiclesService.updateVehicle(req.params.id, req.body);
+            const data = updateVehicleSchema.parse(req.body);
+            const updatedVehicle = await vehiclesService.updateVehicle(req.params.id, data);
             res.json(updatedVehicle);
         } catch (error) {
-            console.error("Error updating vehicle:", error);
-            res.status(500).json({ message: "Internal error updating vehicle" });
+            next(error);
         }
     },
 
-    async delete(req: Request, res: Response) {
+    async delete(req: Request, res: Response, next: NextFunction) {
         try {
             await vehiclesService.deleteVehicle(req.params.id);
             res.status(204).send();
         } catch (error) {
-            console.error("Error deleting vehicle:", error);
-            res.status(500).json({ message: "Internal error deleting vehicle" });
+            next(error);
         }
     }
 };
