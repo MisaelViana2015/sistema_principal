@@ -822,6 +822,38 @@ Para garantir que a feature funciona em produção:
 2. **Testar Criação (Exemplo):**
    Criar um custo fixo com `totalInstallments: 12` e verificar se 12 registros foram criados na tabela `fixed_cost_installments`.
 
+---
+
+## ANEXO C — STATUS DO PROJETO (SNAPSHOT 14/12/2025)
+
+*Conteúdo consolidado de STATUS_PROJETO.md*
+
+### ✅ CONCLUÍDO (Resumo):
+- **Estrutura Base:** TypeScript, Vite, Drizzle, Tailwind.
+- **Backend:** Express, Auth JWT, Segurança, Módulos Veículos/Turnos.
+- **Frontend:** Login, Dashboard, TurnoPage, Veículos.
+- **Banco:** Schema definido, Migrations, Seed.
+
+### 📝 DECISÕES TÉCNICAS (Histórico)
+- **Banco:** PostgreSQL nativo do Railway (Driver `pg`).
+- **Auth:** JWT com expiração de 24h.
+- **Assets:** URLs externas para imagens de veículos (evita problemas de cache/build).
+
+---
+
+## ANEXO D — LOG DE DESENVOLVIMENTO: CORREÇÃO DE IMAGENS
+
+*Conteúdo consolidado de logs/log_2025-12-14.md*
+
+### Problema Resolvido (14/12)
+Imagens de veículos (BYD, Maverick) não carregavam em produção devido a caminhos relativos e case-sensitivity no Linux.
+
+### Solução
+Substituição de assets locais por **URLs externas estáveis** (CDN ou sites de fabricantes).
+- **Arquivo de Config:** `client/src/lib/vehicleAssets.ts`
+- **Resultado:** Visualização corrigida em todas as variantes de cores.
+
+
 
 | Alerta | Ação Imediata | Investigação | Resolução |
 |--------|---------------|--------------|-----------|
