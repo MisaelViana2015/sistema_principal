@@ -515,7 +515,7 @@ export default function DriverShiftPage() {
                                 <p className="text-gray-600 text-sm italic">Nenhuma corrida registrada.</p>
                             ) : (
                                 <div className="space-y-3">
-                                    {rides.slice(0, 5).map((r, i) => (
+                                    {rides.map((r, i) => (
                                         <div key={r.id} className="flex justify-between items-center text-sm border-b border-gray-800 pb-2 last:border-0 last:pb-0">
                                             <div className="flex items-center gap-3">
                                                 <div className={`p-1.5 rounded-md ${r.tipo === 'APP' ? 'bg-blue-900/20 text-blue-400' : 'bg-orange-900/20 text-orange-400'}`}>
@@ -542,7 +542,7 @@ export default function DriverShiftPage() {
                                 <p className="text-gray-600 text-sm italic">Nenhum custo registrado.</p>
                             ) : (
                                 <div className="space-y-3">
-                                    {expenses.slice(0, 5).map(e => {
+                                    {expenses.map(e => {
                                         const typeName = e.tipo || 'Despesa';
                                         return (
                                             <div key={e.id} className="flex justify-between items-center text-sm border-b border-gray-800 pb-2 last:border-0 last:pb-0">
