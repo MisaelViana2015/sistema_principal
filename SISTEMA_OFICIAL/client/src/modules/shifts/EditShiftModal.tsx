@@ -59,12 +59,19 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
         if (!shiftId) return;
         setSaving(true);
         try {
-            await shiftsService.update(shiftId, {
+            const payload = {
                 kmInicial: Number(formData.kmInicial),
                 kmFinal: formData.kmFinal ? Number(formData.kmFinal) : undefined,
                 inicio: formData.inicio ? new Date(formData.inicio) : undefined,
                 fim: formData.fim ? new Date(formData.fim) : undefined
-            });
+            };
+
+            console.log('[EditShiftModal] Sending update:', payload);
+            console.log('[EditShiftModal] Form data:', formData);
+
+            const result = await shiftsService.update(shiftId, payload);
+            console.log('[EditShiftModal] Update result:', result);
+
             if (onSuccess) onSuccess();
             onOpenChange(false);
         } catch (error) {
