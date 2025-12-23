@@ -17,10 +17,18 @@ export async function runMigrations() {
     // Se estivermos rodando do 'dist', precisamos subir mais níveis ou buscar na raiz do app
     if (process.env.NODE_ENV === 'production') {
         // No Docker/Railway, copiamos as migrações para /app/server/scripts/db/migrations
-        // O WORKDIR é /app, então process.cwd() é /app (ou /app/server dependendo do startup. Mas a cópia foi para ./server/scripts...)
 
-        // Caminho relativo ao WORKDIR (/app):
-        migrationsFolder = path.resolve(process.cwd(), "server/scripts/db/migrations");
+        // CORREÇÃO: O npm workspace pode alterar o CWD para /app/server
+        const cwd = process.cwd();
+        const currentDirName = path.basename(cwd);
+
+        if (currentDirName === 'server') {
+            // CWD é /app/server (workspace do npm)
+            migrationsFolder = path.resolve(cwd, "scripts/db/migrations");
+        } else {
+            // CWD é /app (raiz do projeto)
+            migrationsFolder = path.resolve(cwd, "server/scripts/db/migrations");
+        }
     }
 
     console.log(`📂 Pasta de migrações alvo: ${migrationsFolder}`);
