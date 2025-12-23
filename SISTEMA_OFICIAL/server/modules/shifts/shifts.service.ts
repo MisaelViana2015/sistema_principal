@@ -163,6 +163,30 @@ export async function getOpenShift(driverId: string) {
 }
 
 export async function updateShift(id: string, data: any) {
+    // Se está alterando a data de início, precisamos ajustar as corridas
+    if (data.inicio) {
+        const currentShift = await shiftsRepository.findShiftById(id);
+        if (currentShift && currentShift.inicio) {
+            const oldStart = new Date(currentShift.inicio);
+            const newStart = new Date(data.inicio);
+            const timeDiffMs = newStart.getTime() - oldStart.getTime();
+
+            // Se houver diferença de tempo, atualizar todas as corridas
+            if (timeDiffMs !== 0) {
+                const { db } = await import('../../core/db/connection.js');
+                const { rides } = await import('../../../shared/schema.js');
+                const { eq, sql } = await import('drizzle-orm');
+
+                // Atualiza todas as corridas do turno, aplicando o mesmo deslocamento
+                await db.update(rides)
+                    .set({
+                        hora: sql`${rides.hora} + INTERVAL '${timeDiffMs} milliseconds'`
+                    })
+                    .where(eq(rides.shiftId, id));
+            }
+        }
+    }
+
     return await shiftsRepository.updateShift(id, data);
 }
 
