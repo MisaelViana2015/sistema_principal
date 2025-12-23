@@ -46,6 +46,7 @@ export default function DriverShiftPage() {
     // Ride Form State
     const [rideType, setRideType] = useState<"APP" | "PARTICULAR">("APP");
     const [rideValue, setRideValue] = useState("");
+    const [rideDate, setRideDate] = useState("");
     const [rideCooldown, setRideCooldown] = useState(0);
 
     // Cost Form State
@@ -230,11 +231,15 @@ export default function DriverShiftPage() {
                 shiftId: activeShift.id,
                 tipo: rideType,
                 valor: Number(rideValue),
-                hora: new Date().toISOString()
+                hora: rideDate ? new Date(rideDate).toISOString() : new Date().toISOString()
             });
 
             // setRideCooldown(300); // DISABLED per user request
             setRideValue("");
+            // Keep date or reset? Resetting to empty (current) is safer for next, 
+            // but for bulk entry of same day, keeping it is better? 
+            // Let's reset to empty (current).
+            setRideDate("");
             setViewMode("dashboard");
             loadData();
         } catch (err) {
@@ -623,6 +628,18 @@ export default function DriverShiftPage() {
                                     <User className={`w-8 h-8 ${rideType === 'PARTICULAR' ? 'animate-bounce' : ''}`} />
                                     <span className="font-orbitron font-bold text-sm tracking-wider">PARTICULAR</span>
                                 </button>
+                            </div>
+
+                            {/* Date Input */}
+                            <div className="mb-6">
+                                <label className="block text-gray-500 text-xs uppercase font-bold mb-2 tracking-wider">Data/Hora (Opcional)</label>
+                                <input
+                                    type="datetime-local"
+                                    value={rideDate}
+                                    onChange={e => setRideDate(e.target.value)}
+                                    className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-4 py-3 text-white focus:border-emerald-500 focus:outline-none transition-all"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Deixe vazio para usar o horário atual.</p>
                             </div>
 
                             {/* Value Input */}
