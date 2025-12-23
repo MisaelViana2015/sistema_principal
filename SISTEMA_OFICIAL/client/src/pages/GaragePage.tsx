@@ -7,8 +7,9 @@ import { vehiclesService } from "../modules/vehicles/vehicles.service";
 import { shiftsService } from "../modules/shifts/shifts.service";
 import { useAuth } from "../contexts/AuthContext";
 import { Vehicle } from "../../../shared/schema";
-import { Car, Zap, Battery, AlertTriangle, ShieldCheck, ArrowRight, X, Gauge } from "lucide-react";
+import { Car, Zap, Battery, AlertTriangle, ShieldCheck, ArrowRight, X, Gauge, Cpu } from "lucide-react";
 import { useToast } from "../components/ui/use-toast";
+import { Button } from "../components/ui/button";
 import { resolveVehicleImage } from "../lib/vehicleAssets";
 
 export default function GaragePage() {
@@ -229,12 +230,11 @@ export default function GaragePage() {
 
                                     <div className="mt-auto">
                                         <button
-                                            onClick={() => handleAccessVehicle(vehicle)}
                                             className="w-full h-12 btn-futuristic rounded-xl font-bold uppercase tracking-wider flex items-center justify-center gap-2 group-hover:bg-primary/20 transition-all"
                                         >
                                             {hasActiveShiftHere ? 'Continuar Turno' : 'Acessar Veículo'}
                                             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             </motion.div>
@@ -307,7 +307,7 @@ export default function GaragePage() {
                                 )}
                             </div>
 
-                            <button
+                            <Button
                                 onClick={handleStartShift}
                                 disabled={isStartingShift || !kmInicial}
                                 className="w-full h-14 btn-futuristic rounded-xl text-lg font-bold uppercase tracking-wider flex items-center justify-center gap-2"
@@ -320,7 +320,7 @@ export default function GaragePage() {
                                         Iniciar Turno
                                     </>
                                 )}
-                            </button>
+                            </Button>
                         </div>
                     </motion.div>
                 </div>
