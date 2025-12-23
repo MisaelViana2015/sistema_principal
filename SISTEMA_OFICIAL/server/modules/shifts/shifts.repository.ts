@@ -113,6 +113,7 @@ export async function findLastShiftByDriver(driverId: string) {
     return shift;
 }
 
+
 export async function deleteShift(id: string) {
     // Delete dependent records
     await db.delete(rides).where(eq(rides.shiftId, id));

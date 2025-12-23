@@ -163,13 +163,28 @@ export async function getOpenShift(driverId: string) {
 }
 
 export async function updateShift(id: string, data: any) {
+    console.log('[updateShift] Received data:', JSON.stringify(data, null, 2));
+
+    // Converter Date objects para strings ISO se necessário
+    const cleanData = { ...data };
+    if (cleanData.inicio instanceof Date) {
+        cleanData.inicio = cleanData.inicio.toISOString();
+    }
+    if (cleanData.fim instanceof Date) {
+        cleanData.fim = cleanData.fim.toISOString();
+    }
+
+    console.log('[updateShift] Clean data:', JSON.stringify(cleanData, null, 2));
+
     // Se está alterando a data de início, precisamos ajustar as corridas
-    if (data.inicio) {
+    if (cleanData.inicio) {
         const currentShift = await shiftsRepository.findShiftById(id);
         if (currentShift && currentShift.inicio) {
             const oldStart = new Date(currentShift.inicio);
-            const newStart = new Date(data.inicio);
+            const newStart = new Date(cleanData.inicio);
             const timeDiffMs = newStart.getTime() - oldStart.getTime();
+
+            console.log('[updateShift] Time diff:', timeDiffMs, 'ms');
 
             // Se houver diferença de tempo, atualizar todas as corridas
             if (timeDiffMs !== 0) {
@@ -183,11 +198,15 @@ export async function updateShift(id: string, data: any) {
                         hora: sql`${rides.hora} + INTERVAL '${timeDiffMs} milliseconds'`
                     })
                     .where(eq(rides.shiftId, id));
+
+                console.log('[updateShift] Updated ride timestamps');
             }
         }
     }
 
-    return await shiftsRepository.updateShift(id, data);
+    const result = await shiftsRepository.updateShift(id, cleanData);
+    console.log('[updateShift] Result:', JSON.stringify(result, null, 2));
+    return result;
 }
 
 export async function deleteShift(id: string) {
