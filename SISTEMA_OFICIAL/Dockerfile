@@ -37,7 +37,8 @@ RUN npm ci --production --workspace=server --workspace=shared
 # Copy built files
 COPY --from=builder /app/server/dist ./server/dist
 COPY --from=builder /app/client/dist ./client/dist
-COPY --from=builder /app/shared ./shared
+# Copy migrations folder (essential for Drizzle)
+COPY --from=builder /app/server/scripts/db/migrations ./server/scripts/db/migrations
 
 # Expose port (ajustado para o padrão do Railway)
 EXPOSE 5000
