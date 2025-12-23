@@ -7,6 +7,7 @@ import VehiclesList from "../modules/vehicles/VehiclesList";
 import ShiftsList from "../modules/shifts/ShiftsList";
 import { RidesList } from "../modules/rides/RidesList";
 import ImportTab from "./admin/tabs/ImportTab";
+import PerformanceContent from "../modules/performance/components/PerformanceContent";
 import { useTheme } from "../contexts/ThemeContext";
 
 /**
@@ -206,7 +207,7 @@ export default function Admin() {
                                 {activeTab === "financeiro" && <div className="p-4 text-center text-gray-500">Módulo Financeiro em migração</div>}
                                 {activeTab === "manutencao" && <div className="p-4 text-center text-gray-500">Módulo Manutenção em migração</div>}
                                 {activeTab === "pneus" && <div className="p-4 text-center text-gray-500">Módulo Pneus em migração</div>}
-                                {activeTab === "analise" && <div className="p-4 text-center text-gray-500">Módulo Análise em migração</div>}
+                                {activeTab === "analise" && <PerformanceContent />}
                                 {activeTab === "fraude" && <div className="p-4 text-center text-gray-500">Módulo Fraude em migração</div>}
                                 {activeTab === "importar" && <ImportTab />}
                             </div>
