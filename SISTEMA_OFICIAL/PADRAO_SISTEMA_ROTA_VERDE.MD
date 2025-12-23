@@ -1246,8 +1246,40 @@ Compress-Archive -Path "C:\dev\rota-verde-railway\SISTEMA_OFICIAL" -DestinationP
 - B: Prioridades MVP
 - C: Prevenção de Riscos Runtime
 - D: Playbooks de Incidentes
+- E: Cheatsheet de Comandos
+- F: Recursos e Ferramentas (Ambiente)
 
 
+
+---
+
+## ANEXO F — RECURSOS E FERRAMENTAS DO AMBIENTE (AUTO-DETECTED)
+
+Lista de ferramentas instaladas e disponíveis na máquina de desenvolvimento (Windows 11).
+
+### 🛠️ Extensões Essenciais (VS Code)
+Estes recursos estão disponíveis para auxiliar no desenvolvimento e manutenção:
+
+1.  **CodeSnap** (`adpyke.codesnap`): Criação de screenshots elegantes de código.
+2.  **Path Intellisense** (`christian-kohler.path-intellisense`): Autocomplete robusto para caminhos de arquivo.
+3.  **PostgreSQL** (`ckolkman.vscode-postgres`): Gerenciamento direto de DB sem sair do editor.
+4.  **Continue** (`continue.continue`): Assistente de IA open-source integrado (Contexto local).
+5.  **ESLint** (`dbaeumer.vscode-eslint`): Linter estrito para qualidade de código JS/TS.
+6.  **GitLens** (`eamodio.gitlens`): Visualização avançada de histórico e blame linha-a-linha.
+7.  **Prettier** (`esbenp.prettier-vscode`): Formatação automática de código.
+8.  **GitHub Copilot + Chat**: Assistente de IA oficial da GitHub.
+9.  **DotENV** (`mikestead.dotenv`): Syntax highlighting para arquivos .env.
+
+### 💻 Ferramentas de Linha de Comando (CLI)
+Stack base para operações de build, deploy e manutenção:
+
+*   **Docker Desktop (v29.1.3):** Containerização obrigatória para paridade dev/prod.
+*   **Node.js (v24.12.0) & NPM (v11.6.2):** Runtime JS atualizado.
+*   **Git (v2.52.0):** Controle de versão.
+*   **PowerShell 7 (v7.5.4):** Shell moderno para scripts de automação.
+*   **Railway CLI:** Deploy e gerenciamento de variáveis de produção via terminal.
+
+📌 **Nota para IA:** Ao iniciar sessão, checar estas ferramentas para decidir estratégias (ex: usar Docker para builds reprodutíveis, usar PowerShell para scripts complexos).
 
 # ==============================================================================
 # 🛑 ARQUIVO HISTÓRICO ABAIXO (MANTIDO PARA REFERÊNCIA)

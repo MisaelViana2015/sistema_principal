@@ -190,3 +190,65 @@ export type NewFixedCost = typeof fixedCosts.$inferInsert;
 export type Expense = typeof expenses.$inferSelect;
 export type NewExpense = typeof expenses.$inferInsert;
 export type LegacyMaintenance = typeof legacyMaintenances.$inferSelect;
+
+// --- LEGACY TABLES (KEPT TO PREVENT DATA LOSS DURING MIGRATION) ---
+
+export const vehicleCosts = pgTable("vehicle_costs", {
+    id: varchar("id").primaryKey(),
+    vehicleId: varchar("vehicle_id"),
+    tipo: text("tipo"),
+    descricao: text("descricao"),
+    valor: numeric("valor"),
+    mesReferencia: text("mes_referencia"),
+    dataPagamento: timestamp("data_pagamento"),
+    status: text("status"),
+    observacao: text("observacao"),
+    dataReferencia: timestamp("data_referencia"),
+    valorPago: numeric("valor_pago"),
+    dataVencimento: timestamp("data_vencimento"),
+});
+
+export const costs = pgTable("costs", {
+    id: varchar("id").primaryKey(),
+    shiftId: varchar("shift_id"),
+    tipo: text("tipo"),
+    valor: numeric("valor"),
+    observacao: text("observacao"),
+    hora: timestamp("hora"),
+    typeId: varchar("type_id"),
+});
+
+export const logs = pgTable("logs", {
+    id: varchar("id").primaryKey(),
+    level: text("level"),
+    message: text("message"),
+    meta: jsonb("meta"),
+    timestamp: timestamp("timestamp"),
+});
+
+export const fraudEvents = pgTable("fraud_events", {
+    id: varchar("id").primaryKey(),
+    shiftId: varchar("shift_id"),
+    reason: text("reason"),
+    details: text("details"),
+    severity: text("severity"),
+    createdAt: timestamp("created_at"),
+});
+
+export const preventiveMaintenances = pgTable("preventive_maintenances", {
+    id: varchar("id").primaryKey(),
+    vehicleId: varchar("vehicle_id"),
+    maintenanceType: text("maintenance_type"),
+    lastKm: real("last_km"),
+    nextKm: real("next_km"),
+    lastDate: timestamp("last_date"),
+    nextDate: timestamp("next_date"),
+    status: text("status"),
+    notes: text("notes"),
+});
+
+export const sessionTable = pgTable("session", { // Singular 'session' found in DB
+    sid: varchar("sid").primaryKey(),
+    sess: json("sess"),
+    expire: timestamp("expire"),
+});
