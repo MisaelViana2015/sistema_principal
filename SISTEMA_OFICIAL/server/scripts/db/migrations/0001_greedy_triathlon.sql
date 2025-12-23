@@ -65,23 +65,44 @@ CREATE TABLE IF NOT EXISTS "vehicles" (
 	CONSTRAINT "vehicles_plate_key" UNIQUE("plate")
 );
 --> statement-breakpoint
-ALTER TABLE "drivers" DROP CONSTRAINT "drivers_email_unique";--> statement-breakpoint
-ALTER TABLE "sessions" DROP CONSTRAINT "sessions_token_unique";--> statement-breakpoint
-ALTER TABLE "drivers" ALTER COLUMN "id" DROP DEFAULT;--> statement-breakpoint
-ALTER TABLE "sessions" ALTER COLUMN "id" DROP DEFAULT;--> statement-breakpoint
-ALTER TABLE "drivers" DROP COLUMN IF EXISTS "created_at";--> statement-breakpoint
-ALTER TABLE "drivers" DROP COLUMN IF EXISTS "updated_at";--> statement-breakpoint
+ALTER TABLE "drivers" DROP CONSTRAINT IF EXISTS "drivers_email_unique";
+--> statement-breakpoint
+ALTER TABLE "sessions" DROP CONSTRAINT IF EXISTS "sessions_token_unique";
+--> statement-breakpoint
+ALTER TABLE "drivers"
+ALTER COLUMN "id" DROP DEFAULT;
+--> statement-breakpoint
+ALTER TABLE "sessions"
+ALTER COLUMN "id" DROP DEFAULT;
+--> statement-breakpoint
+ALTER TABLE "drivers" DROP COLUMN IF EXISTS "created_at";
+--> statement-breakpoint
+ALTER TABLE "drivers" DROP COLUMN IF EXISTS "updated_at";
+--> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "expenses" ADD CONSTRAINT "expenses_driver_id_drivers_id_fk" FOREIGN KEY ("driver_id") REFERENCES "drivers"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "expenses"
+ADD CONSTRAINT "expenses_driver_id_drivers_id_fk" FOREIGN KEY ("driver_id") REFERENCES "drivers"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
- WHEN duplicate_object THEN null;
+WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "expenses" ADD CONSTRAINT "expenses_cost_type_id_cost_types_id_fk" FOREIGN KEY ("cost_type_id") REFERENCES "cost_types"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "expenses"
+ADD CONSTRAINT "expenses_cost_type_id_cost_types_id_fk" FOREIGN KEY ("cost_type_id") REFERENCES "cost_types"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
- WHEN duplicate_object THEN null;
+WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
-ALTER TABLE "drivers" ADD CONSTRAINT "drivers_email_key" UNIQUE("email");--> statement-breakpoint
-ALTER TABLE "sessions" ADD CONSTRAINT "sessions_token_key" UNIQUE("token");
+DO $$ BEGIN
+ALTER TABLE "drivers"
+ADD CONSTRAINT "drivers_email_key" UNIQUE("email");
+EXCEPTION
+WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+ALTER TABLE "sessions"
+ADD CONSTRAINT "sessions_token_key" UNIQUE("token");
+EXCEPTION
+WHEN duplicate_object THEN null;
+END $$;
