@@ -10,6 +10,8 @@ COPY client/package*.json ./client/
 COPY shared/package*.json ./shared/
 
 # Install dependencies (workspaces handle this)
+# FIX: Remove lockfile to force npm to resolve Linux-specific optional dependencies (like rollup-linux)
+RUN rm -f package-lock.json
 RUN npm install
 
 # Copy source code
