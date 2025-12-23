@@ -6,6 +6,7 @@ import DriversList from "../modules/drivers/DriversList";
 import VehiclesList from "../modules/vehicles/VehiclesList";
 import ShiftsList from "../modules/shifts/ShiftsList";
 import { RidesList } from "../modules/rides/RidesList";
+import ImportTab from "./admin/tabs/ImportTab";
 import { useTheme } from "../contexts/ThemeContext";
 
 /**
@@ -15,7 +16,7 @@ import { useTheme } from "../contexts/ThemeContext";
 type TabValue =
     | "motoristas" | "veiculos" | "turnos" | "corridas"
     | "financeiro" | "manutencao" | "pneus"
-    | "analise" | "fraude";
+    | "analise" | "fraude" | "importar";
 
 interface TabItem {
     value: TabValue;
@@ -32,7 +33,8 @@ const tabs: TabItem[] = [
     { value: "manutencao", label: "Manutenção" },
     { value: "pneus", label: "Pneus" },
     { value: "analise", label: "Análise" },
-    { value: "fraude", label: "Fraude" }
+    { value: "fraude", label: "Fraude" },
+    { value: "importar", label: "Importar" }
 ];
 
 export default function Admin() {
@@ -206,6 +208,7 @@ export default function Admin() {
                                 {activeTab === "pneus" && <div className="p-4 text-center text-gray-500">Módulo Pneus em migração</div>}
                                 {activeTab === "analise" && <div className="p-4 text-center text-gray-500">Módulo Análise em migração</div>}
                                 {activeTab === "fraude" && <div className="p-4 text-center text-gray-500">Módulo Fraude em migração</div>}
+                                {activeTab === "importar" && <ImportTab />}
                             </div>
                         </div>
                     </div>
