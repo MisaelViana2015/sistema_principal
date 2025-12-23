@@ -599,29 +599,4 @@
   .glitch:hover {
     animation: glitch 0.3s ease;
   }
-
-  /* Custom Scrollbar */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary) / 0.3);
-    border-radius: 3px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.6);
-  }
-  
-  /* Firefox */
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--primary) / 0.3) transparent;
-  }
 }

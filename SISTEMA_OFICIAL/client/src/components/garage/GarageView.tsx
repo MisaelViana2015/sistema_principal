@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Car, TrendingUp, TrendingDown, Wrench, CheckCircle, Star, DollarSign, Gauge, Activity, Cpu, Shield, Flame } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { vehiclesService } from "../../modules/vehicles/vehicles.service";
 import { Vehicle } from "../../../../shared/schema";
 
@@ -13,16 +14,16 @@ import dolphinPreto from "@/assets/vehicles/dolphin-preto.png";
 const vehicleImages = [dolphinAzul, dolphinBranco, dolphinPreto];
 
 interface VehicleWithUI extends Vehicle {
-  image: string;
-  isFavorite: boolean;
-  status: "disponivel" | "manutencao" | "em_uso";
-  stats: {
-    revenue: number;
-    kmTotal: number;
-    corridas: number;
-    meta: number;
-    metaLastMonth: number;
-  };
+    image: string;
+    isFavorite: boolean;
+    status: "disponivel" | "manutencao" | "em_uso";
+    stats: {
+        revenue: number;
+        kmTotal: number;
+        corridas: number;
+        meta: number;
+        metaLastMonth: number;
+    };
 }
 
 type FilterType = "todos" | "ativos" | "favoritos";
@@ -67,6 +68,7 @@ const GarageView = () => {
     const [filter, setFilter] = useState<FilterType>("todos");
     const [vehicles, setVehicles] = useState<VehicleWithUI[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
         loadData();
@@ -81,7 +83,7 @@ const GarageView = () => {
                 // Logic for Image: Pick based on ID char or rotating index
                 image: vehicleImages[index % vehicleImages.length],
                 // Logic for Favorite: Mocked for now (could be local storage)
-                isFavorite: false, 
+                isFavorite: false,
                 // Logic for Status
                 status: !v.isActive ? "manutencao" : (v.currentShiftId ? "em_uso" : "disponivel"),
                 // Logic for Stats (Placeholder until we have aggregation endpoint)
@@ -141,8 +143,8 @@ const GarageView = () => {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
                 <div className="flex flex-col items-center gap-4">
-                     <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                     <p className="font-display text-primary animate-pulse">CARREGANDO SISTEMA...</p>
+                    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="font-display text-primary animate-pulse">CARREGANDO SISTEMA...</p>
                 </div>
             </div>
         )
@@ -269,8 +271,8 @@ const GarageView = () => {
                             key={f}
                             onClick={() => setFilter(f)}
                             className={`px-5 py-2 rounded-lg text-sm font-display font-bold tracking-wider transition-all duration-300 ${filter === f
-                                    ? "bg-primary/20 text-primary shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
-                                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                                ? "bg-primary/20 text-primary shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
+                                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                                 }`}
                         >
                             {f.toUpperCase()}
@@ -345,8 +347,8 @@ const GarageView = () => {
                                             </p>
                                         </div>
                                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border ${vehicle.status === "disponivel" ? "bg-primary/10 border-primary/30 text-primary" :
-                                                vehicle.status === "em_uso" ? "bg-racing-orange/10 border-racing-orange/30 text-racing-orange" :
-                                                    "bg-warning/10 border-warning/30 text-warning"
+                                            vehicle.status === "em_uso" ? "bg-racing-orange/10 border-racing-orange/30 text-racing-orange" :
+                                                "bg-warning/10 border-warning/30 text-warning"
                                             }`}>
                                             <Car className="w-7 h-7" />
                                         </div>
@@ -412,7 +414,10 @@ const GarageView = () => {
                                     </div>
 
                                     {/* Action Button */}
-                                    <Button className="w-full h-14 btn-futuristic rounded-xl text-primary-foreground">
+                                    <Button
+                                        onClick={() => navigate(`/vehicle/${vehicle.id}`)}
+                                        className="w-full h-14 btn-futuristic rounded-xl text-primary-foreground"
+                                    >
                                         <span className="relative z-10 flex items-center gap-2">
                                             <Cpu className="w-5 h-5" />
                                             ACESSAR VEÍCULO

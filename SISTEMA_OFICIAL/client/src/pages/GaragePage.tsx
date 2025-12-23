@@ -230,7 +230,7 @@ export default function GaragePage() {
                                     <div className="mt-auto">
                                         <button
                                             onClick={() => handleAccessVehicle(vehicle)}
-                                            className="w-full h-12 btn-futuristic font-bold uppercase tracking-wider flex items-center justify-center gap-2 group-hover:bg-primary/20 transition-all"
+                                            className="w-full h-12 btn-futuristic rounded-xl font-bold uppercase tracking-wider flex items-center justify-center gap-2 group-hover:bg-primary/20 transition-all"
                                         >
                                             {hasActiveShiftHere ? 'Continuar Turno' : 'Acessar Veículo'}
                                             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -310,7 +310,7 @@ export default function GaragePage() {
                             <button
                                 onClick={handleStartShift}
                                 disabled={isStartingShift || !kmInicial}
-                                className="w-full h-14 btn-futuristic text-lg font-bold uppercase tracking-wider flex items-center justify-center gap-2"
+                                className="w-full h-14 btn-futuristic rounded-xl text-lg font-bold uppercase tracking-wider flex items-center justify-center gap-2"
                             >
                                 {isStartingShift ? (
                                     <span className="animate-pulse">Iniciando...</span>
