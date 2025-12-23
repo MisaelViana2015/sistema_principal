@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import MainLayout from "../components/MainLayout";
+import MainLayout from "../../../components/MainLayout";
 import { Wallet, Calendar, Download, TrendingUp, TrendingDown, DollarSign, User, Clock, ChevronLeft, ChevronRight, Loader2, FileDown, Gauge, Calculator, Car, Ticket } from "lucide-react";
-import { useTheme } from "../contexts/ThemeContext";
-import { useAuth } from "../contexts/AuthContext";
-import { shiftsService } from "../modules/shifts/shifts.service";
-import { ridesService, RideWithDetails } from "../modules/rides/rides.service";
-import { driversService } from "../modules/drivers/drivers.service";
-import { Driver } from "../../../shared/schema";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { useAuth } from "../../../contexts/AuthContext";
+import { shiftsService } from "../../shifts/shifts.service";
+import { ridesService, RideWithDetails } from "../../rides/rides.service";
+import { driversService } from "../../drivers/drivers.service";
+import { Driver } from "../../../../../shared/schema";
 
 // Date helpers 
 const startOfDay = (d: Date) => { const n = new Date(d); n.setHours(0, 0, 0, 0); return n; };
@@ -56,7 +56,7 @@ interface ShiftWithDetails {
     repasseMotorista?: number;
 }
 
-export default function CaixaPage() {
+export default function DriverFinancePage() {
     const { theme } = useTheme();
     const { user, isAdmin } = useAuth(); // isAdmin is available in context
     const isDark = theme === 'dark';

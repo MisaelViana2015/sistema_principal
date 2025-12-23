@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import MainLayout from "../components/MainLayout";
+import MainLayout from "../../../components/MainLayout";
 import { Calendar, Clock, Car, User, Filter, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { ridesService, RideWithDetails } from "../modules/rides/rides.service";
-import { driversService } from "../modules/drivers/drivers.service";
-import { Driver } from "../../../shared/schema";
-import { useAuth } from "../contexts/AuthContext";
+import { ridesService, RideWithDetails } from "../rides.service";
+import { driversService } from "../../drivers/drivers.service";
+import { Driver } from "../../../../../shared/schema";
+import { useAuth } from "../../../contexts/AuthContext";
 
-// Date helpers
 // Date helpers
 const toLocalISOString = (d: Date) => {
     const pad = (n: number) => n.toString().padStart(2, '0');
@@ -25,8 +24,7 @@ const startOfWeek = (d: Date) => {
     // If we want Sunday as start: const diff = n.getDate() - day;
     // Brazil usually treats Sunday as start, or Monday. Let's assume Monday as start for Work weeks?
     // Actually date-fns startOfWeek default is Sunday. Locales change it. pt-BR is Monday?
-    // Let's stick to Sunday as start to be safe or Monday.
-    // Let's use Sunday based start for now to be simple.
+    // Let's stick to Sunday as start to be simple.
     const diffSunday = n.getDate() - day;
     n.setDate(diffSunday);
     n.setHours(0, 0, 0, 0);
@@ -59,7 +57,7 @@ const s = {
     rideCard: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '0.5rem', marginBottom: '0.5rem' }
 };
 
-export default function CorridasPage() {
+export default function RidesHistoryPage() {
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
 

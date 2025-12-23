@@ -1,9 +1,9 @@
-import MainLayout from "../components/MainLayout";
+import MainLayout from "../../../components/MainLayout";
 import { TrendingUp, Calendar, Smartphone, User, Clock, Briefcase, DollarSign, Zap, Trophy, Wallet } from "lucide-react";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../../../contexts/ThemeContext";
 import { useState } from "react";
 
-export default function DesempenhoPage() {
+export default function PerformancePage() {
     const { theme } = useTheme();
     const isDark = theme === 'dark';
     const [periodo, setPeriodo] = useState<"dia" | "semana" | "mes">("semana");

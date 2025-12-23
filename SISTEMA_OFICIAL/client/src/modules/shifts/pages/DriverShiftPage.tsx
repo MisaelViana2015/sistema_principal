@@ -1,21 +1,21 @@
 
-import { getVehicleImage } from "../lib/vehicleAssets";
+import { getVehicleImage } from "../../../lib/vehicleAssets";
 import React, { useState, useEffect } from "react";
-import MainLayout from "../components/MainLayout";
+import MainLayout from "../../../components/MainLayout";
 import {
     Car, Clock, Play, RotateCcw, CheckCircle2,
     Plus, DollarSign, TrendingUp, Building, User, Wallet, History, X,
     Zap, Tag, Home, ShoppingCart, Package, Wifi, Phone, Users, Fuel, Utensils, Smartphone, Wrench,
     ArrowLeft, LogOut
 } from "lucide-react";
-import { useTheme } from "../contexts/ThemeContext";
-import { useAuth } from "../contexts/AuthContext";
-import { vehiclesService } from "../modules/vehicles/vehicles.service";
-import { shiftsService } from "../modules/shifts/shifts.service";
-import { ridesService, RideWithDetails } from "../modules/rides/rides.service";
-import { Vehicle } from "../../../shared/schema";
-import { api } from "../lib/api";
-import { AVAILABLE_ICONS, AVAILABLE_COLORS } from "../lib/costTypes";
+import { useTheme } from "../../../contexts/ThemeContext";
+import { useAuth } from "../../../contexts/AuthContext";
+import { vehiclesService } from "../../vehicles/vehicles.service";
+import { shiftsService } from "../shifts.service";
+import { ridesService, RideWithDetails } from "../../rides/rides.service";
+import { Vehicle } from "../../../../../shared/schema";
+import { api } from "../../../lib/api";
+import { AVAILABLE_ICONS, AVAILABLE_COLORS } from "../../../lib/costTypes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +24,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 type ViewMode = "dashboard" | "add_ride" | "add_cost" | "finish_shift";
 
-export default function TurnoPage() {
+export default function DriverShiftPage() {
     const { theme } = useTheme();
     const { user } = useAuth();
     const isDark = theme === 'dark';

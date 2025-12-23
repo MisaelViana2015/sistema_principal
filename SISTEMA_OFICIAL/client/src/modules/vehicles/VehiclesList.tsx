@@ -4,8 +4,7 @@ import { driversService } from "../drivers/drivers.service";
 import { Vehicle, Driver } from "../../../../shared/schema";
 import { Car, AlertCircle, CheckCircle, Wrench, Gauge, Plus, Disc, X, Save, Edit2, Trash2, Image as ImageIcon } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
-import ManutencoesTabLegacy from "../../pages/replit/tabs/ManutencoesTabLegacy";
-import PneusTabLegacy from "../../pages/replit/tabs/PneusTabLegacy";
+
 import { api } from "../../lib/api";
 
 export default function VehiclesList() {
@@ -513,14 +512,18 @@ export default function VehiclesList() {
             )}
 
             {activeTab === 'manutencao' && (
-                <div className="animate-in fade-in duration-300">
-                    <ManutencoesTabLegacy />
+                <div className="p-8 text-center text-gray-500">
+                    <Wrench className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-lg font-semibold mb-2">Módulo em Migração</p>
+                    <p className="text-sm">A funcionalidade de manutenções está sendo migrada para a nova estrutura.</p>
                 </div>
             )}
 
             {activeTab === 'pneus' && (
-                <div className="animate-in fade-in duration-300">
-                    <PneusTabLegacy />
+                <div className="p-8 text-center text-gray-500">
+                    <Disc className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-lg font-semibold mb-2">Módulo em Migração</p>
+                    <p className="text-sm">A funcionalidade de pneus está sendo migrada para a nova estrutura.</p>
                 </div>
             )}
         </div>

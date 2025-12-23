@@ -12,13 +12,14 @@ import { lazy, Suspense } from "react";
 const VeiculosPage = lazy(() => import("./modules/vehicles/VehiclesPage"));
 const DriversPage = lazy(() => import("./modules/drivers/DriversPage"));
 const ShiftsPage = lazy(() => import("./modules/shifts/ShiftsPage"));
+const DriverShiftPage = lazy(() => import("./modules/shifts/pages/DriverShiftPage"));
 // const RidesPage = lazy(() => import("./modules/rides/RidesPage")); // Unused
+const DriverFinancePage = lazy(() => import("./modules/financial/pages/DriverFinancePage"));
+const RidesHistoryPage = lazy(() => import("./modules/rides/pages/RidesHistoryPage"));
+const PerformancePage = lazy(() => import("./modules/performance/pages/PerformancePage"));
+const GaragePage = lazy(() => import("./modules/garage/pages/GaragePage"));
 
-import TurnoPage from "./pages/TurnoPage";
-import GaragePage from "./pages/GaragePage"; // New Garage Page
-import CorridasPage from "./pages/CorridasPage";
-import CaixaPage from "./pages/CaixaPage";
-import DesempenhoPage from "./pages/DesempenhoPage";
+
 import AdminDashboard from "./pages/AdminDashboard";
 
 import MainLayout from "./components/MainLayout"; // Not currently used in layout but imported
@@ -42,11 +43,31 @@ function App() {
                                 <Route path="/" element={<Navigate to="/garagem" replace />} />
 
                                 {/* Shared Routes (Driver/Admin) - Motoristas veem apenas seus dados */}
-                                <Route path="/garagem" element={<GaragePage />} />
-                                <Route path="/turno" element={<TurnoPage />} />
-                                <Route path="/corridas" element={<CorridasPage />} />
-                                <Route path="/caixa" element={<CaixaPage />} />
-                                <Route path="/desempenho" element={<DesempenhoPage />} />
+                                <Route path="/garagem" element={
+                                    <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                        <GaragePage />
+                                    </Suspense>
+                                } />
+                                <Route path="/turno" element={
+                                    <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                        <DriverShiftPage />
+                                    </Suspense>
+                                } />
+                                <Route path="/corridas" element={
+                                    <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                        <RidesHistoryPage />
+                                    </Suspense>
+                                } />
+                                <Route path="/caixa" element={
+                                    <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                        <DriverFinancePage />
+                                    </Suspense>
+                                } />
+                                <Route path="/desempenho" element={
+                                    <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                        <PerformancePage />
+                                    </Suspense>
+                                } />
 
                                 {/* Admin Only Routes */}
                                 <Route element={<AdminRoute />}>

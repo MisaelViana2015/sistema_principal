@@ -6,11 +6,6 @@ import DriversList from "../modules/drivers/DriversList";
 import VehiclesList from "../modules/vehicles/VehiclesList";
 import ShiftsList from "../modules/shifts/ShiftsList";
 import { RidesList } from "../modules/rides/RidesList";
-import ManutencoesTabLegacy from "./replit/tabs/ManutencoesTabLegacy";
-import PneusTabLegacy from "./replit/tabs/PneusTabLegacy";
-import AnaliseTabLegacy from "./replit/tabs/AnaliseTabLegacy";
-import FraudeTabLegacy from "./replit/tabs/FraudeTabLegacy";
-import CustosTabLegacy from "./replit/tabs/CustosTabLegacy";
 import { useTheme } from "../contexts/ThemeContext";
 
 /**
@@ -206,11 +201,11 @@ export default function Admin() {
                                 {activeTab === "veiculos" && <VehiclesList />}
                                 {activeTab === "turnos" && <ShiftsList />}
                                 {activeTab === "corridas" && <RidesList />}
-                                {activeTab === "financeiro" && <CustosTabLegacy />}
-                                {activeTab === "manutencao" && <ManutencoesTabLegacy />}
-                                {activeTab === "pneus" && <PneusTabLegacy />}
-                                {activeTab === "analise" && <AnaliseTabLegacy />}
-                                {activeTab === "fraude" && <FraudeTabLegacy />}
+                                {activeTab === "financeiro" && <div className="p-4 text-center text-gray-500">Módulo Financeiro em migração</div>}
+                                {activeTab === "manutencao" && <div className="p-4 text-center text-gray-500">Módulo Manutenção em migração</div>}
+                                {activeTab === "pneus" && <div className="p-4 text-center text-gray-500">Módulo Pneus em migração</div>}
+                                {activeTab === "analise" && <div className="p-4 text-center text-gray-500">Módulo Análise em migração</div>}
+                                {activeTab === "fraude" && <div className="p-4 text-center text-gray-500">Módulo Fraude em migração</div>}
                             </div>
                         </div>
                     </div>

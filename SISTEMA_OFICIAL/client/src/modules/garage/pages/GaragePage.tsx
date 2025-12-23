@@ -2,14 +2,14 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import MainLayout from "../components/MainLayout";
-import { shiftsService } from "../modules/shifts/shifts.service";
-import { useAuth } from "../contexts/AuthContext";
+import MainLayout from "../../../components/MainLayout";
+import { shiftsService } from "../../shifts/shifts.service";
+import { useAuth } from "../../../contexts/AuthContext";
 import { Zap, AlertTriangle, ShieldCheck, X, Activity } from "lucide-react";
-import { useToast } from "../components/ui/use-toast";
-import { Button } from "../components/ui/button";
-import { useVehicles, VehicleWithUI } from "../hooks/useVehicles";
-import { VehicleCard } from "../components/garage/VehicleCard";
+import { useToast } from "../../../components/ui/use-toast";
+import { Button } from "../../../components/ui/button";
+import { useVehicles, VehicleWithUI } from "../../../hooks/useVehicles";
+import { VehicleCard } from "../../../components/garage/VehicleCard";
 
 export default function GaragePage() {
     const { user } = useAuth();
