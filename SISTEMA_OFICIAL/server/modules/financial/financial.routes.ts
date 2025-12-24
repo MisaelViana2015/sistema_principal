@@ -23,7 +23,7 @@ router.get("/fix-fixed-costs-schema", async (req, res) => {
 router.get("/test-recurrence", async (req, res) => {
     try {
         const { db } = await import("../../core/db/connection.js");
-        const { fixedCosts, fixedCostInstallments } = await import("../../shared/schema.js");
+        const { fixedCosts, fixedCostInstallments } = await import("../../../shared/schema.js");
         const { randomUUID } = await import("crypto");
 
         const id = randomUUID();
