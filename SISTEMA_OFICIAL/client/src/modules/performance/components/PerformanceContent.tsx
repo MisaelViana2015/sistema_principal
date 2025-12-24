@@ -67,10 +67,7 @@ export default function PerformanceContent() {
     const [selectedYear, setSelectedYear] = useState("todos");
     const [selectedMonth, setSelectedMonth] = useState("todos");
 
-    // Fixed Costs Modal State
-    const [isFixedCostModalOpen, setIsFixedCostModalOpen] = useState(false);
-    const [editingFixedCost, setEditingFixedCost] = useState<any>(null);
-    const [fixedCostForm, setFixedCostForm] = useState({ name: "", value: "", frequency: "Mensal", dueDay: 5 });
+
 
     const queryClient = useQueryClient();
 
@@ -140,9 +137,6 @@ export default function PerformanceContent() {
         mutationFn: async (data: any) => { return await api.post("/financial/fixed-costs", data).then(r => r.data) },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["fixedCosts"] });
-            setIsFixedCostModalOpen(false);
-            setEditingFixedCost(null);
-            setFixedCostForm({ name: "", value: "", frequency: "Mensal", dueDay: 5 });
         }
     });
 
@@ -150,9 +144,6 @@ export default function PerformanceContent() {
         mutationFn: async (data: any) => { return await api.put(`/financial/fixed-costs/${data.id}`, data).then(r => r.data) },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["fixedCosts"] });
-            setIsFixedCostModalOpen(false);
-            setEditingFixedCost(null);
-            setFixedCostForm({ name: "", value: "", frequency: "Mensal", dueDay: 5 });
         }
     });
 
@@ -163,26 +154,9 @@ export default function PerformanceContent() {
         }
     });
 
-    const handleOpenFixedCostModal = (cost?: any) => {
-        if (cost) {
-            setEditingFixedCost(cost);
-            setFixedCostForm({ name: cost.name, value: cost.value, frequency: cost.frequency, dueDay: cost.dueDay });
-        } else {
-            setEditingFixedCost(null);
-            setFixedCostForm({ name: "", value: "", frequency: "Mensal", dueDay: 5 });
-        }
-        setIsFixedCostModalOpen(true);
-    };
 
-    const handleSaveFixedCost = () => {
-        if (!fixedCostForm.name || !fixedCostForm.value) return;
 
-        if (editingFixedCost) {
-            updateFixedCostMutation.mutate({ id: editingFixedCost.id, ...fixedCostForm });
-        } else {
-            createFixedCostMutation.mutate(fixedCostForm);
-        }
-    };
+
 
     const getBadgeStyle = (color: string) => {
         const isDarkTheme = theme === "dark";
@@ -803,15 +777,28 @@ export default function PerformanceContent() {
                         costs={fixedCosts}
                         installments={installments}
                         vehicles={vehicles}
+                        costTypes={costTypes}
                         onSave={(data) => {
+                            // Construct Start Date
+                            let startDate = data.specificDate;
+                            let dueDay = data.specificDate ? new Date(data.specificDate).getDate() : 5; // Default due day 5
+
+                            if (!startDate && data.monthYear) {
+                                startDate = `${data.monthYear}-05`; // Default to 5th of the selected month
+                                dueDay = 5;
+                            } else if (!startDate) {
+                                startDate = new Date().toISOString();
+                                dueDay = new Date().getDate();
+                            }
+
                             createFixedCostMutation.mutate({
                                 ...data,
                                 name: data.description,
                                 value: Number(data.value),
                                 frequency: data.isRecurring ? "monthly" : "one_time",
-                                dueDay: data.specificDate ? new Date(data.specificDate).getDate() : 1,
-                                totalInstallments: data.totalInstallments || 1, // New field support
-                                startDate: data.specificDate || new Date().toISOString()
+                                dueDay: dueDay,
+                                totalInstallments: data.totalInstallments || 1,
+                                startDate: startDate
                             });
                         }}
                         onDelete={(id) => deleteFixedCostMutation.mutate(id)}
@@ -866,62 +853,7 @@ export default function PerformanceContent() {
                 )
             }
 
-            {/* Modal de Custos Fixos */}
-            {isFixedCostModalOpen && (
-                <div style={{
-                    position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50
-                }}>
-                    <div style={{
-                        backgroundColor: isDark ? "#1e293b" : "#ffffff",
-                        padding: "1.5rem", borderRadius: "0.5rem", width: "400px",
-                        boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                        border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`
-                    }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-                            <h3 style={styles.title}>{editingFixedCost ? "Editar Custo Fixo" : "Novo Custo Fixo"}</h3>
-                            <button onClick={() => setIsFixedCostModalOpen(false)} style={styles.actionButton}><X size={20} /></button>
-                        </div>
 
-                        <div style={styles.inputGroup}>
-                            <label style={styles.label}>Nome</label>
-                            <input
-                                style={{ ...styles.select, cursor: 'text' }}
-                                value={fixedCostForm.name}
-                                onChange={e => setFixedCostForm({ ...fixedCostForm, name: e.target.value })}
-                                placeholder="Ex: Aluguel, Internet..."
-                            />
-                        </div>
-                        <div style={{ ...styles.inputGroup, marginTop: "1rem" }}>
-                            <label style={styles.label}>Valor (R$)</label>
-                            <input
-                                style={{ ...styles.select, cursor: 'text' }}
-                                type="number"
-                                value={fixedCostForm.value}
-                                onChange={e => setFixedCostForm({ ...fixedCostForm, value: e.target.value })}
-                                placeholder="0.00"
-                            />
-                        </div>
-                        <div style={{ ...styles.inputGroup, marginTop: "1rem" }}>
-                            <label style={styles.label}>Dia de Vencimento</label>
-                            <input
-                                style={{ ...styles.select, cursor: 'text' }}
-                                type="number"
-                                max={31} min={1}
-                                value={fixedCostForm.dueDay}
-                                onChange={e => setFixedCostForm({ ...fixedCostForm, dueDay: Number(e.target.value) })}
-                            />
-                        </div>
-
-                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.5rem", gap: "0.5rem" }}>
-                            <button onClick={() => setIsFixedCostModalOpen(false)} style={{ ...styles.select, width: "auto" }}>Cancelar</button>
-                            <button onClick={handleSaveFixedCost} style={{ ...styles.primaryButton, marginBottom: 0 }}>
-                                <Save size={16} /> Salvar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {
                 activeSubTab !== "financeiro" && activeSubTab !== "repasses" && activeSubTab !== "tipos-custo" && activeSubTab !== "custos-fixos" && activeSubTab !== "motoristas" && activeSubTab !== "manutencao" && activeSubTab !== "veiculos" && (

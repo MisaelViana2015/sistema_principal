@@ -59,6 +59,7 @@ export async function createFixedCost(req: Request, res: Response) {
             frequency: validatedData.frequency,
             dueDay: validatedData.dueDay,
             vehicleId: validatedData.vehicleId,
+            costTypeId: validatedData.costTypeId,
             notes: validatedData.notes,
             totalInstallments: validatedData.totalInstallments,
             startDate: validatedData.startDate ? validatedData.startDate.toISOString() : undefined // Service/Repo expects Date or string? Repo uses new Date(startDate) so string is safer if repository expects string, but schema says timestamp. Repository: `newCost.startDate` is used in `new Date(newCost.startDate)`. Drizzle handles Date object to timestamp.

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Plus, X, Edit, Trash2, Calendar, Filter } from "lucide-react";
+import { Plus, X, Edit, Trash2, Calendar, Filter, RefreshCw } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -35,19 +35,15 @@ interface Vehicle {
     model: string;
 }
 
-interface FixedCostsManagerProps {
+export interface FixedCostsManagerProps {
     costs: FixedCost[];
     installments: Installment[];
     vehicles: Vehicle[];
+    costTypes: any[];
     onSave: (cost: any) => void;
     onDelete: (id: string) => void;
     onUpdateInstallment: (id: string, data: any) => void;
 }
-
-const COST_TYPES = [
-    "Prestação", "Seguro", "IPVA", "Energia", "Licenciamento",
-    "Empréstimo", "Rota77", "Outro"
-];
 
 // Cores baseadas nos screenshots
 const COLORS = {
@@ -57,7 +53,7 @@ const COLORS = {
     interest: { bg: "#f3e8ff", text: "#7e22ce", bar: "#ef4444" }   // Roxo claro / Vermelho (Juros)
 };
 
-export function FixedCostsManager({ costs, installments, vehicles, onSave, onDelete, onUpdateInstallment }: FixedCostsManagerProps) {
+export function FixedCostsManager({ costs, installments, vehicles, costTypes, onSave, onDelete, onUpdateInstallment }: FixedCostsManagerProps) {
     const { theme } = useTheme();
     const isDark = theme === "dark";
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,8 +67,8 @@ export function FixedCostsManager({ costs, installments, vehicles, onSave, onDel
 
     // Form State
     const [formData, setFormData] = useState({
-        vehicleId: "", type: "", description: "", value: "",
-        specificDate: "", isRecurring: false, totalInstallments: "1",
+        vehicleId: "", costTypeId: "", description: "", value: "",
+        specificDate: "", monthYear: "", isRecurring: false, totalInstallments: "12",
         vendor: "", notes: ""
     });
 
@@ -277,11 +273,16 @@ export function FixedCostsManager({ costs, installments, vehicles, onSave, onDel
         // Modal (Simplified copy from prev)
         modalOverlay: { position: "fixed" as const, top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 },
         modalContent: { backgroundColor: isDark ? "#1e293b" : "#ffffff", padding: "2rem", borderRadius: "0.5rem", width: "600px", maxWidth: "95%" },
-        input: { width: "100%", padding: "0.5rem", marginTop: "0.25rem", borderRadius: "0.375rem", border: `1px solid ${isDark ? "#475569" : "#cbd5e1"}`, backgroundColor: isDark ? "#334155" : "#ffffff", color: isDark ? "#f1f5f9" : "#0f172a" }
+        input: { width: "100%", padding: "0.5rem", marginTop: "0.25rem", borderRadius: "0.375rem", border: `1px solid ${isDark ? "#475569" : "#cbd5e1"}`, backgroundColor: isDark ? "#334155" : "#ffffff", color: isDark ? "#f1f5f9" : "#0f172a" },
+        label: { fontSize: "0.8rem", fontWeight: 600, color: isDark ? "#e2e8f0" : "#475569" }
     };
 
     const handleOpenModal = () => {
-        setFormData({ vehicleId: "", type: "", description: "", value: "", specificDate: "", isRecurring: false, totalInstallments: "1", vendor: "", notes: "" });
+        setFormData({
+            vehicleId: "", costTypeId: "", description: "", value: "",
+            specificDate: "", monthYear: "", isRecurring: false, totalInstallments: "12",
+            vendor: "", notes: ""
+        });
         setIsModalOpen(true);
     };
 
@@ -448,49 +449,110 @@ export function FixedCostsManager({ costs, installments, vehicles, onSave, onDel
             {/* Modal (Simplified structure to match previous functionality) */}
             {isModalOpen && (
                 <div style={styles.modalOverlay}>
-                    <div style={styles.modalContent}>
+                    <div style={{ ...styles.modalContent, width: "600px" }}> {/* Wider modal */}
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-                            <h3>Novo Custo</h3>
-                            <button onClick={() => setIsModalOpen(false)} style={{ background: "transparent", border: "none", color: styles.subtitle.color, cursor: "pointer" }}><X /></button>
+                            <h3 style={styles.title}>Novo Custo Fixo</h3>
+                            <button onClick={() => setIsModalOpen(false)} style={{ background: "transparent", border: "none", color: styles.subtitle.color, cursor: "pointer" }}><X size={20} /></button>
                         </div>
-                        {/* Form Fields (Reusing state for simplicity in this refactor view) */}
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+
+                        <p style={{ fontSize: "0.875rem", color: styles.subtitle.color, marginBottom: "1.5rem" }}>
+                            Cadastre um novo custo fixo do veículo
+                        </p>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
                             <div>
-                                <label style={{ fontSize: "0.8rem" }}>Veículo</label>
+                                <label style={styles.label}>Veículo</label>
                                 <select style={styles.input} value={formData.vehicleId} onChange={e => setFormData({ ...formData, vehicleId: e.target.value })}>
-                                    <option value="">Selecione</option>
-                                    {vehicles.map(v => <option key={v.id} value={v.id}>{v.plate} - {v.model}</option>)}
+                                    <option value="">Selecione o veículo</option>
+                                    {vehicles.map((v: any) => <option key={v.id} value={v.id}>{v.plate} - {v.model} {v.driverName ? `(${v.driverName})` : ''}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label style={{ fontSize: "0.8rem" }}>Tipo</label>
-                                <select style={styles.input} value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })}>
-                                    <option value="">Selecione</option>
-                                    {COST_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                <label style={styles.label}>Tipo de Custo</label>
+                                <select style={styles.input} value={formData.costTypeId} onChange={e => setFormData({ ...formData, costTypeId: e.target.value })}>
+                                    <option value="">Selecione o tipo</option>
+                                    {costTypes && costTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                 </select>
                             </div>
                         </div>
-                        <div style={{ marginTop: "1rem" }}>
-                            <label style={{ fontSize: "0.8rem" }}>Descrição</label>
-                            <input style={styles.input} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+
+                        <div style={{ marginBottom: "1rem" }}>
+                            <label style={styles.label}>Descrição</label>
+                            <input
+                                style={styles.input}
+                                placeholder="Ex: Prestação BYD Dolphin"
+                                value={formData.description}
+                                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                            />
                         </div>
-                        <div style={{ marginTop: "1rem", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem" }}>
+
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
                             <div>
-                                <label style={{ fontSize: "0.8rem" }}>Valor</label>
-                                <input type="number" style={styles.input} value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} />
+                                <label style={styles.label}>Valor (R$)</label>
+                                <input type="number" step="0.01" style={styles.input} placeholder="0.00" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} />
                             </div>
                             <div>
-                                <label style={{ fontSize: "0.8rem" }}>Parcelas</label>
-                                <input type="number" style={styles.input} value={formData.totalInstallments} onChange={e => setFormData({ ...formData, totalInstallments: e.target.value })} />
+                                <label style={styles.label}>Mês/Ano</label>
+                                <input type="month" style={styles.input} value={formData.monthYear} onChange={e => setFormData({ ...formData, monthYear: e.target.value })} />
                             </div>
                             <div>
-                                <label style={{ fontSize: "0.8rem" }}>Início</label>
+                                <label style={styles.label}>Data Específica</label>
                                 <input type="date" style={styles.input} value={formData.specificDate} onChange={e => setFormData({ ...formData, specificDate: e.target.value })} />
+                                <span style={{ fontSize: "0.7rem", color: styles.subtitle.color }}>Opcional</span>
                             </div>
                         </div>
-                        <div style={{ marginTop: "1.5rem", display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-                            <button onClick={() => setIsModalOpen(false)} style={{ padding: "0.5rem 1rem", border: "1px solid #ccc", background: "transparent", borderRadius: "0.25rem", cursor: "pointer" }}>Cancelar</button>
-                            <button onClick={() => { onSave(formData); setIsModalOpen(false); }} style={{ padding: "0.5rem 1rem", backgroundColor: "#0f172a", color: "white", border: "none", borderRadius: "0.25rem", cursor: "pointer" }}>Salvar</button>
+
+                        {/* Recurring Section */}
+                        <div style={{ marginBottom: "1.5rem", borderTop: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, paddingTop: "1rem" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                                <RefreshCw size={16} />
+                                <span style={{ fontWeight: 600 }}>Custos Recorrentes</span>
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                                <input
+                                    type="checkbox"
+                                    id="isRecurring"
+                                    checked={formData.isRecurring}
+                                    onChange={e => setFormData({ ...formData, isRecurring: e.target.checked })}
+                                    style={{ width: "16px", height: "16px" }}
+                                />
+                                <label htmlFor="isRecurring" style={{ fontSize: "0.9rem", cursor: "pointer" }}>Repetir mensalmente</label>
+                            </div>
+                            <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginLeft: "1.5rem", marginBottom: "1rem" }}>
+                                Gera automaticamente múltiplos lançamentos mensais
+                            </p>
+
+                            {formData.isRecurring && (
+                                <div style={{ marginLeft: "1.5rem" }}>
+                                    <label style={styles.label}>Quantidade de Meses</label>
+                                    <input type="number" style={{ ...styles.input, width: "100px" }} value={formData.totalInstallments} onChange={e => setFormData({ ...formData, totalInstallments: e.target.value })} />
+                                    <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginTop: "0.25rem" }}>Será criado 1 lançamento para cada mês</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ marginBottom: "1.5rem" }}>
+                            <label style={styles.label}>Observação</label>
+                            <textarea
+                                style={{ ...styles.input, height: "80px", resize: "none" }}
+                                placeholder="Informações adicionais"
+                                value={formData.notes}
+                                onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                            />
+                        </div>
+
+                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                            <button onClick={() => setIsModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
+                            <button
+                                onClick={() => {
+                                    onSave(formData);
+                                    setIsModalOpen(false);
+                                }}
+                                style={{ ...styles.primaryButton, padding: "0.75rem 1.5rem", height: "auto" }}
+                            >
+                                Salvar
+                            </button>
                         </div>
                     </div>
                 </div>
