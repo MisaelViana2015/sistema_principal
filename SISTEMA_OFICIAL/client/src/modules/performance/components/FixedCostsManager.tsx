@@ -361,7 +361,7 @@ export function FixedCostsManager({ costs, installments, vehicles, onSave, onDel
                     <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Veículo</label>
                     <select style={styles.select} value={selectedVehicleId} onChange={e => setSelectedVehicleId(e.target.value)}>
                         <option value="all">Todos os veículos</option>
-                        {vehicles.map(v => <option key={v.id} value={v.id}>{v.plate} - {v.model}</option>)}
+                        {vehicles.map((v: any) => <option key={v.id} value={v.id}>{v.plate} - {v.model} {v.driverName ? `(${v.driverName})` : ''}</option>)}
                     </select>
                 </div>
 

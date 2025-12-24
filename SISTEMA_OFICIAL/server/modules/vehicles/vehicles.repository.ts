@@ -1,6 +1,6 @@
 
 import { db } from "../../core/db/connection.js";
-import { vehicles, NewVehicle } from "../../../shared/schema.js";
+import { vehicles, drivers, NewVehicle } from "../../../shared/schema.js";
 import { eq } from "drizzle-orm";
 
 /**
@@ -13,7 +13,21 @@ import { eq } from "drizzle-orm";
 
 export const vehiclesRepository = {
     async findAll() {
-        return await db.select().from(vehicles);
+        return await db
+            .select({
+                id: vehicles.id,
+                plate: vehicles.plate,
+                modelo: vehicles.modelo, // Note: Schema uses 'modelo'
+                motoristaPadraoId: vehicles.motoristaPadraoId,
+                isActive: vehicles.isActive,
+                currentShiftId: vehicles.currentShiftId,
+                kmInicial: vehicles.kmInicial,
+                color: vehicles.color,
+                imageUrl: vehicles.imageUrl,
+                driverName: drivers.nome
+            })
+            .from(vehicles)
+            .leftJoin(drivers, eq(vehicles.motoristaPadraoId, drivers.id));
     },
 
     async findById(id: string) {
