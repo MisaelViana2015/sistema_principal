@@ -64,8 +64,9 @@ export function FixedCostsManager({ costs, installments, vehicles, onSave, onDel
 
     // Filtros
     const [selectedVehicleId, setSelectedVehicleId] = useState<string>("all");
-    const [selectedMonthYear, setSelectedMonthYear] = useState<string>(""); // YYYY-MM format
-    const [selectedPeriod, setSelectedPeriod] = useState<string>("todos");
+    const [filterDate, setFilterDate] = useState(new Date());
+    const [showAll, setShowAll] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<'all' | 'Pago' | 'Pendente'>('all');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
 
     // Form State
@@ -174,8 +175,24 @@ export function FixedCostsManager({ costs, installments, vehicles, onSave, onDel
     const groupedInstallments = useMemo(() => {
         let filtered = installments;
 
+        // Filter by Vehicle
         if (selectedVehicleId !== "all") {
             filtered = filtered.filter(i => (i.vehicleId || "Sem Veículo") === selectedVehicleId);
+        }
+
+        // Filter by Date (if not Show All)
+        if (!showAll) {
+            const targetMonth = filterDate.getMonth();
+            const targetYear = filterDate.getFullYear();
+            filtered = filtered.filter(i => {
+                const d = new Date(i.dueDate);
+                return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
+            });
+        }
+
+        // Filter by Status
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(i => i.status === statusFilter);
         }
 
         // Ordenar por data decrescente
@@ -194,7 +211,28 @@ export function FixedCostsManager({ costs, installments, vehicles, onSave, onDel
         });
 
         return groups;
-    }, [installments, selectedVehicleId]);
+    }, [installments, selectedVehicleId, showAll, filterDate]);
+
+    // Handlers para Filtros de Data
+    const handlePrevMonth = () => {
+        setFilterDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+        setShowAll(false);
+    };
+    const handleNextMonth = () => {
+        setFilterDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+        setShowAll(false);
+    };
+    const handleCurrentMonth = () => {
+        setFilterDate(new Date());
+        setShowAll(false);
+    };
+    const handleAllMonths = () => {
+        setShowAll(true);
+    };
+
+    const monthDisplay = filterDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    const capitalizedMonthDisplay = monthDisplay.charAt(0).toUpperCase() + monthDisplay.slice(1);
+
 
 
     // --- Styles ---
@@ -221,7 +259,7 @@ export function FixedCostsManager({ costs, installments, vehicles, onSave, onDel
         chartHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" },
 
         // List Layout
-        filtersBar: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", backgroundColor: isDark ? "#1e293b" : "#ffffff", padding: "1rem", borderRadius: "0.5rem", border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}` },
+        filtersBar: { display: "flex", flexWrap: "wrap" as const, alignItems: "center" as const, gap: "1rem", backgroundColor: isDark ? "#1e293b" : "#ffffff", padding: "1rem", borderRadius: "0.5rem", border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}` },
         filterGroup: { display: "flex", flexDirection: "column" as const, gap: "0.25rem" },
         select: { padding: "0.5rem", borderRadius: "0.375rem", border: `1px solid ${isDark ? "#475569" : "#cbd5e1"}`, backgroundColor: isDark ? "#334155" : "#ffffff", color: isDark ? "#f1f5f9" : "#0f172a" },
 
@@ -292,7 +330,7 @@ export function FixedCostsManager({ costs, installments, vehicles, onSave, onDel
                             <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke={isDark ? "#334155" : "#e2e8f0"} />
                             <XAxis type="number" stroke={styles.subtitle.color} />
                             <YAxis dataKey="name" type="category" stroke={styles.subtitle.color} width={40} />
-                            <Tooltip contentStyle={{ backgroundColor: isDark ? "#1e293b" : "#ffffff" }} formatter={(val: number) => formatCurrency(val)} />
+                            <Tooltip contentStyle={{ backgroundColor: isDark ? "#1e293b" : "#ffffff" }} formatter={(val: number | undefined) => formatCurrency(Number(val) || 0)} />
                             <Legend verticalAlign="top" height={36} />
                             <Bar dataKey="Total" fill={COLORS.costs.bar} name="Custo Total" barSize={20} radius={[0, 4, 4, 0]} />
                             <Bar dataKey="Juros" fill={COLORS.interest.bar} name="Juros" barSize={20} radius={[0, 4, 4, 0]} />
@@ -318,7 +356,7 @@ export function FixedCostsManager({ costs, installments, vehicles, onSave, onDel
             </div>
 
             {/* Filters Bar */}
-            <div style={styles.filtersBar}>
+            <div style={{ ...styles.filtersBar, display: "flex" as const }}>
                 <div style={styles.filterGroup}>
                     <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Veículo</label>
                     <select style={styles.select} value={selectedVehicleId} onChange={e => setSelectedVehicleId(e.target.value)}>
@@ -326,20 +364,33 @@ export function FixedCostsManager({ costs, installments, vehicles, onSave, onDel
                         {vehicles.map(v => <option key={v.id} value={v.id}>{v.plate} - {v.model}</option>)}
                     </select>
                 </div>
+
+                {/* Buttons Group */}
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-end" }}>
+                    <button onClick={handlePrevMonth} style={styles.primaryButton}>Mês Anterior</button>
+                    <button onClick={handleCurrentMonth} style={styles.primaryButton}>Mês Atual</button>
+                    <button onClick={handleNextMonth} style={styles.primaryButton}>Mês Seguinte</button>
+                    <button onClick={handleAllMonths} style={{ ...styles.primaryButton, backgroundColor: showAll ? "#2563eb" : (isDark ? "#334155" : "#cbd5e1"), color: showAll ? "white" : (isDark ? "white" : "black") }}>
+                        Todos Meses
+                    </button>
+                </div>
+
                 <div style={styles.filterGroup}>
                     <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Mês/Ano</label>
-                    <div style={{ ...styles.select, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span>--------- de ----</span>
+                    <div style={{ ...styles.select, display: "flex", alignItems: "center", justifyContent: "space-between", minWidth: "180px" }}>
+                        <span>{showAll ? "Todos" : capitalizedMonthDisplay}</span>
                         <Calendar size={14} />
                     </div>
                 </div>
+
+                {/* Status Filter */}
                 <div style={styles.filterGroup}>
-                    <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Período</label>
-                    <select style={styles.select} value={selectedPeriod} onChange={e => setSelectedPeriod(e.target.value)}>
-                        <option value="todos">Todos</option>
-                        <option value="week">Semana</option>
-                        <option value="month">Mês</option>
-                    </select>
+                    <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Status</label>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <button onClick={() => setStatusFilter('Pago')} style={{ ...styles.primaryButton, backgroundColor: statusFilter === 'Pago' ? "#22c55e" : (isDark ? "#334155" : "#e2e8f0"), color: statusFilter === 'Pago' ? "white" : (isDark ? "#e2e8f0" : "#1e293b") }}>Pago</button>
+                        <button onClick={() => setStatusFilter('Pendente')} style={{ ...styles.primaryButton, backgroundColor: statusFilter === 'Pendente' ? "#ef4444" : (isDark ? "#334155" : "#e2e8f0"), color: statusFilter === 'Pendente' ? "white" : (isDark ? "#e2e8f0" : "#1e293b") }}>Aberto</button>
+                        <button onClick={() => setStatusFilter('all')} style={{ ...styles.primaryButton, backgroundColor: statusFilter === 'all' ? (isDark ? "#475569" : "#94a3b8") : (isDark ? "#334155" : "#e2e8f0"), color: statusFilter === 'all' ? "white" : (isDark ? "#e2e8f0" : "#1e293b") }}>Ambos</button>
+                    </div>
                 </div>
             </div>
 

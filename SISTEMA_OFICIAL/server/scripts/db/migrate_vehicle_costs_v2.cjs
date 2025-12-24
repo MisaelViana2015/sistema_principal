@@ -1,39 +1,35 @@
-import "dotenv/config";
-import pg from "pg";
-import { randomUUID } from 'crypto';
 
-const { Pool } = pg;
+const { Client } = require('pg');
+const { randomUUID } = require('crypto');
 
-// Use pool for raw query on legacy table
-const pool = new Pool({
+const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: { rejectUnauthorized: false }
 });
 
 async function migrate() {
     console.log("🚀 Iniciando migração de Vehicle Costs -> Fixed Costs...");
+    await client.connect();
 
     try {
         // 1. Buscar todos os custos de veículo "Prestação"
-        const result = await pool.query(`
+        const result = await client.query(`
             SELECT * FROM vehicle_costs 
             WHERE tipo ILIKE '%Prestação%' 
             ORDER BY data_referencia ASC
         `);
 
         const rawCosts = result.rows;
-        console.log(`📊 Encontrados ${rawCosts.length} registros de prestação/financiamento.`);
+        console.log(`📊 Encontrados ${rawCosts.length} registros.`);
 
         if (rawCosts.length === 0) {
             console.log("✅ Nada a migrar.");
             process.exit(0);
         }
 
-        // 2. Agrupar por "Descrição Base" (ex: "Santander")
         const groups = {};
 
         for (const cost of rawCosts) {
-            // Regex to extract base name "Santander" from "Santander (1/60)"
             const match = cost.descricao.match(/^(.*?)\s*\((\d+)\/(\d+)\)$/);
 
             let baseName = cost.descricao;
@@ -47,37 +43,29 @@ async function migrate() {
             }
 
             const key = `${baseName}_${cost.vehicle_id}`;
+            if (!groups[key]) groups[key] = [];
 
-            if (!groups[key]) {
-                groups[key] = [];
-            }
-            cost._meta = {
-                baseName,
-                currentInstallment,
-                totalInstallments
-            };
+            cost._meta = { baseName, currentInstallment, totalInstallments };
             groups[key].push(cost);
         }
 
-        console.log(`📦 Grupos identificados: ${Object.keys(groups).length}`);
+        console.log(`📦 Grupos: ${Object.keys(groups).length}`);
 
-        // 3. Processar cada grupo
         for (const groupKey of Object.keys(groups)) {
             const items = groups[groupKey];
             const firstItem = items[0];
             const meta = firstItem._meta;
+            const total = items[0]._meta.totalInstallments || items.length;
 
-            console.log(`\n🔹 Processando grupo: ${meta.baseName} (Veículo: ${firstItem.vehicle_id})`);
+            console.log(`🔹 Processando: ${meta.baseName}`);
 
-            // Check if Cost Type exists
             let costTypeId = null;
-            const typeRes = await pool.query(`SELECT id FROM cost_types WHERE name = 'Financiamento' LIMIT 1`);
+            const typeRes = await client.query(`SELECT id FROM cost_types WHERE name = 'Financiamento' LIMIT 1`);
 
             if (typeRes.rows.length > 0) {
                 costTypeId = typeRes.rows[0].id;
             } else {
-                // Create basic type
-                const typeInsert = await pool.query(`
+                const typeInsert = await client.query(`
                     INSERT INTO cost_types (id, name, category, icon, color, is_active)
                     VALUES ($1, $2, $3, $4, $5, $6)
                     RETURNING id
@@ -85,9 +73,8 @@ async function migrate() {
                 costTypeId = typeInsert.rows[0].id;
             }
 
-            // Create Parent Fixed Cost
             const fixedCostId = randomUUID();
-            await pool.query(`
+            await client.query(`
                 INSERT INTO fixed_costs (id, name, valor, frequency, due_day, cost_type_id, vehicle_id, vendor, total_installments, description, is_active)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             `, [
@@ -99,24 +86,18 @@ async function migrate() {
                 costTypeId,
                 firstItem.vehicle_id,
                 meta.baseName,
-                items[0]._meta.totalInstallments || items.length,
+                total,
                 "Migrado automaticamente de vehicle_costs",
                 true
             ]);
 
-            console.log(`✅ Fixed Cost criado: ${fixedCostId}`);
-
-            // Create Installments
-            let installmentsCreated = 0;
             for (const item of items) {
                 const itemMeta = item._meta;
-
-                // Map status
                 let status = 'Pendente';
                 if (item.status === 'pago') status = 'Pago';
                 if (item.status === 'atrasado') status = 'Atrasado';
 
-                await pool.query(`
+                await client.query(`
                     INSERT INTO fixed_cost_installments (id, fixed_cost_id, installment_number, due_date, valor, status, paid_amount, paid_date, notes)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 `, [
@@ -130,19 +111,15 @@ async function migrate() {
                     item.data_pagamento ? new Date(item.data_pagamento) : null,
                     item.observacao
                 ]);
-                installmentsCreated++;
             }
-            console.log(`   parcelas: ${installmentsCreated}`);
         }
 
-        console.log("\n🎉 Migração concluída!");
-        process.exit(0);
-
+        console.log("🎉 Migração concluída!");
     } catch (e) {
         console.error("❌ Erro:", e);
         process.exit(1);
     } finally {
-        await pool.end();
+        await client.end();
     }
 }
 
