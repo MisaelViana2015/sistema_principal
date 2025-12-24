@@ -34,6 +34,43 @@ router.get("/debug", async (req, res) => {
     }
 });
 
+// DEBUG: Attempt to create a fixed cost directly (Bypass Auth/UI)
+router.get("/debug-create-cost", async (req, res) => {
+    try {
+        const { createFixedCost } = await import("./financial.service.js");
+
+        // Use IDs known to exist from /debug output
+        // CostType: "Teste 14:14" -> d7a8f090-2ecb-4abc-945b-04e20935203a
+        // Vehicle: "TQQ0A07" -> 89146774-1d45-46c2-aa6c-abd1884d90c9
+
+        const payload = {
+            name: "Debug Auto Create",
+            value: "100.50",
+            frequency: "Único",
+            dueDay: 25,
+            vehicleId: "89146774-1d45-46c2-aa6c-abd1884d90c9",
+            costTypeId: "d7a8f090-2ecb-4abc-945b-04e20935203a",
+            vendor: "DebugBot",
+            notes: "Created via /debug-create-cost",
+            totalInstallments: 1,
+            startDate: new Date("2025-12-25"),
+            isActive: true
+        };
+
+        const result = await createFixedCost(payload);
+        res.json({ success: true, result });
+    } catch (error: any) {
+        res.status(500).json({
+            success: false,
+            error: "Insert Failed",
+            message: error.message,
+            code: error.code,
+            detail: error.detail,
+            stack: error.stack
+        });
+    }
+});
+
 // ========== AUTHENTICATED ROUTES ==========
 // Todas as rotas abaixo exigem autenticação
 router.use(requireAuth);
