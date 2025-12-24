@@ -545,9 +545,16 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                         <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
                             <button onClick={() => setIsModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
                             <button
-                                onClick={() => {
-                                    onSave(formData);
-                                    setIsModalOpen(false);
+                                onClick={async () => {
+                                    try {
+                                        console.log("Tentando salvar payload:", formData);
+                                        await onSave(formData);
+                                        console.log("Solicitação de salvamento enviada com sucesso.");
+                                        setIsModalOpen(false);
+                                    } catch (err) {
+                                        console.error("ERRO AO SALVAR (Call Stack):", err);
+                                        alert("Erro ao salvar! Verifique o console com F12.");
+                                    }
                                 }}
                                 style={{ ...styles.primaryButton, padding: "0.75rem 1.5rem", height: "auto" }}
                             >
