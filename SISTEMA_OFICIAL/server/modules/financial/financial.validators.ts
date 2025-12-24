@@ -20,8 +20,8 @@ export const createFixedCostSchema = z.object({
     value: z.number().or(z.string()).transform(val => String(val)),
     frequency: z.enum(["Mensal", "Semanal", "Anual", "Único"]).default("Mensal"),
     dueDay: z.number().min(1).max(31).default(5),
-    vehicleId: z.string().optional(),
-    costTypeId: z.string().optional(),
+    vehicleId: z.string().optional().transform(val => val === "" ? undefined : val),
+    costTypeId: z.string().optional().transform(val => val === "" ? undefined : val),
     notes: z.string().optional(),
     totalInstallments: z.number().or(z.string()).transform(val => Number(val)).optional(),
     startDate: z.string().or(z.date()).transform(val => val ? new Date(val) : undefined).optional()
