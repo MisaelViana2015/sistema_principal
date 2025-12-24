@@ -75,7 +75,7 @@ export async function createFixedCost(req: Request, res: Response) {
     } catch (error: any) {
         console.error("Erro ao criar custo fixo:", error);
         if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
-        res.status(500).json({ error: "Erro interno" });
+        res.status(500).json({ error: "Erro interno", detail: error.message, code: error.code });
     }
 }
 
