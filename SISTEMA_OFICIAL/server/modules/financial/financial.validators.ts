@@ -42,7 +42,7 @@ export const updateCostTypeSchema = createCostTypeSchema.partial();
 
 // --- INSTALLMENTS ---
 export const updateInstallmentSchema = z.object({
-    status: z.enum(["paid", "pending"]),
+    status: z.enum(["Pago", "Pendente"]),
     paymentDate: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
     value: z.number().or(z.string()).optional().transform(val => val ? String(val) : undefined)
 });
