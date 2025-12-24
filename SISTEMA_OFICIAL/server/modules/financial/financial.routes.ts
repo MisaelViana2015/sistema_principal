@@ -12,14 +12,20 @@ const router = Router();
 router.get("/debug", async (req, res) => {
     try {
         const { db } = await import("../../core/db/connection.js");
-        const { fixedCosts, fixedCostInstallments } = await import("../../../shared/schema.js");
+        const { fixedCosts, fixedCostInstallments, costTypes, vehicles } = await import("../../../shared/schema.js");
 
         const recentCosts = await db.select().from(fixedCosts).limit(5);
         const recentInstallments = await db.select().from(fixedCostInstallments).limit(10);
+        const allCostTypes = await db.select({ id: costTypes.id, name: costTypes.name }).from(costTypes);
+        const allVehicles = await db.select({ id: vehicles.id, plate: vehicles.plate }).from(vehicles);
 
         res.json({
             fixedCostsCount: recentCosts.length,
             installmentsCount: recentInstallments.length,
+            costTypesCount: allCostTypes.length,
+            vehiclesCount: allVehicles.length,
+            costTypes: allCostTypes,
+            vehicles: allVehicles,
             recentCosts,
             recentInstallments
         });
