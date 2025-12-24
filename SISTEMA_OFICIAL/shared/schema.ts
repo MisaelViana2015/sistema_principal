@@ -113,7 +113,7 @@ export const fixedCosts = pgTable("fixed_costs", {
     frequency: text("frequency").default('Mensal').notNull(),
     dueDay: integer("due_day").default(5), // Day of month
     costTypeId: varchar("cost_type_id").references(() => costTypes.id),
-    vehicleId: uuid("vehicle_id").references(() => vehicles.id),
+    vehicleId: varchar("vehicle_id").references(() => vehicles.id),
     vendor: text("vendor"),
     totalInstallments: integer("total_installments"), // 60, 96, etc.
     startDate: timestamp("start_date"),
