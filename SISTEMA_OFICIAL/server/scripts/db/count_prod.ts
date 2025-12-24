@@ -2,7 +2,7 @@
 import { Client } from 'pg';
 
 const client = new Client({
-    connectionString: 'postgresql://postgres:QGtJKrxgQqoPYFDQraMZyXdBJxeuJuIM@crossover.proxy.rlwy.net:50382/railway',
+    connectionString: process.env.DATABASE_URL,
 });
 
 async function check() {

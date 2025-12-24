@@ -1,40 +1,37 @@
-
 import axios from 'axios';
 
-const URL_TEST = 'https://endpoint-api-production-f16d.up.railway.app/api/financial/test-recurrence';
-const URL_FIX = 'https://endpoint-api-production-f16d.up.railway.app/api/financial/fix-fixed-costs-schema';
+const ENDPOINTS = [
+    "https://endpoint-api-production-f16d.up.railway.app/api/financial/debug-data",
+    "https://endpoint-api-production-f16d.up.railway.app/api/financial/fix-fixed-costs-schema"
+];
 
 async function poll() {
-    console.log("Polling...");
-    for (let i = 0; i < 30; i++) {
+    console.log("Polling endpoints...");
+    for (let i = 0; i < 60; i++) { // 60 attempts
         try {
             console.log(`-- Attempt ${i + 1} --`);
 
-            // Check FIX route
-            try {
-                const r1 = await axios.get(URL_FIX, { timeout: 3000 });
-                console.log("FIX Route:", r1.status);
-            } catch (e: any) {
-                console.log("FIX Route Error:", e.response?.status || e.message);
-            }
+            for (const endpoint of ENDPOINTS) {
+                try {
+                    const res = await axios.get(endpoint, { timeout: 5000 });
+                    console.log(`Endpoint ${endpoint.split('/').pop()}: ${res.status}`);
 
-            // Check TEST route
-            try {
-                const r2 = await axios.get(URL_TEST, { timeout: 3000 });
-                console.log("TEST Route:", r2.status, r2.data);
-                if (r2.status === 200) {
-                    console.log("SUCCESS! Deployed.");
-                    break;
+                    if (res.request.path.includes('debug-data') && res.status === 200) {
+                        console.log("SUCCESS! Debug route is up.");
+                        console.log("Meta:", JSON.stringify(res.data.meta, null, 2));
+                        console.log("Search Result:", JSON.stringify(res.data.searchResult, null, 2));
+                        process.exit(0);
+                    }
+                } catch (e: any) {
+                    // Ignore individual failures
                 }
-            } catch (e: any) {
-                console.log("TEST Route Error:", e.response?.status || e.message);
             }
-
-        } catch (err) {
-            console.error(err);
+        } catch (e: any) {
+            console.log("Error:", e.message);
         }
         await new Promise(r => setTimeout(r, 5000));
     }
+
 }
 
 poll();
