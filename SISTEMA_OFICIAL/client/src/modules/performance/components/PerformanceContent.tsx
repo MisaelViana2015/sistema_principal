@@ -803,6 +803,12 @@ export default function PerformanceContent() {
                                 dueDay = new Date().getDate();
                             }
 
+                            console.log("Saving Fixed Cost - Payload Debug:", {
+                                ...data,
+                                startDate,
+                                dueDay
+                            });
+
                             createFixedCostMutation.mutate({
                                 ...data,
                                 name: data.description,
