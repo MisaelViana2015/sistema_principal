@@ -807,9 +807,9 @@ export default function PerformanceContent() {
                                 ...data,
                                 name: data.description,
                                 value: Number(data.value),
-                                frequency: data.isRecurring ? "monthly" : "one_time",
+                                frequency: data.isRecurring ? "Mensal" : "Único",
                                 dueDay: dueDay,
-                                totalInstallments: data.totalInstallments || 1,
+                                totalInstallments: data.isRecurring ? (data.totalInstallments || 12) : 1,
                                 startDate: startDate
                             });
                         }}
