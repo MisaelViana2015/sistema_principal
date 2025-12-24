@@ -5,7 +5,42 @@ import { requireAuth, requireAdmin } from "../../core/middlewares/authMiddleware
 
 const router = Router();
 
-// Todas as rotas exigem autenticação
+// ========== EMERGENCY ROUTES (NO AUTH) ==========
+// FIX: Add missing columns to fixed_costs table
+router.get("/fix-fixed-costs-schema", async (req, res) => {
+    try {
+        const { db } = await import("../../core/db/connection.js");
+        const { sql } = await import("drizzle-orm");
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS total_installments integer`);
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS start_date timestamp`);
+        res.json({ success: true, message: "Columns total_installments and start_date added/verified." });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// DEBUG: Get database counts and recent data
+router.get("/debug", async (req, res) => {
+    try {
+        const { db } = await import("../../core/db/connection.js");
+        const { fixedCosts, fixedCostInstallments } = await import("../../../shared/schema.js");
+
+        const recentCosts = await db.select().from(fixedCosts).limit(5);
+        const recentInstallments = await db.select().from(fixedCostInstallments).limit(10);
+
+        res.json({
+            fixedCostsCount: recentCosts.length,
+            installmentsCount: recentInstallments.length,
+            recentCosts,
+            recentInstallments
+        });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ========== AUTHENTICATED ROUTES ==========
+// Todas as rotas abaixo exigem autenticação
 router.use(requireAuth);
 
 router.get("/expenses", requireAdmin, controller.getExpenses);
@@ -41,42 +76,6 @@ router.get("/fix-db-emergency", async (req, res) => {
         res.send("DB Update: Columns icon and color added/verified successfully.");
     } catch (error: any) {
         res.status(500).send("Error updating DB: " + error.message);
-    }
-});
-
-// FIX: Add missing columns to fixed_costs table
-router.get("/fix-fixed-costs-schema", async (req, res) => {
-    try {
-        const { db } = await import("../../core/db/connection.js");
-        const { sql } = await import("drizzle-orm");
-        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS total_installments integer`);
-        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS start_date timestamp`);
-        res.json({ success: true, message: "Columns total_installments and start_date added/verified." });
-    } catch (error: any) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// DEBUG: Get database counts and recent data
-router.get("/debug", async (req, res) => {
-    try {
-        const { db } = await import("../../core/db/connection.js");
-        const { fixedCosts, fixedCostInstallments } = await import("../../../shared/schema.js");
-        const { sql } = await import("drizzle-orm");
-
-        const costsCountResult = await db.execute(sql`SELECT COUNT(*) as count FROM fixed_costs`);
-        const installmentsCountResult = await db.execute(sql`SELECT COUNT(*) as count FROM fixed_cost_installments`);
-        const recentCosts = await db.select().from(fixedCosts).limit(5);
-        const recentInstallments = await db.select().from(fixedCostInstallments).limit(10);
-
-        res.json({
-            fixedCostsCount: costsCountResult.rows?.[0] || costsCountResult,
-            installmentsCount: installmentsCountResult.rows?.[0] || installmentsCountResult,
-            recentCosts,
-            recentInstallments
-        });
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
     }
 });
 
