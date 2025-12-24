@@ -39,7 +39,14 @@ export async function createFixedCost(data: typeof fixedCosts.$inferInsert) {
     const [newCost] = await db.insert(fixedCosts).values(data).returning();
 
     // Generate Installments if totalInstallments > 0
+    console.log("Creating Fixed Cost - Logic Check:", {
+        id: newCost.id,
+        totalInstallments: newCost.totalInstallments,
+        startDate: newCost.startDate
+    });
+
     if (newCost.totalInstallments && newCost.totalInstallments > 0 && newCost.startDate) {
+        console.log("Generating installments...");
         const installments = [];
         const start = new Date(newCost.startDate);
         const day = newCost.dueDay || 5;

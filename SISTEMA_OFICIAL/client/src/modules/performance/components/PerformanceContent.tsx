@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     TrendingUp, TrendingDown, DollarSign, Clock, Users, Calendar, Trophy,
     Car, Wrench, Filter, List, Plus, Trash2, Edit, PieChart, X, Save
@@ -97,6 +97,15 @@ export default function PerformanceContent() {
     });
 
     // --- CALCULATIONS (Financeiro) ---
+
+
+    // Debug Installments
+    useEffect(() => {
+        if (installments) {
+            console.log("Fluxo de Dados: Frontend recebeu parcelas:", installments.length);
+        }
+    }, [installments]);
+
     // 1. Filter Data based on selection
     const filteredShifts = (shifts || []).filter((s: any) => {
         const d = new Date(s.inicio);
