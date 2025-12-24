@@ -137,6 +137,7 @@ export default function PerformanceContent() {
         mutationFn: async (data: any) => { return await api.post("/financial/fixed-costs", data).then(r => r.data) },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["fixedCosts"] });
+            queryClient.invalidateQueries({ queryKey: ["fixedCostInstallments"] });
         }
     });
 
@@ -144,6 +145,7 @@ export default function PerformanceContent() {
         mutationFn: async (data: any) => { return await api.put(`/financial/fixed-costs/${data.id}`, data).then(r => r.data) },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["fixedCosts"] });
+            queryClient.invalidateQueries({ queryKey: ["fixedCostInstallments"] });
         }
     });
 
@@ -151,6 +153,7 @@ export default function PerformanceContent() {
         mutationFn: async (id: string) => { return await api.delete(`/financial/fixed-costs/${id}`).then(r => r.data) },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["fixedCosts"] });
+            queryClient.invalidateQueries({ queryKey: ["fixedCostInstallments"] });
         }
     });
 
