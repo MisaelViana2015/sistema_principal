@@ -30,7 +30,7 @@ const COLORS = [
 export function CostTypesManager({ costTypes, isDark, refetch }: CostTypesManagerProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingType, setEditingType] = useState<any>(null);
-    const [formData, setFormData] = useState({ name: "", icon: "DollarSign", color: "blue", category: "variable" });
+    const [formData, setFormData] = useState({ name: "", icon: "DollarSign", color: "blue", category: "Variável" });
     const [loading, setLoading] = useState(false);
 
     const handleOpenModal = (type?: any) => {
@@ -40,11 +40,11 @@ export function CostTypesManager({ costTypes, isDark, refetch }: CostTypesManage
                 name: type.name || type.tipo, // Handle legacy 'tipo' field
                 icon: type.icon || "DollarSign",
                 color: type.color || "blue",
-                category: type.category || "variable"
+                category: type.category || "Variável"
             });
         } else {
             setEditingType(null);
-            setFormData({ name: "", icon: "DollarSign", color: "blue", category: "variable" });
+            setFormData({ name: "", icon: "DollarSign", color: "blue", category: "Variável" });
         }
         setIsModalOpen(true);
     };
