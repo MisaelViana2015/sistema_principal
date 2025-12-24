@@ -8,17 +8,59 @@ const router = Router();
 // ========== EMERGENCY ROUTES (NO AUTH) ==========
 // FIX: Add missing columns to fixed_costs table
 
+// Route to add missing columns if they don't exist (Safe to run multiple times)
 router.get("/fix-fixed-costs-schema", async (req, res) => {
     try {
         const { db } = await import("../../core/db/connection.js");
         const { sql } = await import("drizzle-orm");
+
+        // Add columns if not exist
         await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS total_installments integer`);
         await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS start_date timestamp`);
+
         res.json({ success: true, message: "Columns total_installments and start_date added/verified." });
     } catch (error: any) {
         res.status(500).json({ success: false, error: error.message });
     }
 });
+
+// DEBUG ROUTE - Check Data Existence
+router.get("/debug-data", async (req, res) => {
+    try {
+        const { db } = await import("../../core/db/connection.js");
+        const { fixedCosts, fixedCostInstallments, vehicles } = await import("../../../shared/schema.js");
+        const { desc, eq, sql } = await import("drizzle-orm");
+
+        const costsCount = await db.select({ count: sql`count(*)` }).from(fixedCosts);
+        const installmentsCount = await db.select({ count: sql`count(*)` }).from(fixedCostInstallments);
+
+        // Find the specific user item
+        const userItem = await db.select().from(fixedCosts).where(sql`description LIKE '%qwqewqeqw%'`);
+
+        // Get last 5 costs
+        const last5Costs = await db.select().from(fixedCosts).orderBy(desc(fixedCosts.id)).limit(5);
+
+        // Get last 5 installments
+        const last5Installments = await db.select().from(fixedCostInstallments).orderBy(desc(fixedCostInstallments.id)).limit(5);
+
+        // Check vehicles
+        const vehicleCount = await db.select({ count: sql`count(*)` }).from(vehicles);
+
+        res.json({
+            meta: {
+                costsCount: costsCount[0],
+                installmentsCount: installmentsCount[0],
+                vehicleCount: vehicleCount[0]
+            },
+            searchResult: userItem,
+            recentCosts: last5Costs,
+            recentInstallments: last5Installments
+        });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message, stack: error.stack });
+    }
+});
+
 
 router.get("/test-recurrence", async (req, res) => {
     try {
