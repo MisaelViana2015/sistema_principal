@@ -57,7 +57,18 @@ export async function createFixedCost(req: Request, res: Response) {
             name: validatedData.name,
             value: validatedData.value,
             frequency: validatedData.frequency,
-            dueDay: validatedData.dueDay
+            dueDay: validatedData.dueDay,
+            vehicleId: validatedData.vehicleId,
+            notes: validatedData.notes,
+            totalInstallments: validatedData.totalInstallments,
+            startDate: validatedData.startDate ? validatedData.startDate.toISOString() : undefined // Service/Repo expects Date or string? Repo uses new Date(startDate) so string is safer if repository expects string, but schema says timestamp. Repository: `newCost.startDate` is used in `new Date(newCost.startDate)`. Drizzle handles Date object to timestamp.
+            // Actually, let's pass it as Date if repository handles it. Repo uses `startDate` from `fixedCosts` table insert.
+            // Let's check repository again. Line 44: `const start = new Date(newCost.startDate);`.
+            // So if `newCost.startDate` is a Date object, `new Date(Date object)` works.
+            // So passing Date is fine.
+            // HOWEVER, the `createFixedCost` types in `service` are `any`, but `repository` says `typeof fixedCosts.$inferInsert`.
+            // `fixedCosts` schema definition in `shared/schema.ts`: `start_date: timestamp('start_date')`.
+            // Drizzle expects Date object for timestamp.
         });
         res.status(201).json(newCost);
     } catch (error: any) {
