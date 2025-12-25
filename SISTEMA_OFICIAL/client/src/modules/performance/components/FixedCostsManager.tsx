@@ -644,13 +644,49 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                                                     {inst.status}
                                                 </span>
                                             </div>
+                                            {/* Date info: Due date + Paid date if applicable */}
                                             <div style={{ fontSize: "0.8rem", color: styles.subtitle.color }}>
-                                                {new Date(inst.dueDate).toLocaleDateString()} • {inst.vendor || inst.costName}
-                                                {inst.totalInstallments && inst.totalInstallments > 1 && ` (${inst.installmentNumber}/${inst.totalInstallments})`}
+                                                <span>Venc: {new Date(inst.dueDate).toLocaleDateString()}</span>
+                                                {inst.status === 'Pago' && inst.paidDate && (
+                                                    <span style={{ marginLeft: "0.5rem", color: "#22c55e" }}>
+                                                        • Pago: {new Date(inst.paidDate).toLocaleDateString()}
+                                                    </span>
+                                                )}
+                                                <span style={{ marginLeft: "0.5rem" }}>
+                                                    • {inst.vendor || inst.costName}
+                                                    {inst.totalInstallments && inst.totalInstallments > 1 && ` (${inst.installmentNumber}/${inst.totalInstallments})`}
+                                                </span>
                                             </div>
                                         </div>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                                            <span style={{ fontWeight: "bold" }}>{formatCurrency(inst.value)}</span>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
+                                            {/* Original value */}
+                                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                                <span style={{ fontWeight: "bold", fontSize: inst.status === 'Pago' && inst.paidAmount != null && Number(inst.paidAmount) !== Number(inst.value) ? "0.85rem" : "1rem" }}>
+                                                    {formatCurrency(Number(inst.value))}
+                                                </span>
+                                                {inst.status === 'Pago' && inst.paidAmount != null && Number(inst.paidAmount) !== Number(inst.value) && (
+                                                    <span style={{
+                                                        fontSize: "0.7rem",
+                                                        color: Number(inst.paidAmount) > Number(inst.value) ? "#ef4444" : "#22c55e",
+                                                        fontWeight: "bold"
+                                                    }}>
+                                                        {Number(inst.paidAmount) > Number(inst.value)
+                                                            ? `+${formatCurrency(Number(inst.paidAmount) - Number(inst.value))} juros`
+                                                            : `-${formatCurrency(Number(inst.value) - Number(inst.paidAmount))} desc.`
+                                                        }
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {/* Paid value when different */}
+                                            {inst.status === 'Pago' && inst.paidAmount != null && (
+                                                <span style={{
+                                                    fontSize: "0.9rem",
+                                                    fontWeight: "bold",
+                                                    color: Number(inst.paidAmount) > Number(inst.value) ? "#ef4444" : (Number(inst.paidAmount) < Number(inst.value) ? "#22c55e" : isDark ? "#e2e8f0" : "#1e293b")
+                                                }}>
+                                                    Pago: {formatCurrency(Number(inst.paidAmount))}
+                                                </span>
+                                            )}
                                             <div style={{ display: "flex", gap: "0.25rem" }}>
                                                 <button style={styles.iconButton} onClick={() => handleEditCost(inst.fixedCostId)}><Edit size={14} /></button>
                                                 <button style={styles.iconButton} onClick={() => onDelete(inst.fixedCostId)}><Trash2 size={14} /></button>
