@@ -65,7 +65,14 @@ async function ensureSchemaIntegrity() {
             )
         `);
 
-        console.log("✅ Schema verificado: colunas shifts, expenses, cost_types e vehicles garantidas.");
+        // Fix Fixed Costs columns (Prevent 500 on Update)
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS total_installments integer`);
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS start_date timestamp`);
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS description text`);
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS vendor text`);
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT true`);
+
+        console.log("✅ Schema verificado: colunas shifts, expenses, cost_types, vehicles e fixed_costs garantidas.");
     } catch (error) {
         console.error("⚠️  Erro ao verificar schema:", error);
     }
