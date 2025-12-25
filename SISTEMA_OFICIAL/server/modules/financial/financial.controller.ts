@@ -29,6 +29,17 @@ export async function getLegacyMaintenances(req: Request, res: Response) {
     }
 }
 
+export async function deleteLegacyMaintenance(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        await service.deleteLegacyMaintenance(id);
+        res.json({ message: "Manutenção removida com sucesso" });
+    } catch (error) {
+        console.error("Erro ao remover manutenção legada:", error);
+        res.status(500).json({ error: "Erro interno ao remover manutenção" });
+    }
+}
+
 export async function getCostTypes(req: Request, res: Response) {
     try {
         const types = await service.getAllCostTypes();

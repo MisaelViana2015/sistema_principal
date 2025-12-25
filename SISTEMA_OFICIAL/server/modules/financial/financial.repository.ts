@@ -235,6 +235,11 @@ export async function findAllLegacyMaintenances() {
         .orderBy(desc(legacyMaintenances.date));
 }
 
+export async function deleteLegacyMaintenance(id: string) {
+    const [deleted] = await db.delete(legacyMaintenances).where(eq(legacyMaintenances.id, id)).returning();
+    return deleted;
+}
+
 export async function restoreDefaultCostTypes() {
     // First, try to migrate from legacy table
     let legacyTypes = await db.select().from(legacyShiftCostTypes);

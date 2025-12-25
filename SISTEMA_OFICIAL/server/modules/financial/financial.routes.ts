@@ -40,6 +40,7 @@ router.use(requireAuth);
 
 router.get("/expenses", requireAdmin, controller.getExpenses);
 router.get("/legacy-maintenances", requireAdmin, controller.getLegacyMaintenances);
+router.delete("/legacy-maintenances/:id", requireAdmin, controller.deleteLegacyMaintenance);
 router.post("/expenses", controller.createExpense);
 router.put("/expenses/:id", controller.updateExpenseController);
 router.delete("/expenses/:id", controller.deleteExpenseController);

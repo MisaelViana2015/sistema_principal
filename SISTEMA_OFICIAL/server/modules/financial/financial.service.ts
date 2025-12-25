@@ -112,3 +112,7 @@ export async function updateCostType(id: string, data: any) {
 export async function deleteCostType(id: string) {
     return await repository.deleteCostType(id);
 }
+
+export async function deleteLegacyMaintenance(id: string) {
+    return await repository.deleteLegacyMaintenance(id);
+}

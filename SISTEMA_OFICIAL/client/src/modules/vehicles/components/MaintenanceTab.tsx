@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Plus, Edit2, Trash2, Wrench, ChevronDown, Calendar, DollarSign, Filter, Search } from "lucide-react";
 import { api } from "../../../lib/api";
 
+import { vehiclesService } from "../vehicles.service";
+
 interface Maintenance {
     id: string;
     notes: string;
@@ -15,8 +17,30 @@ interface Maintenance {
     tipo?: string;
 }
 
+interface Vehicle {
+    id: string;
+    plate: string;
+    modelo: string;
+}
+
+const MONTHS = [
+    { value: "1", label: "Janeiro" },
+    { value: "2", label: "Fevereiro" },
+    { value: "3", label: "Março" },
+    { value: "4", label: "Abril" },
+    { value: "5", label: "Maio" },
+    { value: "6", label: "Junho" },
+    { value: "7", label: "Julho" },
+    { value: "8", label: "Agosto" },
+    { value: "9", label: "Setembro" },
+    { value: "10", label: "Outubro" },
+    { value: "11", label: "Novembro" },
+    { value: "12", label: "Dezembro" },
+];
+
 export function MaintenanceTab() {
     const [maintenances, setMaintenances] = useState<Maintenance[]>([]);
+    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filterVehicle, setFilterVehicle] = useState("all");
     const [filterMonth, setFilterMonth] = useState("all");
@@ -27,14 +51,15 @@ export function MaintenanceTab() {
 
     async function loadData() {
         try {
-            // TODO: Ensure this endpoint exists or use expenses with type filter
-            // For now, using a hypothetical legacy-maintenances endpoint or matching existing patterns
-            // Use existing vehiclesService logic if available.
-            // fallback to empty or mock if endpoint fails during dev
-            const res = await api.get("/financial/legacy-maintenances");
-            setMaintenances(res.data);
+            setIsLoading(true);
+            const [mRes, vRes] = await Promise.all([
+                api.get("/financial/legacy-maintenances"),
+                vehiclesService.getAll()
+            ]);
+            setMaintenances(mRes.data);
+            setVehicles(vRes || []);
         } catch (error) {
-            console.error("Failed to load maintenances:", error);
+            console.error("Failed to load data:", error);
             // Fallback to empty to avoid crash if API missing
             setMaintenances([]);
         } finally {
@@ -42,9 +67,33 @@ export function MaintenanceTab() {
         }
     }
 
+    async function handleDelete(id: string) {
+        if (!window.confirm("Deseja realmente excluir esta manutenção? Esta ação não pode ser desfeita.")) {
+            return;
+        }
+
+        try {
+            await api.delete(`/financial/legacy-maintenances/${id}`);
+            // Remove from state immediately for snappy feel
+            setMaintenances(prev => prev.filter(m => m.id !== id));
+        } catch (error) {
+            console.error("Failed to delete maintenance:", error);
+            alert("Erro ao excluir manutenção. Tente novamente.");
+        }
+    }
+
     const filtered = maintenances.filter(m => {
         if (filterVehicle !== "all" && m.veiculoId !== filterVehicle) return false;
-        // Month filter logic here if needed
+
+        if (filterMonth !== "all") {
+            const date = new Date(m.data);
+            // date.getMonth() is 0-indexed (0=Jan, 11=Dec)
+            // our filter is 1-indexed string ("1", "12")
+            if (!isNaN(date.getTime())) {
+                const month = (date.getMonth() + 1).toString();
+                if (month !== filterMonth) return false;
+            }
+        }
         return true;
     });
 
@@ -95,6 +144,11 @@ export function MaintenanceTab() {
                             className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:border-cyan-500 outline-none transition-all"
                         >
                             <option value="all">Todos os Veículos</option>
+                            {vehicles.map(v => (
+                                <option key={v.id} value={v.id}>
+                                    {v.plate} - {v.modelo}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div className="space-y-2">
@@ -103,6 +157,7 @@ export function MaintenanceTab() {
                             <option value="all">Todos</option>
                             <option value="2025">2025</option>
                             <option value="2024">2024</option>
+                            <option value="2023">2023</option>
                         </select>
                     </div>
                     <div className="space-y-2">
@@ -113,6 +168,9 @@ export function MaintenanceTab() {
                             className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:border-cyan-500 outline-none transition-all"
                         >
                             <option value="all">Todos</option>
+                            {MONTHS.map(m => (
+                                <option key={m.value} value={m.value}>{m.label}</option>
+                            ))}
                         </select>
                     </div>
                 </div>
@@ -170,7 +228,11 @@ export function MaintenanceTab() {
                                             {formatCurrency(item.valor)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="text-gray-600 hover:text-red-500 transition-colors p-1">
+                                            <button
+                                                onClick={() => handleDelete(item.id)}
+                                                className="text-gray-600 hover:text-red-500 transition-colors p-1"
+                                                title="Excluir"
+                                            >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         </td>
