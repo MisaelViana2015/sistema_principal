@@ -483,208 +483,209 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                                         <div style={{ fontSize: "0.75rem", color: styles.subtitle.color }}>{insts.length} custo(s)</div>
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* Individual Items */}
-                                {insts.map(inst => (
-                                    <div key={inst.id} style={styles.cardRow}>
-                                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                                            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                                                <span style={{ fontWeight: 600 }}>{inst.costName}</span>
-                                                <span
-                                                    onClick={() => inst.status === 'Pendente' && handleOpenPayment(inst)}
-                                                    style={{ ...styles.tag(inst.status), cursor: inst.status === 'Pendente' ? 'pointer' : 'default' }}
-                                                    title={inst.status === 'Pendente' ? "Clique para registrar pagamento" : ""}
-                                                >
-                                                    {inst.status}
-                                                </span>
-                                            </div>
-                                            <div style={{ fontSize: "0.8rem", color: styles.subtitle.color }}>
-                                                {new Date(inst.dueDate).toLocaleDateString()} • {inst.vendor || inst.costName}
-                                                {inst.totalInstallments && inst.totalInstallments > 1 && ` (${inst.installmentNumber}/${inst.totalInstallments})`}
-                                            </div>
+                            {/* Individual Items */}
+                            {insts.map(inst => (
+                                <div key={inst.id} style={styles.cardRow}>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                                            <span style={{ fontWeight: 600 }}>{inst.costName}</span>
+                                            <span
+                                                onClick={() => inst.status === 'Pendente' && handleOpenPayment(inst)}
+                                                style={{ ...styles.tag(inst.status), cursor: inst.status === 'Pendente' ? 'pointer' : 'default' }}
+                                                title={inst.status === 'Pendente' ? "Clique para registrar pagamento" : ""}
+                                            >
+                                                {inst.status}
+                                            </span>
                                         </div>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                                            <span style={{ fontWeight: "bold" }}>{formatCurrency(inst.value)}</span>
-                                            <div style={{ display: "flex", gap: "0.25rem" }}>
-                                                <button style={styles.iconButton}><Edit size={14} /></button>
-                                                <button style={styles.iconButton} onClick={() => onDelete(inst.fixedCostId)}><Trash2 size={14} /></button>
-                                            </div>
+                                        <div style={{ fontSize: "0.8rem", color: styles.subtitle.color }}>
+                                            {new Date(inst.dueDate).toLocaleDateString()} • {inst.vendor || inst.costName}
+                                            {inst.totalInstallments && inst.totalInstallments > 1 && ` (${inst.installmentNumber}/${inst.totalInstallments})`}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                            );
-                })}
+                                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                                        <span style={{ fontWeight: "bold" }}>{formatCurrency(inst.value)}</span>
+                                        <div style={{ display: "flex", gap: "0.25rem" }}>
+                                            <button style={styles.iconButton}><Edit size={14} /></button>
+                                            <button style={styles.iconButton} onClick={() => onDelete(inst.fixedCostId)}><Trash2 size={14} /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
+                    );
+                })}
+            </div>
 
-            {/* Modal (Simplified structure to match previous functionality) */ }
-                    {
-                        isModalOpen && (
-                            <div style={styles.modalOverlay}>
-                                <div style={{ ...styles.modalContent, width: "600px" }}> {/* Wider modal */}
-                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-                                        <h3 style={styles.title}>{formData.id ? "Editar Custo Fixo" : "Novo Custo Fixo"}</h3>
-                                        <button onClick={() => setIsModalOpen(false)} style={{ background: "transparent", border: "none", color: styles.subtitle.color, cursor: "pointer" }}><X size={20} /></button>
-                                    </div>
+            {/* Modal (Simplified structure to match previous functionality) */}
+            {
+                isModalOpen && (
+                    <div style={styles.modalOverlay}>
+                        <div style={{ ...styles.modalContent, width: "600px" }}> {/* Wider modal */}
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+                                <h3 style={styles.title}>{formData.id ? "Editar Custo Fixo" : "Novo Custo Fixo"}</h3>
+                                <button onClick={() => setIsModalOpen(false)} style={{ background: "transparent", border: "none", color: styles.subtitle.color, cursor: "pointer" }}><X size={20} /></button>
+                            </div>
 
-                                    <p style={{ fontSize: "0.875rem", color: styles.subtitle.color, marginBottom: "1.5rem" }}>
-                                        {formData.id ? "Edite as informações do custo fixo" : "Cadastre um novo custo fixo do veículo"}
-                                    </p>
+                            <p style={{ fontSize: "0.875rem", color: styles.subtitle.color, marginBottom: "1.5rem" }}>
+                                {formData.id ? "Edite as informações do custo fixo" : "Cadastre um novo custo fixo do veículo"}
+                            </p>
 
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
-                                        <div>
-                                            <label style={styles.label}>Veículo</label>
-                                            <select style={styles.input} value={formData.vehicleId} onChange={e => setFormData({ ...formData, vehicleId: e.target.value })}>
-                                                <option value="">Selecione o veículo</option>
-                                                {vehicles.map((v: any) => <option key={v.id} value={v.id}>{v.plate} - {v.model} {v.driverName ? `(${v.driverName})` : ''}</option>)}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label style={styles.label}>Tipo de Custo</label>
-                                            <select style={styles.input} value={formData.costTypeId} onChange={e => setFormData({ ...formData, costTypeId: e.target.value })}>
-                                                <option value="">Selecione o tipo</option>
-                                                {costTypes && costTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ marginBottom: "1rem" }}>
-                                        <label style={styles.label}>Descrição</label>
-                                        <input
-                                            style={styles.input}
-                                            placeholder="Ex: Prestação BYD Dolphin"
-                                            value={formData.description}
-                                            onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
-                                        <div>
-                                            <label style={styles.label}>Valor (R$)</label>
-                                            <input type="number" step="0.01" style={styles.input} placeholder="0.00" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} />
-                                        </div>
-                                        <div>
-                                            <label style={styles.label}>Mês/Ano</label>
-                                            <input type="month" style={styles.input} value={formData.monthYear} onChange={e => setFormData({ ...formData, monthYear: e.target.value })} />
-                                        </div>
-                                        <div>
-                                            <label style={styles.label}>Data Específica</label>
-                                            <input type="date" style={styles.input} value={formData.specificDate} onChange={e => setFormData({ ...formData, specificDate: e.target.value })} />
-                                            <span style={{ fontSize: "0.7rem", color: styles.subtitle.color }}>Opcional. Se não informado, assume dia 1.</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Recurring Section */}
-                                    <div style={{ marginBottom: "1.5rem", borderTop: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, paddingTop: "1rem" }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                                            <RefreshCw size={16} />
-                                            <span style={{ fontWeight: 600 }}>Custos Recorrentes</span>
-                                        </div>
-
-                                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                                            <input
-                                                type="checkbox"
-                                                id="isRecurring"
-                                                checked={formData.isRecurring}
-                                                onChange={e => setFormData({ ...formData, isRecurring: e.target.checked })}
-                                                style={{ width: "16px", height: "16px" }}
-                                            />
-                                            <label htmlFor="isRecurring" style={{ fontSize: "0.9rem", cursor: "pointer" }}>Repetir mensalmente</label>
-                                        </div>
-                                        <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginLeft: "1.5rem", marginBottom: "1rem" }}>
-                                            Gera automaticamente múltiplos lançamentos mensais
-                                        </p>
-
-                                        {formData.isRecurring && (
-                                            <div style={{ marginLeft: "1.5rem" }}>
-                                                <label style={styles.label}>Quantidade de Meses</label>
-                                                <input type="number" style={{ ...styles.input, width: "100px" }} value={formData.totalInstallments} onChange={e => setFormData({ ...formData, totalInstallments: e.target.value })} />
-                                                <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginTop: "0.25rem" }}>Será criado 1 lançamento para cada mês</p>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div style={{ marginBottom: "1.5rem" }}>
-                                        <label style={styles.label}>Observação</label>
-                                        <textarea
-                                            style={{ ...styles.input, height: "80px", resize: "none" }}
-                                            placeholder="Informações adicionais"
-                                            value={formData.notes}
-                                            onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-                                        <button onClick={() => setIsModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
-                                        <button
-                                            onClick={async () => {
-                                                try {
-                                                    console.log("Tentando salvar payload:", formData);
-                                                    await onSave(formData);
-                                                    console.log("Solicitação de salvamento enviada com sucesso.");
-                                                    setIsModalOpen(false);
-                                                } catch (err) {
-                                                    console.error("ERRO AO SALVAR (Call Stack):", err);
-                                                    alert("Erro ao salvar! Verifique o console com F12.");
-                                                }
-                                            }}
-                                            style={{ ...styles.primaryButton, padding: "0.75rem 1.5rem", height: "auto" }}
-                                        >
-                                            Salvar
-                                        </button>
-                                    </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                                <div>
+                                    <label style={styles.label}>Veículo</label>
+                                    <select style={styles.input} value={formData.vehicleId} onChange={e => setFormData({ ...formData, vehicleId: e.target.value })}>
+                                        <option value="">Selecione o veículo</option>
+                                        {vehicles.map((v: any) => <option key={v.id} value={v.id}>{v.plate} - {v.model} {v.driverName ? `(${v.driverName})` : ''}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={styles.label}>Tipo de Custo</label>
+                                    <select style={styles.input} value={formData.costTypeId} onChange={e => setFormData({ ...formData, costTypeId: e.target.value })}>
+                                        <option value="">Selecione o tipo</option>
+                                        {costTypes && costTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                    </select>
                                 </div>
                             </div>
-                        )
-                    }
 
-                    {/* Payment Modal */ }
-                    {
-                        isPaymentModalOpen && (
-                            <div style={styles.modalOverlay}>
-                                <div style={{ ...styles.modalContent, width: "400px" }}>
-                                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-                                        <h3 style={styles.title}>Registrar Pagamento</h3>
-                                        <button onClick={() => setIsPaymentModalOpen(false)} style={{ background: "transparent", border: "none" }}><X size={20} color={styles.subtitle.color} /></button>
-                                    </div>
-                                    <p style={{ fontSize: "0.875rem", color: styles.subtitle.color, marginBottom: "1.5rem" }}>
-                                        Informe a data e o valor pago para este custo
-                                    </p>
+                            <div style={{ marginBottom: "1rem" }}>
+                                <label style={styles.label}>Descrição</label>
+                                <input
+                                    style={styles.input}
+                                    placeholder="Ex: Prestação BYD Dolphin"
+                                    value={formData.description}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                />
+                            </div>
 
-                                    <div style={{ marginBottom: "1rem" }}>
-                                        <label style={styles.label}>Data do Pagamento</label>
-                                        <input
-                                            type="date"
-                                            style={styles.input}
-                                            value={paymentData.date}
-                                            onChange={e => setPaymentData({ ...paymentData, date: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div style={{ marginBottom: "1.5rem" }}>
-                                        <label style={styles.label}>Valor Pago</label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            style={styles.input}
-                                            value={paymentData.value}
-                                            onChange={e => setPaymentData({ ...paymentData, value: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-                                        <button onClick={() => setIsPaymentModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
-                                        <button
-                                            onClick={handleConfirmPayment}
-                                            style={{ ...styles.primaryButton, padding: "0.75rem 1.5rem", height: "auto" }}
-                                        >
-                                            Confirmar Pagamento
-                                        </button>
-                                    </div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+                                <div>
+                                    <label style={styles.label}>Valor (R$)</label>
+                                    <input type="number" step="0.01" style={styles.input} placeholder="0.00" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label style={styles.label}>Mês/Ano</label>
+                                    <input type="month" style={styles.input} value={formData.monthYear} onChange={e => setFormData({ ...formData, monthYear: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label style={styles.label}>Data Específica</label>
+                                    <input type="date" style={styles.input} value={formData.specificDate} onChange={e => setFormData({ ...formData, specificDate: e.target.value })} />
+                                    <span style={{ fontSize: "0.7rem", color: styles.subtitle.color }}>Opcional. Se não informado, assume dia 1.</span>
                                 </div>
                             </div>
-                        )
-                    }
+
+                            {/* Recurring Section */}
+                            <div style={{ marginBottom: "1.5rem", borderTop: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, paddingTop: "1rem" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                                    <RefreshCw size={16} />
+                                    <span style={{ fontWeight: 600 }}>Custos Recorrentes</span>
+                                </div>
+
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                                    <input
+                                        type="checkbox"
+                                        id="isRecurring"
+                                        checked={formData.isRecurring}
+                                        onChange={e => setFormData({ ...formData, isRecurring: e.target.checked })}
+                                        style={{ width: "16px", height: "16px" }}
+                                    />
+                                    <label htmlFor="isRecurring" style={{ fontSize: "0.9rem", cursor: "pointer" }}>Repetir mensalmente</label>
+                                </div>
+                                <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginLeft: "1.5rem", marginBottom: "1rem" }}>
+                                    Gera automaticamente múltiplos lançamentos mensais
+                                </p>
+
+                                {formData.isRecurring && (
+                                    <div style={{ marginLeft: "1.5rem" }}>
+                                        <label style={styles.label}>Quantidade de Meses</label>
+                                        <input type="number" style={{ ...styles.input, width: "100px" }} value={formData.totalInstallments} onChange={e => setFormData({ ...formData, totalInstallments: e.target.value })} />
+                                        <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginTop: "0.25rem" }}>Será criado 1 lançamento para cada mês</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ marginBottom: "1.5rem" }}>
+                                <label style={styles.label}>Observação</label>
+                                <textarea
+                                    style={{ ...styles.input, height: "80px", resize: "none" }}
+                                    placeholder="Informações adicionais"
+                                    value={formData.notes}
+                                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                                <button onClick={() => setIsModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            console.log("Tentando salvar payload:", formData);
+                                            await onSave(formData);
+                                            console.log("Solicitação de salvamento enviada com sucesso.");
+                                            setIsModalOpen(false);
+                                        } catch (err) {
+                                            console.error("ERRO AO SALVAR (Call Stack):", err);
+                                            alert("Erro ao salvar! Verifique o console com F12.");
+                                        }
+                                    }}
+                                    style={{ ...styles.primaryButton, padding: "0.75rem 1.5rem", height: "auto" }}
+                                >
+                                    Salvar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Payment Modal */}
+            {
+                isPaymentModalOpen && (
+                    <div style={styles.modalOverlay}>
+                        <div style={{ ...styles.modalContent, width: "400px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+                                <h3 style={styles.title}>Registrar Pagamento</h3>
+                                <button onClick={() => setIsPaymentModalOpen(false)} style={{ background: "transparent", border: "none" }}><X size={20} color={styles.subtitle.color} /></button>
+                            </div>
+                            <p style={{ fontSize: "0.875rem", color: styles.subtitle.color, marginBottom: "1.5rem" }}>
+                                Informe a data e o valor pago para este custo
+                            </p>
+
+                            <div style={{ marginBottom: "1rem" }}>
+                                <label style={styles.label}>Data do Pagamento</label>
+                                <input
+                                    type="date"
+                                    style={styles.input}
+                                    value={paymentData.date}
+                                    onChange={e => setPaymentData({ ...paymentData, date: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ marginBottom: "1.5rem" }}>
+                                <label style={styles.label}>Valor Pago</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    style={styles.input}
+                                    value={paymentData.value}
+                                    onChange={e => setPaymentData({ ...paymentData, value: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                                <button onClick={() => setIsPaymentModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
+                                <button
+                                    onClick={handleConfirmPayment}
+                                    style={{ ...styles.primaryButton, padding: "0.75rem 1.5rem", height: "auto" }}
+                                >
+                                    Confirmar Pagamento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div>
-            );
+    );
 }
