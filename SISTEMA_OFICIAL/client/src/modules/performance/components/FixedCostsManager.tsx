@@ -130,9 +130,11 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
 
     const handleConfirmPayment = () => {
         if (!paymentData.installmentId) return;
+        // Adiciona T12:00:00 para evitar problema de timezone (meia-noite UTC vira dia anterior em BR)
+        const dateWithTime = paymentData.date + 'T12:00:00';
         onUpdateInstallment(paymentData.installmentId, {
             status: "Pago",
-            paidDate: new Date(paymentData.date),
+            paidDate: new Date(dateWithTime),
             paidAmount: Number(paymentData.value)
         });
         setIsPaymentModalOpen(false);
