@@ -26,11 +26,32 @@ interface Vehicle {
     modelo: string;
 }
 
+const MONTHS = [
+    { value: "1", label: "Janeiro" },
+    { value: "2", label: "Fevereiro" },
+    { value: "3", label: "Março" },
+    { value: "4", label: "Abril" },
+    { value: "5", label: "Maio" },
+    { value: "6", label: "Junho" },
+    { value: "7", label: "Julho" },
+    { value: "8", label: "Agosto" },
+    { value: "9", label: "Setembro" },
+    { value: "10", label: "Outubro" },
+    { value: "11", label: "Novembro" },
+    { value: "12", label: "Dezembro" },
+];
+
 export function TiresTab() {
     const [tires, setTires] = useState<Tire[]>([]);
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Filters
     const [filterVehicle, setFilterVehicle] = useState("all");
+    const [filterStatus, setFilterStatus] = useState("all");
+    const [filterPosition, setFilterPosition] = useState("all");
+    const [filterMonth, setFilterMonth] = useState("all");
+    const [filterYear, setFilterYear] = useState("all");
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -119,6 +140,25 @@ export function TiresTab() {
 
     const filtered = tires.filter(t => {
         if (filterVehicle !== "all" && t.vehicleId !== filterVehicle) return false;
+        if (filterStatus !== "all" && t.status !== filterStatus) return false;
+        if (filterPosition !== "all" && t.position !== filterPosition) return false;
+
+        const date = new Date(t.installDate);
+        const isValidDate = !isNaN(date.getTime());
+
+        if (filterYear !== "all") {
+            if (isValidDate) {
+                const year = date.getFullYear().toString();
+                if (year !== filterYear) return false;
+            }
+        }
+
+        if (filterMonth !== "all") {
+            if (isValidDate) {
+                const month = (date.getMonth() + 1).toString();
+                if (month !== filterMonth) return false;
+            }
+        }
         return true;
     });
 
@@ -271,7 +311,7 @@ export function TiresTab() {
                     <Filter className="w-4 h-4" />
                     Filtros de Pneus
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Veículo</label>
                         <select
@@ -285,7 +325,61 @@ export function TiresTab() {
                             ))}
                         </select>
                     </div>
-                    {/* Placeholder Filters for Year/Month (can be implemented if needed) */}
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</label>
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-orange-500 transition-colors"
+                        >
+                            <option value="all">Todos os Estados</option>
+                            <option value="Novo">Novo</option>
+                            <option value="Seminovo">Seminovo</option>
+                            <option value="Usado">Usado</option>
+                            <option value="Reformado">Reformado</option>
+                        </select>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Posição</label>
+                        <select
+                            value={filterPosition}
+                            onChange={(e) => setFilterPosition(e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-orange-500 transition-colors"
+                        >
+                            <option value="all">Todas as Posições</option>
+                            <option value="Dianteiro Esq.">Dianteiro Esq.</option>
+                            <option value="Dianteiro Dir.">Dianteiro Dir.</option>
+                            <option value="Traseiro Esq.">Traseiro Esq.</option>
+                            <option value="Traseiro Dir.">Traseiro Dir.</option>
+                            <option value="Estepe">Estepe</option>
+                        </select>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ano</label>
+                        <select
+                            value={filterYear}
+                            onChange={(e) => setFilterYear(e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-orange-500 transition-colors"
+                        >
+                            <option value="all">Todos</option>
+                            <option value="2025">2025</option>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                        </select>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mês</label>
+                        <select
+                            value={filterMonth}
+                            onChange={(e) => setFilterMonth(e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-orange-500 transition-colors"
+                        >
+                            <option value="all">Todos</option>
+                            {MONTHS.map(m => (
+                                <option key={m.value} value={m.value}>{m.label}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
