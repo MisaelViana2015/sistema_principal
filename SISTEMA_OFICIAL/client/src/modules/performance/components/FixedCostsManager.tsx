@@ -221,24 +221,27 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
             // Custos: Total value of all installments
             const custos = filtered.reduce((acc, curr) => acc + Number(curr.value), 0);
 
-            // Pago: Sum of paidAmount for paid installments
+            // Pago: Sum of paidAmount for paid installments (use paidAmount if exists, else value)
             const pago = filtered
                 .filter(inst => inst.status === 'Pago')
-                .reduce((acc, curr) => acc + Number(curr.paidAmount || curr.value), 0);
+                .reduce((acc, curr) => {
+                    const amount = curr.paidAmount != null ? Number(curr.paidAmount) : Number(curr.value);
+                    return acc + amount;
+                }, 0);
 
             // Pendente: Sum of value for pending installments
             const pendente = filtered
                 .filter(inst => inst.status === 'Pendente')
                 .reduce((acc, curr) => acc + Number(curr.value), 0);
 
-            // Juros: Difference between paidAmount and value when paidAmount > value
+            // Juros: When paidAmount > value (paid more than original)
             const juros = filtered
-                .filter(inst => inst.status === 'Pago' && Number(inst.paidAmount) > Number(inst.value))
+                .filter(inst => inst.status === 'Pago' && inst.paidAmount != null && Number(inst.paidAmount) > Number(inst.value))
                 .reduce((acc, curr) => acc + (Number(curr.paidAmount) - Number(curr.value)), 0);
 
-            // Desconto: Difference between value and paidAmount when paidAmount < value
+            // Desconto: When paidAmount < value (paid less than original)
             const desconto = filtered
-                .filter(inst => inst.status === 'Pago' && inst.paidAmount !== undefined && Number(inst.paidAmount) < Number(inst.value))
+                .filter(inst => inst.status === 'Pago' && inst.paidAmount != null && Number(inst.paidAmount) < Number(inst.value))
                 .reduce((acc, curr) => acc + (Number(curr.value) - Number(curr.paidAmount)), 0);
 
             return { custos, pago, pendente, juros, desconto };
