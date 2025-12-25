@@ -5,14 +5,14 @@ import { api } from "../../../lib/api";
 
 interface Maintenance {
     id: string;
-    description: string;
-    value: number;
-    date: string;
-    vehicleId: string;
-    vehiclePlate?: string; // If joined
+    notes: string;
+    valor: string | number;
+    data: string;
+    veiculoId: string;
+    veiculoPlate?: string;
+    veiculoModelo?: string;
     km?: number;
-    notes?: string;
-    type?: string;
+    tipo?: string;
 }
 
 export function MaintenanceTab() {
@@ -43,84 +43,96 @@ export function MaintenanceTab() {
     }
 
     const filtered = maintenances.filter(m => {
-        if (filterVehicle !== "all" && m.vehicleId !== filterVehicle) return false;
+        if (filterVehicle !== "all" && m.veiculoId !== filterVehicle) return false;
         // Month filter logic here if needed
         return true;
     });
+
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return "-";
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return "Erro Data";
+        return date.toLocaleDateString('pt-BR');
+    };
+
+    const formatCurrency = (val: string | number | undefined) => {
+        const num = Number(val);
+        if (isNaN(num)) return "R$ 0,00";
+        return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    };
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex flex-col">
-                    <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-gray-100">
-                        <Wrench className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                    <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-gray-100 uppercase tracking-wide">
+                        <Wrench className="w-6 h-6 text-cyan-400" />
                         Histórico de Manutenções
                     </h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                         Gerencie as manutenções da frota com estilo e precisão.
                     </p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white rounded-lg font-medium shadow-lg hover:shadow-cyan-500/20 transition-all">
+                <button className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-bold shadow-lg hover:shadow-cyan-500/20 transition-all uppercase tracking-wider text-xs">
                     <Plus className="w-4 h-4" />
                     NOVA MANUTENÇÃO
                 </button>
             </div>
 
             {/* Filters */}
-            <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-4 text-green-500 font-bold uppercase text-sm tracking-wider">
+            <div className="bg-gray-900/40 border border-gray-700/50 rounded-xl p-6 backdrop-blur-sm">
+                <div className="flex items-center gap-2 mb-6 text-emerald-400 font-bold uppercase text-[10px] tracking-[0.2em]">
                     <Filter className="w-4 h-4" />
-                    Filtros Avançados
+                    FILTROS AVANÇADOS
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Veículo</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Veículo</label>
                         <select
                             value={filterVehicle}
                             onChange={(e) => setFilterVehicle(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
+                            className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:border-cyan-500 outline-none transition-all"
                         >
                             <option value="all">Todos os Veículos</option>
-                            {/* Populate with vehicles if passed as props */}
                         </select>
                     </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Ano</label>
-                        <select className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ano</label>
+                        <select className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:border-cyan-500 outline-none transition-all">
                             <option value="all">Todos</option>
                             <option value="2025">2025</option>
                             <option value="2024">2024</option>
                         </select>
                     </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Mês</label>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Mês</label>
                         <select
                             value={filterMonth}
                             onChange={(e) => setFilterMonth(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none"
+                            className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:border-cyan-500 outline-none transition-all"
                         >
                             <option value="all">Todos</option>
-                            <option value="1">Janeiro</option>
-                            {/* ... */}
                         </select>
                     </div>
                 </div>
             </div>
 
             {/* List */}
-            <div className="space-y-3">
+            <div className="bg-gray-900/20 border border-gray-800 rounded-xl overflow-hidden">
                 {isLoading ? (
-                    <div className="text-center py-8 text-gray-500">Carregando...</div>
+                    <div className="text-center py-12 text-gray-500 font-medium animate-pulse">
+                        Sincronizando registros legados...
+                    </div>
                 ) : filtered.length === 0 ? (
-                    <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/30 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
-                        <Wrench className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                        <p className="text-gray-500 dark:text-gray-400">Nenhuma manutenção encontrada.</p>
+                    <div className="text-center py-16">
+                        <Wrench className="w-12 h-12 mx-auto text-gray-700 mb-4 opacity-20" />
+                        <p className="text-gray-500 text-sm font-medium">Nenhuma manutenção encontrada no histórico.</p>
                     </div>
                 ) : (
-                    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-medium uppercase text-xs">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-xs text-left">
+                            <thead className="bg-gray-800/50 text-gray-500 font-bold uppercase tracking-widest">
                                 <tr>
                                     <th className="px-6 py-4">Data</th>
                                     <th className="px-6 py-4">Veículo</th>
@@ -131,32 +143,34 @@ export function MaintenanceTab() {
                                     <th className="px-6 py-4 text-right">Ações</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                            <tbody className="divide-y divide-gray-800">
                                 {filtered.map((item) => (
-                                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                        <td className="px-6 py-4 font-mono text-gray-600 dark:text-gray-300">
-                                            {new Date(item.date).toLocaleDateString()}
+                                    <tr key={item.id} className="hover:bg-cyan-500/5 transition-colors group">
+                                        <td className="px-6 py-4 font-mono text-gray-400">
+                                            {formatDate(item.data)}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
-                                                <span className="font-bold text-gray-900 dark:text-white">{item.vehiclePlate || "N/A"}</span>
+                                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                                <span className="font-bold text-gray-200">{item.veiculoPlate || "N/A"}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{item.description}</td>
+                                        <td className="px-6 py-4 text-gray-400 group-hover:text-gray-200 transition-colors">
+                                            {item.notes || "Sem descrição"}
+                                        </td>
                                         <td className="px-6 py-4">
-                                            <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-xs font-bold uppercase">
-                                                {item.type || "Geral"}
+                                            <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold uppercase text-[10px]">
+                                                {item.tipo || "GERAL"}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 font-mono text-gray-500 dark:text-gray-400">
+                                        <td className="px-6 py-4 font-mono text-gray-500">
                                             {item.km ? `${item.km} km` : "-"}
                                         </td>
-                                        <td className="px-6 py-4 font-bold text-green-600 dark:text-green-400 font-mono">
-                                            R$ {Number(item.value).toFixed(2)}
+                                        <td className="px-6 py-4 font-bold text-emerald-400 font-mono">
+                                            {formatCurrency(item.valor)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="text-gray-400 hover:text-red-500 transition-colors">
+                                            <button className="text-gray-600 hover:text-red-500 transition-colors p-1">
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         </td>
