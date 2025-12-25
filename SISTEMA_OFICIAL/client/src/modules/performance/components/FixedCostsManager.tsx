@@ -311,7 +311,7 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
         });
 
         return groups;
-    }, [installments, selectedVehicleId, showAll, filterDate]);
+    }, [installments, selectedVehicleId, showAll, filterDate, statusFilter]);
 
     // Handlers para Filtros de Data
     const handlePrevMonth = () => {
