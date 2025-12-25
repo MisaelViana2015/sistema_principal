@@ -173,6 +173,8 @@ export async function getFixedCostInstallments(filters?: { month?: string, year?
         dueDate: fixedCostInstallments.dueDate,
         value: fixedCostInstallments.value,
         status: fixedCostInstallments.status,
+        paidAmount: fixedCostInstallments.paidAmount,
+        paidDate: fixedCostInstallments.paidDate,
     })
         .from(fixedCostInstallments)
         .leftJoin(fixedCosts, eq(fixedCostInstallments.fixedCostId, fixedCosts.id))
