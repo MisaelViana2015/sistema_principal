@@ -64,6 +64,7 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
     const [showAll, setShowAll] = useState(false);
     const [statusFilter, setStatusFilter] = useState<'all' | 'Pago' | 'Pendente'>('all');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+    const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
 
     // Form State for Cost
     const [formData, setFormData] = useState({
@@ -484,11 +485,57 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                 </div>
 
                 <div style={styles.filterGroup}>
-                    <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Mês/Ano</label>
-                    <div style={{ ...styles.select, display: "flex", alignItems: "center", justifyContent: "space-between", minWidth: "180px" }}>
-                        <span>{showAll ? "Todos" : capitalizedMonthDisplay}</span>
-                        <Calendar size={14} />
-                    </div>
+                    <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Mês</label>
+                    <select
+                        style={styles.select}
+                        value={showAll ? "todos" : selectedMonth}
+                        onChange={e => {
+                            if (e.target.value === "todos") {
+                                setShowAll(true);
+                            } else {
+                                setShowAll(false);
+                                setSelectedMonth(e.target.value);
+                                setFilterDate(new Date(parseInt(selectedYear), parseInt(e.target.value) - 1, 1));
+                            }
+                        }}
+                    >
+                        <option value="todos">Todos</option>
+                        <option value="1">Janeiro</option>
+                        <option value="2">Fevereiro</option>
+                        <option value="3">Março</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Maio</option>
+                        <option value="6">Junho</option>
+                        <option value="7">Julho</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+                </div>
+
+                <div style={styles.filterGroup}>
+                    <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Ano</label>
+                    <select
+                        style={styles.select}
+                        value={showAll ? "todos" : selectedYear}
+                        onChange={e => {
+                            if (e.target.value === "todos") {
+                                setShowAll(true);
+                            } else {
+                                setShowAll(false);
+                                setSelectedYear(e.target.value);
+                                setFilterDate(new Date(parseInt(e.target.value), parseInt(selectedMonth) - 1, 1));
+                            }
+                        }}
+                    >
+                        <option value="todos">Todos</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                    </select>
                 </div>
 
                 {/* Status Filter */}
