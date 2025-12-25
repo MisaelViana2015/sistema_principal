@@ -27,6 +27,8 @@ interface Installment {
     status: 'Pago' | 'Pendente';
     costName?: string;
     vendor?: string;
+    paidAmount?: number;
+    paidDate?: string;
 }
 
 interface Vehicle {
@@ -192,61 +194,76 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
         const currentMonth = now.getMonth();
         const currentDay = now.getDate();
 
-        // Helper to filter installments
-        const filter = (period: 'day' | 'week' | 'month' | 'year' | 'total', status?: 'Pago' | 'Pendente') => {
-            return installments.filter(inst => {
-                const d = new Date(inst.dueDate);
-                if (status && inst.status !== status) return false;
+        // Helper to check if installment is within period
+        const isInPeriod = (inst: Installment, period: 'day' | 'week' | 'month' | 'year' | 'total') => {
+            const d = new Date(inst.dueDate);
+            const isSameYear = d.getFullYear() === currentYear;
+            const isSameMonth = d.getMonth() === currentMonth;
+            const isSameDay = d.getDate() === currentDay;
 
-                const isSameYear = d.getFullYear() === currentYear;
-                const isSameMonth = d.getMonth() === currentMonth;
-                const isSameDay = d.getDate() === currentDay;
-
-                if (period === 'total') return true;
-                if (period === 'year') return isSameYear;
-                if (period === 'month') return isSameYear && isSameMonth;
-                if (period === 'day') return isSameYear && isSameMonth && isSameDay;
-                if (period === 'week') {
-                    // Simplificação: Semana atual (Sunday-Saturday)
-                    const firstDayOfWeek = currentDay - now.getDay();
-                    const lastDayOfWeek = firstDayOfWeek + 6;
-                    return isSameYear && isSameMonth && d.getDate() >= firstDayOfWeek && d.getDate() <= lastDayOfWeek;
-                }
-                return false;
-            }).reduce((acc, curr) => acc + Number(curr.value), 0);
+            if (period === 'total') return true;
+            if (period === 'year') return isSameYear;
+            if (period === 'month') return isSameYear && isSameMonth;
+            if (period === 'day') return isSameYear && isSameMonth && isSameDay;
+            if (period === 'week') {
+                const firstDayOfWeek = currentDay - now.getDay();
+                const lastDayOfWeek = firstDayOfWeek + 6;
+                return isSameYear && isSameMonth && d.getDate() >= firstDayOfWeek && d.getDate() <= lastDayOfWeek;
+            }
+            return false;
         };
 
-        const totalCost = installments.reduce((acc, curr) => acc + Number(curr.value), 0);
+        // Calculate values for each period
+        const calculate = (period: 'day' | 'week' | 'month' | 'year' | 'total') => {
+            const filtered = installments.filter(inst => isInPeriod(inst, period));
 
-        // Estrutura para os 4 cards principais (Linhas) x 5 colunas
+            // Custos: Total value of all installments
+            const custos = filtered.reduce((acc, curr) => acc + Number(curr.value), 0);
+
+            // Pago: Sum of paidAmount for paid installments
+            const pago = filtered
+                .filter(inst => inst.status === 'Pago')
+                .reduce((acc, curr) => acc + Number(curr.paidAmount || curr.value), 0);
+
+            // Pendente: Sum of value for pending installments
+            const pendente = filtered
+                .filter(inst => inst.status === 'Pendente')
+                .reduce((acc, curr) => acc + Number(curr.value), 0);
+
+            // Juros: Difference between paidAmount and value when paidAmount > value
+            const juros = filtered
+                .filter(inst => inst.status === 'Pago' && Number(inst.paidAmount) > Number(inst.value))
+                .reduce((acc, curr) => acc + (Number(curr.paidAmount) - Number(curr.value)), 0);
+
+            return { custos, pago, pendente, juros };
+        };
+
+        const dia = calculate('day');
+        const semana = calculate('week');
+        const mes = calculate('month');
+        const ano = calculate('year');
+        const total = calculate('total');
+
         return [
             {
                 label: "Custos",
                 color: COLORS.costs,
-                values: {
-                    dia: filter('day'), semana: filter('week'), mes: filter('month'), ano: filter('year'), total: filter('total')
-                }
+                values: { dia: dia.custos, semana: semana.custos, mes: mes.custos, ano: ano.custos, total: total.custos }
             },
             {
                 label: "Pago",
                 color: COLORS.paid,
-                values: {
-                    dia: filter('day', 'Pago'), semana: filter('week', 'Pago'), mes: filter('month', 'Pago'), ano: filter('year', 'Pago'), total: filter('total', 'Pago')
-                }
+                values: { dia: dia.pago, semana: semana.pago, mes: mes.pago, ano: ano.pago, total: total.pago }
             },
             {
                 label: "Pendente",
                 color: COLORS.pending,
-                values: {
-                    dia: filter('day', 'Pendente'), semana: filter('week', 'Pendente'), mes: filter('month', 'Pendente'), ano: filter('year', 'Pendente'), total: filter('total', 'Pendente')
-                }
+                values: { dia: dia.pendente, semana: semana.pendente, mes: mes.pendente, ano: ano.pendente, total: total.pendente }
             },
             {
                 label: "Juros",
                 color: COLORS.interest,
-                values: {
-                    dia: 0, semana: 0, mes: 0, ano: 0, total: 0 // TODO: Implementar cálculo de juros real
-                }
+                values: { dia: dia.juros, semana: semana.juros, mes: mes.juros, ano: ano.juros, total: total.juros }
             }
         ];
     }, [installments]);
