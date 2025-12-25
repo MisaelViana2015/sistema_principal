@@ -22,7 +22,9 @@ export const createFixedCostSchema = z.object({
     dueDay: z.number().min(1).max(31).default(5),
     vehicleId: z.string().optional().transform(val => val === "" ? undefined : val),
     costTypeId: z.string().optional().transform(val => val === "" ? undefined : val),
-    notes: z.string().optional(),
+    notes: z.string().optional().transform(val => val === "" ? undefined : val),
+    vendor: z.string().optional().transform(val => val === "" ? undefined : val),
+    description: z.string().optional().transform(val => val === "" ? undefined : val),
     totalInstallments: z.number().or(z.string()).transform(val => Number(val)).optional(),
     startDate: z.string().or(z.date()).transform(val => val ? new Date(val) : undefined).optional()
 });

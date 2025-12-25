@@ -82,7 +82,7 @@ export async function updateFixedCost(req: Request, res: Response) {
     } catch (error: any) {
         console.error("Erro ao atualizar custo fixo:", error);
         if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
-        res.status(500).json({ error: "Erro interno" });
+        res.status(500).json({ error: "Erro interno", message: error.message, code: error.code });
     }
 }
 
