@@ -245,7 +245,7 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                 label: "Juros",
                 color: COLORS.interest,
                 values: {
-                    dia: 0, semana: 0, mes: 0, ano: 810.48, total: 810.48 // Hardcoded conforme screenshot por enquanto
+                    dia: 0, semana: 0, mes: 0, ano: 0, total: 0 // TODO: Implementar cálculo de juros real
                 }
             }
         ];
