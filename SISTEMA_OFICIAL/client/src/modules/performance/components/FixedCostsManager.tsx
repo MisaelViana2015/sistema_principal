@@ -61,14 +61,16 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
     const isDark = theme === "dark";
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // DEBUG: Log para verificar se paidAmount está chegando
-    console.log('🔍 DEBUG - Parcelas recebidas:', installments?.slice(0, 3).map(i => ({
+    // DEBUG: Log para verificar se paidAmount está chegando (APENAS PAGAS)
+    const paidInstallments = installments?.filter(i => i.status === 'Pago');
+    console.log('🔍 DEBUG - Parcelas PAGAS:', paidInstallments?.slice(0, 5).map(i => ({
         costName: i.costName,
         value: i.value,
         paidAmount: i.paidAmount,
         paidDate: i.paidDate,
         status: i.status
     })));
+    console.log(`📊 Total pagas: ${paidInstallments?.length || 0}`);
 
     // Filtros
     const [selectedVehicleId, setSelectedVehicleId] = useState<string>("all");
