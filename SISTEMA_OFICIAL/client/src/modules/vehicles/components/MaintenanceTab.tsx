@@ -44,6 +44,7 @@ export function MaintenanceTab() {
     const [isLoading, setIsLoading] = useState(true);
     const [filterVehicle, setFilterVehicle] = useState("all");
     const [filterMonth, setFilterMonth] = useState("all");
+    const [filterYear, setFilterYear] = useState("all");
 
     useEffect(() => {
         loadData();
@@ -85,11 +86,20 @@ export function MaintenanceTab() {
     const filtered = maintenances.filter(m => {
         if (filterVehicle !== "all" && m.veiculoId !== filterVehicle) return false;
 
+        const date = new Date(m.data);
+        const isValidDate = !isNaN(date.getTime());
+
+        if (filterYear !== "all") {
+            if (isValidDate) {
+                const year = date.getFullYear().toString();
+                if (year !== filterYear) return false;
+            }
+        }
+
         if (filterMonth !== "all") {
-            const date = new Date(m.data);
             // date.getMonth() is 0-indexed (0=Jan, 11=Dec)
             // our filter is 1-indexed string ("1", "12")
-            if (!isNaN(date.getTime())) {
+            if (isValidDate) {
                 const month = (date.getMonth() + 1).toString();
                 if (month !== filterMonth) return false;
             }
@@ -153,7 +163,11 @@ export function MaintenanceTab() {
                     </div>
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ano</label>
-                        <select className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:border-cyan-500 outline-none transition-all">
+                        <select
+                            value={filterYear}
+                            onChange={(e) => setFilterYear(e.target.value)}
+                            className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 focus:border-cyan-500 outline-none transition-all"
+                        >
                             <option value="all">Todos</option>
                             <option value="2025">2025</option>
                             <option value="2024">2024</option>
