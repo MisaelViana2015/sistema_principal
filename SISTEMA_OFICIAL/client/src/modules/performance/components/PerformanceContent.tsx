@@ -820,12 +820,12 @@ export default function PerformanceContent() {
                             };
 
                             if (data.id) {
-                                updateFixedCostMutation.mutate({
+                                return updateFixedCostMutation.mutateAsync({
                                     id: data.id,
                                     ...payload
                                 });
                             } else {
-                                createFixedCostMutation.mutate(payload);
+                                return createFixedCostMutation.mutateAsync(payload);
                             }
                         }}
                         onDelete={(id) => deleteFixedCostMutation.mutate(id)}

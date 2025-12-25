@@ -1,7 +1,7 @@
 
 import { db } from "../../core/db/connection.js";
 import { expenses, costTypes, fixedCosts, fixedCostInstallments, drivers, shifts, vehicles, legacyMaintenances, legacyShiftCostTypes } from "../../../shared/schema.js";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, ne } from "drizzle-orm";
 
 export async function findAllExpenses(filters?: { shiftId?: string }) {
     const whereConditions = [];
@@ -97,12 +97,12 @@ export async function updateFixedCost(id: string, data: Partial<typeof fixedCost
     const [updated] = await db.update(fixedCosts).set(data).where(eq(fixedCosts.id, id)).returning();
 
     if (data.value) {
-        // Update pending installments
+        // Update pending installments (or any not paid)
         await db.update(fixedCostInstallments)
             .set({ value: String(data.value) })
             .where(and(
                 eq(fixedCostInstallments.fixedCostId, id),
-                eq(fixedCostInstallments.status, 'Pendente')
+                ne(fixedCostInstallments.status, 'Pago')
             ));
     }
 
