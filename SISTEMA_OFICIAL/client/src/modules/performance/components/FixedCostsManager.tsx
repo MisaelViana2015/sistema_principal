@@ -315,15 +315,24 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
 
     // Handlers para Filtros de Data
     const handlePrevMonth = () => {
-        setFilterDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+        const newDate = new Date(filterDate.getFullYear(), filterDate.getMonth() - 1, 1);
+        setFilterDate(newDate);
+        setSelectedMonth((newDate.getMonth() + 1).toString());
+        setSelectedYear(newDate.getFullYear().toString());
         setShowAll(false);
     };
     const handleNextMonth = () => {
-        setFilterDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+        const newDate = new Date(filterDate.getFullYear(), filterDate.getMonth() + 1, 1);
+        setFilterDate(newDate);
+        setSelectedMonth((newDate.getMonth() + 1).toString());
+        setSelectedYear(newDate.getFullYear().toString());
         setShowAll(false);
     };
     const handleCurrentMonth = () => {
-        setFilterDate(new Date());
+        const now = new Date();
+        setFilterDate(now);
+        setSelectedMonth((now.getMonth() + 1).toString());
+        setSelectedYear(now.getFullYear().toString());
         setShowAll(false);
     };
     const handleAllMonths = () => {
