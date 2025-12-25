@@ -34,7 +34,7 @@ const pool = new Pool({
             : false,
     max: 10, // máximo de conexões no pool
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    connectionTimeoutMillis: 30000,
 });
 
 // Configuração do Drizzle ORM
