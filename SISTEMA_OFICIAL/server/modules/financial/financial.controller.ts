@@ -233,6 +233,53 @@ export async function deleteCostType(req: Request, res: Response) {
     }
 }
 
+// ... existing code ...
+
+export async function createLegacyMaintenance(req: Request, res: Response) {
+    try {
+        const data = req.body;
+        // Basic validation could go here or use Zod
+        const newMaintenance = await service.createLegacyMaintenance(data);
+        res.status(201).json(newMaintenance);
+    } catch (error) {
+        console.error("Erro ao criar manutenção legada:", error);
+        res.status(500).json({ error: "Erro interno ao criar manutenção" });
+    }
+}
+
+// --- TIRES ---
+export async function getTires(req: Request, res: Response) {
+    try {
+        const tires = await service.getAllTires();
+        res.json(tires);
+    } catch (error) {
+        console.error("Erro ao buscar pneus:", error);
+        res.status(500).json({ error: "Erro interno ao buscar pneus" });
+    }
+}
+
+export async function createTire(req: Request, res: Response) {
+    try {
+        const data = req.body;
+        const newTire = await service.createTire(data);
+        res.status(201).json(newTire);
+    } catch (error) {
+        console.error("Erro ao criar pneu:", error);
+        res.status(500).json({ error: "Erro interno ao criar pneu" });
+    }
+}
+
+export async function deleteTire(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        await service.deleteTire(id);
+        res.json({ message: "Pneu removido com sucesso" });
+    } catch (error) {
+        console.error("Erro ao remover pneu:", error);
+        res.status(500).json({ error: "Erro interno ao remover pneu" });
+    }
+}
+
 export async function restoreDefaultCostTypes(req: Request, res: Response) {
     try {
         await service.restoreDefaultCostTypes();
@@ -242,3 +289,4 @@ export async function restoreDefaultCostTypes(req: Request, res: Response) {
         res.status(500).json({ error: "Erro interno ao restaurar tipos de custo" });
     }
 }
+

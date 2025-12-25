@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Plus, Edit2, Trash2, Wrench, ChevronDown, Calendar, DollarSign, Filter, Search } from "lucide-react";
+import { Wrench, Plus, Filter, Trash2, Calendar, DollarSign, Activity, FileText } from "lucide-react";
 import { api } from "../../../lib/api";
-
 import { vehiclesService } from "../vehicles.service";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Maintenance {
     id: string;
@@ -46,6 +49,18 @@ export function MaintenanceTab() {
     const [filterMonth, setFilterMonth] = useState("all");
     const [filterYear, setFilterYear] = useState("all");
 
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [newItem, setNewItem] = useState({
+        vehicleId: "",
+        type: "",
+        description: "",
+        value: "",
+        date: new Date().toISOString().split('T')[0],
+        km: ""
+    });
+
     useEffect(() => {
         loadData();
     }, []);
@@ -61,7 +76,6 @@ export function MaintenanceTab() {
             setVehicles(vRes || []);
         } catch (error) {
             console.error("Failed to load data:", error);
-            // Fallback to empty to avoid crash if API missing
             setMaintenances([]);
         } finally {
             setIsLoading(false);
@@ -75,11 +89,46 @@ export function MaintenanceTab() {
 
         try {
             await api.delete(`/financial/legacy-maintenances/${id}`);
-            // Remove from state immediately for snappy feel
             setMaintenances(prev => prev.filter(m => m.id !== id));
         } catch (error) {
             console.error("Failed to delete maintenance:", error);
             alert("Erro ao excluir manutenção. Tente novamente.");
+        }
+    }
+
+    async function handleCreate(e: React.FormEvent) {
+        e.preventDefault();
+        if (!newItem.vehicleId || !newItem.value || !newItem.date) {
+            alert("Preencha os campos obrigatórios");
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            await api.post("/financial/legacy-maintenances", {
+                vehicleId: newItem.vehicleId,
+                type: newItem.type || "Geral",
+                description: newItem.description,
+                value: parseFloat(newItem.value.replace(',', '.')),
+                date: newItem.date,
+                km: newItem.km ? parseInt(newItem.km) : null
+            });
+
+            setIsModalOpen(false);
+            setNewItem({
+                vehicleId: "",
+                type: "",
+                description: "",
+                value: "",
+                date: new Date().toISOString().split('T')[0],
+                km: ""
+            });
+            await loadData(); // Refresh list
+        } catch (error) {
+            console.error("Failed to create maintenance:", error);
+            alert("Erro ao criar manutenção.");
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -97,8 +146,6 @@ export function MaintenanceTab() {
         }
 
         if (filterMonth !== "all") {
-            // date.getMonth() is 0-indexed (0=Jan, 11=Dec)
-            // our filter is 1-indexed string ("1", "12")
             if (isValidDate) {
                 const month = (date.getMonth() + 1).toString();
                 if (month !== filterMonth) return false;
@@ -133,10 +180,120 @@ export function MaintenanceTab() {
                         Gerencie as manutenções da frota com estilo e precisão.
                     </p>
                 </div>
-                <button className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-bold shadow-lg hover:shadow-cyan-500/20 transition-all uppercase tracking-wider text-xs">
-                    <Plus className="w-4 h-4" />
-                    NOVA MANUTENÇÃO
-                </button>
+
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                    <DialogTrigger asChild>
+                        <button className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white rounded-lg font-bold shadow-lg hover:shadow-cyan-500/20 transition-all uppercase tracking-wider text-xs">
+                            <Plus className="w-4 h-4" />
+                            NOVA MANUTENÇÃO
+                        </button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[500px] bg-gray-950 border-gray-800 text-gray-100">
+                        <DialogHeader>
+                            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-cyan-400">
+                                <Wrench className="w-5 h-5" />
+                                Nova Manutenção
+                            </DialogTitle>
+                        </DialogHeader>
+
+                        <form onSubmit={handleCreate} className="space-y-4 mt-4">
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Veículo</Label>
+                                <select
+                                    className="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm focus:border-cyan-500 outline-none"
+                                    value={newItem.vehicleId}
+                                    onChange={e => setNewItem({ ...newItem, vehicleId: e.target.value })}
+                                    required
+                                >
+                                    <option value="">Selecione um veículo...</option>
+                                    {vehicles.map(v => (
+                                        <option key={v.id} value={v.id}>{v.plate} - {v.modelo}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Tipo / Categoria</Label>
+                                    <div className="relative">
+                                        <Activity className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+                                        <Input
+                                            placeholder="Ex: Troca de Óleo"
+                                            className="pl-9 bg-gray-900/50 border-gray-700 focus:border-cyan-500"
+                                            value={newItem.type}
+                                            onChange={e => setNewItem({ ...newItem, type: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Valor (R$)</Label>
+                                    <div className="relative">
+                                        <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0,00"
+                                            className="pl-9 bg-gray-900/50 border-gray-700 focus:border-cyan-500"
+                                            value={newItem.value}
+                                            onChange={e => setNewItem({ ...newItem, value: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Data</Label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+                                        <Input
+                                            type="date"
+                                            className="pl-9 bg-gray-900/50 border-gray-700 focus:border-cyan-500 block w-full"
+                                            value={newItem.date}
+                                            onChange={e => setNewItem({ ...newItem, date: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">KM Atual</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="Ex: 50000"
+                                        className="bg-gray-900/50 border-gray-700 focus:border-cyan-500"
+                                        value={newItem.km}
+                                        onChange={e => setNewItem({ ...newItem, km: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Descrição / Observações</Label>
+                                <div className="relative">
+                                    <FileText className="absolute left-3 top-3 w-4 h-4 text-gray-500" />
+                                    <Textarea
+                                        placeholder="Detalhes adicionais..."
+                                        className="pl-9 min-h-[80px] bg-gray-900/50 border-gray-700 focus:border-cyan-500"
+                                        value={newItem.description}
+                                        onChange={e => setNewItem({ ...newItem, description: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4">
+                                <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                                <Button
+                                    type="submit"
+                                    className="bg-cyan-600 hover:bg-cyan-700 text-white font-bold"
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? "Salvando..." : "Salvar Manutenção"}
+                                </Button>
+                            </div>
+                        </form>
+                    </DialogContent>
+                </Dialog>
             </div>
 
             {/* Filters */}
