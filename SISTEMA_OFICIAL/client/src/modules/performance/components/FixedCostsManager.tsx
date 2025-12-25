@@ -128,8 +128,8 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
         if (!paymentData.installmentId) return;
         onUpdateInstallment(paymentData.installmentId, {
             status: "Pago",
-            paymentDate: new Date(paymentData.date),
-            value: Number(paymentData.value)
+            paidDate: new Date(paymentData.date),
+            paidAmount: Number(paymentData.value)
         });
         setIsPaymentModalOpen(false);
     };
@@ -611,35 +611,37 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                                 </div>
                             </div>
 
-                            {/* Recurring Section */}
-                            <div style={{ marginBottom: "1.5rem", borderTop: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, paddingTop: "1rem" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                                    <RefreshCw size={16} />
-                                    <span style={{ fontWeight: 600 }}>Custos Recorrentes</span>
-                                </div>
-
-                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                                    <input
-                                        type="checkbox"
-                                        id="isRecurring"
-                                        checked={formData.isRecurring}
-                                        onChange={e => setFormData({ ...formData, isRecurring: e.target.checked })}
-                                        style={{ width: "16px", height: "16px" }}
-                                    />
-                                    <label htmlFor="isRecurring" style={{ fontSize: "0.9rem", cursor: "pointer" }}>Repetir mensalmente</label>
-                                </div>
-                                <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginLeft: "1.5rem", marginBottom: "1rem" }}>
-                                    Gera automaticamente múltiplos lançamentos mensais
-                                </p>
-
-                                {formData.isRecurring && (
-                                    <div style={{ marginLeft: "1.5rem" }}>
-                                        <label style={styles.label}>Quantidade de Meses</label>
-                                        <input type="number" style={{ ...styles.input, width: "100px" }} value={formData.totalInstallments} onChange={e => setFormData({ ...formData, totalInstallments: e.target.value })} />
-                                        <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginTop: "0.25rem" }}>Será criado 1 lançamento para cada mês</p>
+                            {/* Recurring Section - Only show for new costs */}
+                            {!formData.id && (
+                                <div style={{ marginBottom: "1.5rem", borderTop: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, paddingTop: "1rem" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                                        <RefreshCw size={16} />
+                                        <span style={{ fontWeight: 600 }}>Custos Recorrentes</span>
                                     </div>
-                                )}
-                            </div>
+
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                                        <input
+                                            type="checkbox"
+                                            id="isRecurring"
+                                            checked={formData.isRecurring}
+                                            onChange={e => setFormData({ ...formData, isRecurring: e.target.checked })}
+                                            style={{ width: "16px", height: "16px" }}
+                                        />
+                                        <label htmlFor="isRecurring" style={{ fontSize: "0.9rem", cursor: "pointer" }}>Repetir mensalmente</label>
+                                    </div>
+                                    <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginLeft: "1.5rem", marginBottom: "1rem" }}>
+                                        Gera automaticamente múltiplos lançamentos mensais
+                                    </p>
+
+                                    {formData.isRecurring && (
+                                        <div style={{ marginLeft: "1.5rem" }}>
+                                            <label style={styles.label}>Quantidade de Meses</label>
+                                            <input type="number" style={{ ...styles.input, width: "100px" }} value={formData.totalInstallments} onChange={e => setFormData({ ...formData, totalInstallments: e.target.value })} />
+                                            <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginTop: "0.25rem" }}>Será criado 1 lançamento para cada mês</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div style={{ marginBottom: "1.5rem" }}>
                                 <label style={styles.label}>Observação</label>

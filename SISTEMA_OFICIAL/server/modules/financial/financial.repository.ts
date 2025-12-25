@@ -107,9 +107,14 @@ export async function deleteFixedCost(id: string) {
     return deleted;
 }
 
-export async function updateFixedCostInstallment(id: string, data: { status?: string, value?: number, dueDate?: Date }) {
-    const updateData: any = { ...data };
+export async function updateFixedCostInstallment(id: string, data: { status?: string, value?: number, dueDate?: Date, paidDate?: Date, paidAmount?: number }) {
+    const updateData: any = {};
+
+    if (data.status !== undefined) updateData.status = data.status;
     if (data.value !== undefined) updateData.value = String(data.value);
+    if (data.dueDate !== undefined) updateData.dueDate = data.dueDate;
+    if (data.paidDate !== undefined) updateData.paidDate = data.paidDate;
+    if (data.paidAmount !== undefined) updateData.paidAmount = String(data.paidAmount);
 
     const [updated] = await db.update(fixedCostInstallments)
         .set(updateData)

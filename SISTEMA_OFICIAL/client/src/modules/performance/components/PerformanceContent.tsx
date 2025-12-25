@@ -88,11 +88,11 @@ export default function PerformanceContent() {
 
     // Mutations
     const updateInstallmentMutation = useMutation({
-        mutationFn: (data: { id: string, status?: string, value?: number, dueDate?: Date }) =>
+        mutationFn: (data: { id: string, status?: string, value?: number, dueDate?: Date, paidDate?: Date, paidAmount?: number }) =>
             api.put(`/financial/fixed-costs/installments/${data.id}`, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["fixedCostInstallments"] });
-            queryClient.invalidateQueries({ queryKey: ["fixedCosts"] }); // Update totals maybe
+            queryClient.invalidateQueries({ queryKey: ["fixedCosts"] });
         }
     });
 
