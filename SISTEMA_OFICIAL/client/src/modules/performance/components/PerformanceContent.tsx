@@ -809,23 +809,29 @@ export default function PerformanceContent() {
                                 dueDay
                             });
 
-                            startDate: startDate
-                        };
+                            const payload = {
+                                ...data,
+                                name: data.description,
+                                value: Number(data.value),
+                                frequency: data.isRecurring ? "Mensal" : "Único",
+                                dueDay: dueDay,
+                                totalInstallments: data.isRecurring ? (data.totalInstallments || 12) : 1,
+                                startDate: startDate
+                            };
 
-            if (data.id) {
-                updateFixedCostMutation.mutate({
-                    id: data.id,
-                    ...payload
-                });
+                            if (data.id) {
+                                updateFixedCostMutation.mutate({
+                                    id: data.id,
+                                    ...payload
+                                });
                             } else {
-                createFixedCostMutation.mutate(payload);
+                                createFixedCostMutation.mutate(payload);
                             }
                         }}
-                        }}
-            onDelete={(id) => deleteFixedCostMutation.mutate(id)}
-            onUpdateInstallment={(id, data) => updateInstallmentMutation.mutate({ id, ...data })}
+                        onDelete={(id) => deleteFixedCostMutation.mutate(id)}
+                        onUpdateInstallment={(id, data) => updateInstallmentMutation.mutate({ id, ...data })}
                     />
-            )
+                )
             }
 
             {
