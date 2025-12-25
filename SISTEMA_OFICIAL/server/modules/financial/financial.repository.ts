@@ -95,8 +95,17 @@ export async function createFixedCost(data: typeof fixedCosts.$inferInsert) {
 
 export async function updateFixedCost(id: string, data: Partial<typeof fixedCosts.$inferInsert>) {
     const [updated] = await db.update(fixedCosts).set(data).where(eq(fixedCosts.id, id)).returning();
-    // Logic to update future installments if value changed? Complex. 
-    // For now, just update the template.
+
+    if (data.value) {
+        // Update pending installments
+        await db.update(fixedCostInstallments)
+            .set({ value: String(data.value) })
+            .where(and(
+                eq(fixedCostInstallments.fixedCostId, id),
+                eq(fixedCostInstallments.status, 'Pendente')
+            ));
+    }
+
     return updated;
 }
 
@@ -111,10 +120,10 @@ export async function updateFixedCostInstallment(id: string, data: { status?: st
     const updateData: any = {};
 
     if (data.status !== undefined) updateData.status = data.status;
-    if (data.value !== undefined) updateData.value = String(data.value);
+    if (data.value !== undefined) updateData.value = data.value === null ? null : String(data.value);
     if (data.dueDate !== undefined) updateData.dueDate = data.dueDate;
     if (data.paidDate !== undefined) updateData.paidDate = data.paidDate;
-    if (data.paidAmount !== undefined) updateData.paidAmount = String(data.paidAmount);
+    if (data.paidAmount !== undefined) updateData.paidAmount = data.paidAmount === null ? null : String(data.paidAmount);
 
     const [updated] = await db.update(fixedCostInstallments)
         .set(updateData)

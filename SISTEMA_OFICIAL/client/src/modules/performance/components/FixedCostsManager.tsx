@@ -134,6 +134,26 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
         setIsPaymentModalOpen(false);
     };
 
+    // Unpay Handler
+    const [unpayId, setUnpayId] = useState<string | null>(null);
+    const [isUnpayModalOpen, setIsUnpayModalOpen] = useState(false);
+
+    const handleOpenUnpay = (id: string) => {
+        setUnpayId(id);
+        setIsUnpayModalOpen(true);
+    };
+
+    const handleConfirmUnpay = () => {
+        if (!unpayId) return;
+        onUpdateInstallment(unpayId, {
+            status: "Pendente",
+            paidDate: null,
+            paidAmount: null
+        });
+        setIsUnpayModalOpen(false);
+        setUnpayId(null);
+    };
+
     const handleEditInstallment = (inst: Installment) => {
         setEditInstallmentData({
             installmentId: inst.id,
@@ -527,9 +547,12 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                                             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                                                 <span style={{ fontWeight: 600 }}>{inst.costName}</span>
                                                 <span
-                                                    onClick={() => inst.status === 'Pendente' && handleOpenPayment(inst)}
-                                                    style={{ ...styles.tag(inst.status), cursor: inst.status === 'Pendente' ? 'pointer' : 'default' }}
-                                                    title={inst.status === 'Pendente' ? "Clique para registrar pagamento" : ""}
+                                                    onClick={() => {
+                                                        if (inst.status === 'Pendente') handleOpenPayment(inst);
+                                                        else if (inst.status === 'Pago') handleOpenUnpay(inst.id);
+                                                    }}
+                                                    style={{ ...styles.tag(inst.status), cursor: 'pointer' }}
+                                                    title={inst.status === 'Pendente' ? "Registrar Pagamento" : "Cancelar Pagamento"}
                                                 >
                                                     {inst.status}
                                                 </span>
@@ -780,6 +803,34 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                         </div>
                     </div>
                 )}
+
+            {/* Unpay Confirmation Modal */}
+            {
+                isUnpayModalOpen && (
+                    <div style={styles.modalOverlay}>
+                        <div style={{ ...styles.modalContent, width: "400px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+                                <h3 style={styles.title}>Cancelar Pagamento?</h3>
+                                <button onClick={() => setIsUnpayModalOpen(false)} style={{ background: "transparent", border: "none" }}><X size={20} color={styles.subtitle.color} /></button>
+                            </div>
+
+                            <p style={{ fontSize: "0.9rem", color: styles.subtitle.color, marginBottom: "1.5rem" }}>
+                                Deseja desfazer o pagamento desta parcela? O status voltará para "Pendente".
+                            </p>
+
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                                <button onClick={() => setIsUnpayModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
+                                <button
+                                    onClick={handleConfirmUnpay}
+                                    style={{ ...styles.primaryButton, backgroundColor: "#ef4444", padding: "0.75rem 1.5rem", height: "auto" }}
+                                >
+                                    Desfazer Pagamento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div>
     );
 }
