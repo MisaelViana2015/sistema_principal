@@ -224,6 +224,29 @@ Se necessário restaurar:
 
 📌 **Processo manual, consciente e reversível**
 
+### ⚙️ IMPLEMENTAÇÃO OFICIAL (SCRIPTS ATIVOS)
+
+A automação de backup foi implementada via PowerShell e Node.js para garantir robustez e segurança.
+
+#### 1. Script Mestre: `scripts/auto_backup.ps1`
+*   **Função:** Orquestrador Geral.
+*   **Execução:** `powershell -ExecutionPolicy Bypass -File scripts/auto_backup.ps1`
+*   **Ações:**
+    *   Gerencia retenção (mantém últimos 6 backups).
+    *   Copia arquivos do projeto e dump do banco.
+    *   **Destinos:**
+        *   Local: `C:\dev\Backups_Servidores\`
+        *   Nuvem: `OneDrive` (Detectado automaticamente)
+
+#### 2. Backup de Banco: `server/scripts/db/backup-simple.ts`
+*   **Função:** Gera o dump SQL dos dados.
+*   **Credenciais:** Utiliza `server/db_prod.cred` (criptografado via DPAPI) para conexão segura, sem expor senhas em texto plano.
+*   **Output:** Gera arquivos `.sql` com timestamp na pasta `server/backups/`.
+
+#### 3. Segurança
+*   Credenciais de produção (`db_prod.cred`) são protegidas e decriptadas apenas em memória durante a execução.
+*   Arquivo `.gitignore` configurado para jamais versionar credenciais ou dumps.
+
 ## 1️⃣0️⃣ SEGURANÇA — CAMADA MÍNIMA OBRIGATÓRIA
 
 Implementar obrigatoriamente:
@@ -4462,32 +4485,22 @@ Regra oficial:
 9.3. Não permitir "sync" que rescreve tabelas
 9.4. Banco versionado + migrations obrigatórias
 9.5. Scripts de restauração prontos
-10. SISTEMA DE BACKUPS AUTOMÁTICOS (5x por dia)
-10.1. Frequência
+10. SISTEMA DE BACKUPS AUTOMÁTICOS (IMPLEMENTADO v1.0)
+10.1. Ferramenta Oficial
+Script: `scripts/auto_backup.ps1`
+Método: PowerShell + Node.js (dump)
 
-03:00 → backup FULL
+10.2. Frequência e Execução
+Execução Manual ou via Agendador de Tarefas do Windows.
+Comando: `powershell -File scripts/auto_backup.ps1`
 
-09:00 → diferencial
+10.3. Destino (Redundância Dupla)
+1. Local: `C:\dev\Backups_Servidores\`
+2. Nuvem: `OneDrive` (Pasta 'Backups_Servidor' detectada automaticamente)
 
-15:00 → diferencial
-
-21:00 → full
-
-23:59 → incremental
-
-10.2. Retenção
-
-7 dias de backups completos
-
-backups semanais guardados por 1 mês
-
-backups mensais guardados por 1 ano
-
-10.3. Destino
-
-✔ S3
-✔ Backblaze B2
-✔ Google Cloud Storage
+10.4. Retenção
+Script mantém automaticamente os últimos 6 backups para economizar espaço.
+Rotação: FIFO (First-In, First-Out).
 
 11. BACKUP LOCAL A CADA 2 HORAS (DESENVOLVIMENTO)
 
@@ -12412,3 +12425,25 @@ otes, km_atual -> campo customizado em expenses ou tabela auxiliar).
 - [x] .gitignore configurado
 - [x] Validators implementados em todos os módulos críticos
 - [x] Arquivos de build removidos do Git
+
+## 5. Status Update (25/12/2025)
+
+### 1. Migração de Dados (16/12 a 25/12)
+- **Problema:** Dados inseridos em banco incorreto (Supabase) ou não migrados.
+- **Solução:**
+  - Scripts de migração criados (`scripts/db/generate_migration_sql.ts`).
+  - Uso de conexão direta via `railway connect` para aplicar dados no `junction.proxy`.
+  - Correção de IDs (UUID) e mapeamento de nomes de motoristas.
+  - **Resultado:** 28 Turnos e 600+ corridas recuperados e ativos em produção.
+
+### 2. Automação de Backups (Oficial)
+- **Nova Ferramenta:** `scripts/auto_backup.ps1` (PowerShell).
+- **Segurança:** Uso de `db_prod.cred` (DPAPI) para não expor senhas.
+- **Funcionalidade:** Backup de Código + Dump de Banco.
+- **Destino:** Local + OneDrive (Sync automático).
+
+### 3. Migração Neon DB (17/12)
+- Recuperação pontual de dados faltantes do dia 17/12 originados do banco Neon.
+- Inserção cirúrgica sem afetar outros registros.
+
+**Estado Atual:** Sistema OPERACIONAL, Dados ÍNTEGROS, Backups AUTOMATIZADOS.

@@ -16,7 +16,7 @@ import { useTheme } from "../contexts/ThemeContext";
 
 type TabValue =
     | "motoristas" | "veiculos" | "turnos" | "corridas"
-    | "financeiro" | "manutencao" | "pneus"
+    | "financeiro"
     | "analise" | "fraude" | "importar";
 
 interface TabItem {
@@ -31,12 +31,11 @@ const tabs: TabItem[] = [
     { value: "turnos", label: "Turnos" },
     { value: "corridas", label: "Corridas" },
     { value: "financeiro", label: "Financeiro / Custos" }, // Mapeado para CustosTabLegacy
-    { value: "manutencao", label: "Manutenção" },
-    { value: "pneus", label: "Pneus" },
     { value: "analise", label: "Análise" },
     { value: "fraude", label: "Fraude" },
     { value: "importar", label: "Importar" }
 ];
+
 
 export default function Admin() {
     const [activeTab, setActiveTab] = useState<TabValue>("motoristas");
@@ -205,8 +204,6 @@ export default function Admin() {
                                 {activeTab === "turnos" && <ShiftsList />}
                                 {activeTab === "corridas" && <RidesList />}
                                 {activeTab === "financeiro" && <div className="p-4 text-center text-gray-500">Módulo Financeiro em migração</div>}
-                                {activeTab === "manutencao" && <div className="p-4 text-center text-gray-500">Módulo Manutenção em migração</div>}
-                                {activeTab === "pneus" && <div className="p-4 text-center text-gray-500">Módulo Pneus em migração</div>}
                                 {activeTab === "analise" && <PerformanceContent />}
                                 {activeTab === "fraude" && <div className="p-4 text-center text-gray-500">Módulo Fraude em migração</div>}
                                 {activeTab === "importar" && <ImportTab />}
