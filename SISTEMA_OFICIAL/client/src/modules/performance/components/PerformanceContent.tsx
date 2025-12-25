@@ -99,13 +99,6 @@ export default function PerformanceContent() {
     // --- CALCULATIONS (Financeiro) ---
 
 
-    // Debug Installments
-    useEffect(() => {
-        if (installments) {
-            console.log("Fluxo de Dados: Frontend recebeu parcelas:", installments.length);
-        }
-    }, [installments]);
-
     // 1. Filter Data based on selection
     const filteredShifts = (shifts || []).filter((s: any) => {
         const d = new Date(s.inicio);
