@@ -51,8 +51,9 @@ export interface FixedCostsManagerProps {
 const COLORS = {
     costs: { bg: "#dbeafe", text: "#1e40af", bar: "#3b82f6" },     // Azul claro / Azul
     paid: { bg: "#ccfbf1", text: "#0f766e", bar: "#22c55e" },      // Verde-azulado / Verde
-    pending: { bg: "#e0f2fe", text: "#0369a1", bar: "#f59e0b" },   // Azul céu / Laranja (conforme gráfico)
-    interest: { bg: "#f3e8ff", text: "#7e22ce", bar: "#ef4444" }   // Roxo claro / Vermelho (Juros)
+    pending: { bg: "#e0f2fe", text: "#0369a1", bar: "#f59e0b" },   // Azul céu / Laranja
+    interest: { bg: "#f3e8ff", text: "#7e22ce", bar: "#ef4444" },  // Roxo claro / Vermelho (Juros)
+    discount: { bg: "#fef3c7", text: "#92400e", bar: "#10b981" }   // Amarelo claro / Verde (Desconto)
 };
 
 export function FixedCostsManager({ costs, installments, vehicles, costTypes, onSave, onDelete, onUpdateInstallment }: FixedCostsManagerProps) {
@@ -235,7 +236,12 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                 .filter(inst => inst.status === 'Pago' && Number(inst.paidAmount) > Number(inst.value))
                 .reduce((acc, curr) => acc + (Number(curr.paidAmount) - Number(curr.value)), 0);
 
-            return { custos, pago, pendente, juros };
+            // Desconto: Difference between value and paidAmount when paidAmount < value
+            const desconto = filtered
+                .filter(inst => inst.status === 'Pago' && inst.paidAmount !== undefined && Number(inst.paidAmount) < Number(inst.value))
+                .reduce((acc, curr) => acc + (Number(curr.value) - Number(curr.paidAmount)), 0);
+
+            return { custos, pago, pendente, juros, desconto };
         };
 
         const dia = calculate('day');
@@ -264,6 +270,11 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                 label: "Juros",
                 color: COLORS.interest,
                 values: { dia: dia.juros, semana: semana.juros, mes: mes.juros, ano: ano.juros, total: total.juros }
+            },
+            {
+                label: "Desconto",
+                color: COLORS.discount,
+                values: { dia: dia.desconto, semana: semana.desconto, mes: mes.desconto, ano: ano.desconto, total: total.desconto }
             }
         ];
     }, [installments]);
