@@ -542,7 +542,7 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                                         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
                                             <span style={{ fontWeight: "bold" }}>{formatCurrency(inst.value)}</span>
                                             <div style={{ display: "flex", gap: "0.25rem" }}>
-                                                <button style={styles.iconButton} onClick={() => handleEditInstallment(inst)}><Edit size={14} /></button>
+                                                <button style={styles.iconButton} onClick={() => handleEditCost(inst.fixedCostId)}><Edit size={14} /></button>
                                                 <button style={styles.iconButton} onClick={() => onDelete(inst.fixedCostId)}><Trash2 size={14} /></button>
                                             </div>
                                         </div>
