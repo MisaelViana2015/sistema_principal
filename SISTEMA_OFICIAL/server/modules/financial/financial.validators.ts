@@ -9,7 +9,8 @@ export const createExpenseSchema = z.object({
     value: z.number().or(z.string()).transform(val => String(val)), // Accept number or string, convert to string
     date: z.string().or(z.date()).transform(val => new Date(val)),
     notes: z.string().optional(),
-    isParticular: z.boolean().default(false).optional()
+    isParticular: z.boolean().default(false).optional(),
+    isSplitCost: z.boolean().default(false).optional()
 });
 
 export const updateExpenseSchema = createExpenseSchema.partial();
