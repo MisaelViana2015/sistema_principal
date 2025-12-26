@@ -46,26 +46,85 @@ export async function finishShift(shiftId: string, kmFinal: number) {
         throw new Error(`KM Final (${kmFinal}) não pode ser menor que o KM Inicial do turno (${shift.kmInicial}).`);
     }
 
-    // Atualiza dados básicos de finalização primeiro
-    await shiftsRepository.updateShift(shiftId, {
-        kmFinal,
-        fim: new Date(),
-        status: 'finalizado',
-    });
-
-    // Atualizar KM do Veículo com o KM Final do Turno (Lógica Acumulativa)
     const { db } = await import("../../core/db/connection.js");
-    const { vehicles } = await import("../../../shared/schema.js");
+    const { shifts, vehicles, rides, expenses } = await import("../../../shared/schema.js");
     const { eq } = await import("drizzle-orm");
 
-    await db.update(vehicles)
-        .set({ kmInicial: kmFinal })
-        .where(eq(vehicles.id, shift.vehicleId));
+    // TRANSAÇÃO ATÔMICA COMPLETA: Tudo ou Nada
+    const updatedShift = await db.transaction(async (tx) => {
+        // 1. Buscar Corridas e Despesas para Cálculo Financeiro
+        const ridesData = await tx.select().from(rides).where(eq(rides.shiftId, shiftId));
+        const expensesData = await tx.select().from(expenses).where(eq(expenses.shiftId, shiftId));
 
-    console.log(`✅ Veículo ${shift.vehicleId} atualizado para ${kmFinal} km.`);
+        // 2. Calcular Totais de Receita
+        const totalApp = ridesData
+            .filter(r => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || ''))
+            .reduce((sum, r) => sum + Number(r.valor || 0), 0);
 
-    // Recalcula totais (financeiro)
-    return await recalculateShiftTotals(shiftId);
+        const totalParticular = ridesData
+            .filter(r => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || ''))
+            .reduce((sum, r) => sum + Number(r.valor || 0), 0);
+
+        const totalCorridasApp = ridesData.filter(r => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length;
+        const totalCorridasParticular = ridesData.filter(r => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length;
+
+        // 3. Calcular Totais de Custos
+        const normalExpenses = expensesData.filter(e => !e.isSplitCost);
+        const splitExpenses = expensesData.filter(e => e.isSplitCost);
+        const totalCustosParticular = expensesData.filter(e => e.isParticular).reduce((sum, e) => sum + Number(e.value || 0), 0);
+        const totalCustosNormais = normalExpenses.reduce((sum, e) => sum + Number(e.value || 0), 0);
+        const totalCustosDivididos = splitExpenses.reduce((sum, e) => sum + Number(e.value || 0), 0);
+        const totalCustos = totalCustosNormais + totalCustosDivididos;
+
+        // 4. Calcular Líquido e Repasses
+        const totalBruto = totalApp + totalParticular;
+        const totalCorridas = ridesData.length;
+        const liquido = totalBruto;
+
+        let repasseEmpresaFinal = liquido * 0.60;
+        let repasseMotoristaFinal = liquido * 0.40;
+        repasseEmpresaFinal -= totalCustosNormais;
+
+        const discountCompany = totalCustosDivididos * 0.50;
+        const discountDriver = totalCustosDivididos * 0.50;
+        repasseEmpresaFinal -= discountCompany;
+        repasseMotoristaFinal -= discountDriver;
+
+        // 5. Atualizar Turno com TODOS os dados (básicos + financeiros)
+        const [updated] = await tx.update(shifts)
+            .set({
+                kmFinal,
+                fim: new Date(),
+                status: 'finalizado',
+                totalApp,
+                totalParticular,
+                totalBruto,
+                totalCorridas,
+                totalCorridasApp,
+                totalCorridasParticular,
+                totalCustos,
+                totalCustosParticular,
+                liquido,
+                repasseEmpresa: repasseEmpresaFinal,
+                repasseMotorista: repasseMotoristaFinal,
+                discountCompany,
+                discountDriver
+            })
+            .where(eq(shifts.id, shiftId))
+            .returning();
+
+        // 6. Atualizar KM do Veículo
+        await tx.update(vehicles)
+            .set({ kmInicial: kmFinal })
+            .where(eq(vehicles.id, shift.vehicleId));
+
+        console.log(`✅ Transação completa: Turno finalizado, Veículo atualizado para ${kmFinal} km, Totais calculados.`);
+
+        return updated;
+    });
+
+    return updatedShift;
+
 }
 
 
