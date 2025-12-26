@@ -107,7 +107,6 @@ export const costTypes = pgTable("cost_types", {
     visibleToDriver: boolean("visible_to_driver").default(true).notNull(),
     icon: text("icon"),
     color: text("color"),
-    visibleToDriver: boolean("visible_to_driver").default(true),
 });
 
 export const fixedCosts = pgTable("fixed_costs", {
