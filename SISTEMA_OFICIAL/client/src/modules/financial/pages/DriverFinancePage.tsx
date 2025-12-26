@@ -286,22 +286,31 @@ export default function DriverFinancePage() {
     );
 }
 
+
+import { financialService, Expense } from "../../financial/financial.service";
+
+
 function ShiftCard({ shift, isDark }: { shift: ShiftWithDetails, isDark: boolean }) {
     const [rides, setRides] = useState<RideWithDetails[]>([]);
+    const [expenses, setExpenses] = useState<Expense[]>([]); // New state
     const [loadingRides, setLoadingRides] = useState(true);
 
     useEffect(() => {
-        async function fetchRides() {
+        async function fetchData() {
             try {
-                const data = await ridesService.getAll({ shiftId: shift.id, limit: 100 });
-                setRides(data.data);
+                const [ridesData, expensesData] = await Promise.all([
+                    ridesService.getAll({ shiftId: shift.id, limit: 100 }),
+                    financialService.getExpenses(shift.id) // Fetch expenses
+                ]);
+                setRides(ridesData.data);
+                setExpenses(expensesData as any);
             } catch (error) {
-                console.error("Erro ao buscar corridas do turno", error);
+                console.error("Erro ao buscar dados do turno", error);
             } finally {
                 setLoadingRides(false);
             }
         }
-        fetchRides();
+        fetchData();
     }, [shift.id]);
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -416,6 +425,45 @@ function ShiftCard({ shift, isDark }: { shift: ShiftWithDetails, isDark: boolean
                             <span className="text-xs text-gray-500">Total Corridas Particulares</span>
                         </div>
                         <span className="text-sm font-medium text-gray-500">{shift.totalCorridasParticular}</span>
+                    </div>
+                </div>
+
+                {/* Costs List - Custos */}
+                <div className="mb-8">
+                    <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400">
+                            <DollarSign size={16} />
+                        </div>
+                        <h4 className="font-bold">Custos</h4>
+                    </div>
+
+                    {loadingRides ? <div className="p-2 text-sm text-gray-500">Carregando custos...</div> : (
+                        <div className="space-y-1 pl-10 mb-2">
+                            {/* Renderizar lista de despesas aqui */}
+                            {expenses.length === 0 ? (
+                                <p className="text-gray-500 text-sm italic">Nenhum custo registrado.</p>
+                            ) : (
+                                expenses.map((expense, idx) => (
+                                    <div key={expense.id} className="flex justify-between text-sm py-1 border-b border-gray-100 dark:border-gray-800 last:border-0">
+                                        <div className="text-gray-500 font-mono flex flex-col">
+                                            <span>{idx + 1} - {expense.tipo || 'Outros'}</span>
+                                            {(expense as any).isSplitCost && (
+                                                <span className="text-[10px] text-gray-400 pl-2">↳ Dividido (50/50)</span>
+                                            )}
+                                        </div>
+                                        <div className="font-mono font-medium text-red-400">{formatCurrency(Number(expense.valor))}</div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
+
+                    <div className="pl-10 flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <div className="flex flex-col">
+                            <span className="font-bold text-lg text-red-500">{formatCurrency(Number(shift.totalCustos))}</span>
+                            <span className="text-xs text-gray-500">Total Custos</span>
+                        </div>
+                        <span className="text-sm font-medium text-gray-500">{expenses.length}</span>
                     </div>
                 </div>
 
