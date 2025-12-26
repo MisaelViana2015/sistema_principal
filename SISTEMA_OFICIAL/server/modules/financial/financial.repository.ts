@@ -254,23 +254,28 @@ export async function createLegacyMaintenance(data: typeof legacyMaintenances.$i
 
 // --- TIRES ---
 export async function findAllTires() {
-    return await db
-        .select({
-            id: tires.id,
-            position: tires.position,
-            brand: tires.brand,
-            model: tires.model,
-            status: tires.status,
-            installDate: tires.installDate,
-            installKm: tires.installKm,
-            cost: tires.cost,
-            vehicleId: tires.vehicleId,
-            veiculoPlate: vehicles.plate,
-            veiculoModelo: vehicles.modelo
-        })
-        .from(tires)
-        .leftJoin(vehicles, eq(tires.vehicleId, vehicles.id))
-        .orderBy(desc(tires.installDate));
+    try {
+        return await db
+            .select({
+                id: tires.id,
+                position: tires.position,
+                brand: tires.brand,
+                model: tires.model,
+                status: tires.status,
+                installDate: tires.installDate,
+                installKm: tires.installKm,
+                cost: tires.cost,
+                vehicleId: tires.vehicleId,
+                veiculoPlate: vehicles.plate,
+                veiculoModelo: vehicles.modelo
+            })
+            .from(tires)
+            .leftJoin(vehicles, eq(tires.vehicleId, vehicles.id))
+            .orderBy(desc(tires.installDate));
+    } catch (error) {
+        console.error("❌ Erro CRÍTICO em findAllTires:", error);
+        throw error; // Re-throw to let controller catch it, but now we have server logs (if we could see them)
+    }
 }
 
 export async function createTire(data: typeof tires.$inferInsert) {
