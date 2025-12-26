@@ -46,7 +46,6 @@ export default function DriverShiftPage() {
     // Ride Form State
     const [rideType, setRideType] = useState<"APP" | "PARTICULAR">("APP");
     const [rideValue, setRideValue] = useState("");
-    const [rideDate, setRideDate] = useState("");
     const [rideCooldown, setRideCooldown] = useState(0);
 
     // Cost Form State
@@ -66,18 +65,25 @@ export default function DriverShiftPage() {
         loadCostTypes();
     }, [user]);
 
-    // Cooldown Timer - DISABLED per user request
-    /*
+    // Cooldown Timer (30 seconds)
     useEffect(() => {
-        let interval: NodeJS.Timeout;
         if (rideCooldown > 0) {
-            interval = setInterval(() => {
+            const timer = setTimeout(() => {
                 setRideCooldown(prev => prev - 1);
             }, 1000);
+            return () => clearTimeout(timer);
         }
-        return () => clearInterval(interval);
     }, [rideCooldown]);
-    */
+
+    // Refresh data when cooldown ends
+    const prevCooldownRef = React.useRef(rideCooldown);
+    useEffect(() => {
+        if (prevCooldownRef.current > 0 && rideCooldown === 0) {
+            loadData();
+        }
+        prevCooldownRef.current = rideCooldown;
+    }, [rideCooldown]);
+
 
     // Work Timer
     useEffect(() => {
@@ -231,15 +237,11 @@ export default function DriverShiftPage() {
                 shiftId: activeShift.id,
                 tipo: rideType,
                 valor: Number(rideValue),
-                hora: rideDate ? new Date(rideDate).toISOString() : new Date().toISOString()
+                hora: new Date().toISOString()
             });
 
-            // setRideCooldown(300); // DISABLED per user request
+            setRideCooldown(30);
             setRideValue("");
-            // Keep date or reset? Resetting to empty (current) is safer for next, 
-            // but for bulk entry of same day, keeping it is better? 
-            // Let's reset to empty (current).
-            setRideDate("");
             setViewMode("dashboard");
             loadData();
         } catch (err) {
@@ -272,6 +274,8 @@ export default function DriverShiftPage() {
                 notes: obs,
                 isSplitCost: isSplitCost
             });
+
+            setRideCooldown(30);
             setCostValue("");
             setObs("");
             setIsSplitCost(false);
@@ -658,17 +662,6 @@ export default function DriverShiftPage() {
                                 </button>
                             </div>
 
-                            {/* Date Input */}
-                            <div className="mb-6">
-                                <label className="block text-gray-500 text-xs uppercase font-bold mb-2 tracking-wider">Data/Hora (Opcional)</label>
-                                <input
-                                    type="datetime-local"
-                                    value={rideDate}
-                                    onChange={e => setRideDate(e.target.value)}
-                                    className="w-full bg-gray-800 border-2 border-gray-700 rounded-xl px-4 py-3 text-white focus:border-emerald-500 focus:outline-none transition-all"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">Deixe vazio para usar o horário atual.</p>
-                            </div>
 
                             {/* Value Input */}
                             <div className="mb-8">

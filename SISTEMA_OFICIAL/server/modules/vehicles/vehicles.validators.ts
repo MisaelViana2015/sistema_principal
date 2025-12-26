@@ -39,6 +39,10 @@ export const createVehicleSchema = z.object({
         .boolean()
         .optional()
         .default(true),
+    status: z
+        .enum(['ativo', 'manutencao', 'indisponivel'])
+        .optional()
+        .default('ativo'),
 });
 
 export const updateVehicleSchema = createVehicleSchema.partial();
