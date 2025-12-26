@@ -937,12 +937,22 @@ export default function PerformanceContent() {
             />
 
             {deleteConfirmId && (
-                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-                    <div style={{ background: isDark ? '#1e293b' : '#fff', padding: '1.5rem', borderRadius: '0.5rem', maxWidth: '400px', textAlign: 'center', border: `1px solid ${isDark ? '#4b5563' : '#e5e7eb'}` }}>
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }}>
+                    <div style={{ background: isDark ? '#1e293b' : '#fff', padding: '1.5rem', borderRadius: '0.5rem', maxWidth: '400px', textAlign: 'center', border: `1px solid ${isDark ? '#4b5563' : '#e5e7eb'}`, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
                         <p style={{ marginBottom: '1rem', color: isDark ? '#fff' : '#000', fontWeight: '500' }}>Tem certeza que deseja excluir este custo?</p>
                         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                             <button onClick={() => setDeleteConfirmId(null)} style={{ padding: '0.5rem 1rem', borderRadius: '0.25rem', border: `1px solid ${isDark ? '#4b5563' : '#9ca3af'}`, background: 'transparent', color: isDark ? '#d1d5db' : '#374151', cursor: 'pointer' }}>Cancelar</button>
-                            <button onClick={async () => { await api.delete(`/financial/expenses/${deleteConfirmId}`); refetchExpenses(); setDeleteConfirmId(null); }} style={{ padding: '0.5rem 1rem', borderRadius: '0.25rem', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontWeight: '500' }}>Excluir</button>
+                            <button onClick={async () => {
+                                try {
+                                    console.log("Excluindo custo:", deleteConfirmId);
+                                    await api.delete(`/financial/expenses/${deleteConfirmId}`);
+                                    refetchExpenses();
+                                    setDeleteConfirmId(null);
+                                } catch (err) {
+                                    console.error("Erro ao excluir:", err);
+                                    alert("Erro ao excluir. Veja o console.");
+                                }
+                            }} style={{ padding: '0.5rem 1rem', borderRadius: '0.25rem', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontWeight: '500' }}>Excluir</button>
                         </div>
                     </div>
                 </div>
