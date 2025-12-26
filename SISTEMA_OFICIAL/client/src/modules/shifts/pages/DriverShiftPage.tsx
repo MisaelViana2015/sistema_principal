@@ -486,7 +486,7 @@ export default function DriverShiftPage() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div className="grid grid-cols-2 gap-2 mb-8">
                         {/* MOTORISTA */}
                         <div className="col-span-1 md:col-span-1 futuristic-card p-4 bg-purple-900/10 border-purple-500/30 border">
                             <div className="flex items-center gap-2 text-purple-400 font-bold text-xs uppercase mb-2">
@@ -529,7 +529,7 @@ export default function DriverShiftPage() {
                     </div>
 
                     {/* RECENT LISTS */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="grid grid-cols-2 gap-2 mb-8">
                         {/* CORRIDAS RECENTES */}
                         <div className="futuristic-card p-5 bg-gray-900/80 border border-gray-800">
                             <h3 className="text-emerald-400 font-orbitron font-bold text-lg mb-4 flex items-center gap-2">
