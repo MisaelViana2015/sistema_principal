@@ -164,11 +164,13 @@ export function CostTypesManager({ costTypes, isDark, refetch }: CostTypesManage
                     const Icon = ICONS[type.icon] || DollarSign;
                     return (
                         <div key={type.id} style={styles.card}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <div style={styles.iconWrapper(type.color || 'blue')}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0 }}>
+                                <div style={{ ...styles.iconWrapper(type.color || 'blue'), flexShrink: 0 }}>
                                     <Icon size={20} />
                                 </div>
-                                <span style={{ fontWeight: '500', color: isDark ? '#fff' : '#111827' }}>{type.name || type.tipo}</span>
+                                <span style={{ fontWeight: '500', color: isDark ? '#fff' : '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={type.name || type.tipo}>
+                                    {type.name || type.tipo}
+                                </span>
                                 {type.visibleToDriver === false && (
                                     <span title="Invisível para Motorista" style={{ marginLeft: '0.5rem', color: '#ef4444' }}>
                                         <Users size={16} />

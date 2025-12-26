@@ -11,6 +11,7 @@ import { api } from "../../../lib/api";
 import { KPICard } from "../../../components/kpi/KPICard";
 import { CostTypesManager } from "./CostTypesManager";
 import { FixedCostsManager } from "./FixedCostsManager";
+import { EditExpenseModal } from "../../financial/EditExpenseModal";
 
 // --- FETCHERS ---
 async function fetchExpenses() {
@@ -72,7 +73,7 @@ export default function PerformanceContent() {
     const queryClient = useQueryClient();
 
     // Queries
-    const { data: costs = [] } = useQuery({ queryKey: ["expenses"], queryFn: fetchExpenses });
+    const { data: costs = [], refetch: refetchExpenses } = useQuery({ queryKey: ["expenses"], queryFn: fetchExpenses });
     const { data: costTypes = [], refetch: refetchCostTypes } = useQuery({ queryKey: ["costTypes"], queryFn: fetchCostTypes });
     const { data: fixedCosts = [] } = useQuery({ queryKey: ["fixedCosts"], queryFn: fetchFixedCosts });
     const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
@@ -158,6 +159,41 @@ export default function PerformanceContent() {
             queryClient.invalidateQueries({ queryKey: ["fixedCostInstallments"] });
         }
     });
+
+    // --- EXPENSE MODAL LOGIC ---
+    const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+    const [editingExpense, setEditingExpense] = useState<any>(null);
+
+    const handleSaveExpense = async (id: string | null, data: any) => {
+        try {
+            if (id) {
+                await api.put(`/financial/expenses/${id}`, data);
+            } else {
+                // Ensure costTypeId is present if backend requires it, or just pass as is if EditExpenseModal handles it
+                // EditExpenseModal sends { tipo: string, ... } and maybe we need to map to costTypeId if backend creates via ID
+                // But the current backend validator creates via `costTypeId`. 
+                // The `EditExpenseModal` uses names. This might be a mismatch.
+                // Let's check `EditExpenseModal`:
+                // It sends `tipo`. 
+                // Backend `createExpenseSchema` requires `costTypeId`.
+                // WE NEED TO MAP `tipo` (name) to `costTypeId`.
+
+                const typeObj = costTypes.find((t: any) => t.name === data.tipo);
+                const payload = {
+                    ...data,
+                    costTypeId: typeObj?.id,
+                    date: new Date().toISOString() // Default to now for new expense
+                };
+
+                await api.post("/financial/expenses", payload);
+            }
+            refetchExpenses();
+            setIsExpenseModalOpen(false);
+        } catch (error) {
+            console.error("Error saving expense", error);
+            alert("Erro ao salvar despesa. Verifique se o tipo de custo é válido.");
+        }
+    };
 
 
 
@@ -344,7 +380,7 @@ export default function PerformanceContent() {
                     <DollarSign size={14} /> Financeiro
                 </button>
                 <button style={styles.subTabButton(activeSubTab === "repasses")} onClick={() => setActiveSubTab("repasses")}>
-                    <DollarSign size={14} /> Repasses / Custos
+                    <DollarSign size={14} /> Custos
                 </button>
                 <button style={styles.subTabButton(activeSubTab === "motoristas")} onClick={() => setActiveSubTab("motoristas")}>
                     <Users size={14} /> Motoristas
@@ -624,12 +660,18 @@ export default function PerformanceContent() {
                                     onChange={(e) => setSelectedCostType(e.target.value)}
                                 >
                                     <option value="todos">Todos</option>
-                                    {Array.from(new Set(costs.map((c: any) => c.tipo).filter(Boolean))).sort().map((type: any) => (
-                                        <option key={type} value={type}>{type}</option>
+                                    {costTypes.map((type: any) => (
+                                        <option key={type.id} value={type.name}>{type.name}</option>
                                     ))}
                                 </select>
                             </div>
-                            <button style={{ ...styles.primaryButton, marginBottom: 0, marginLeft: "auto", background: "#ef4444" }}>
+                            <button
+                                style={{ ...styles.primaryButton, marginBottom: 0, marginLeft: "auto", background: "#ef4444" }}
+                                onClick={() => {
+                                    setEditingExpense(null);
+                                    setIsExpenseModalOpen(true);
+                                }}
+                            >
                                 <Plus size={16} /> Novo Custo
                             </button>
                         </div>
@@ -882,6 +924,12 @@ export default function PerformanceContent() {
                     </div>
                 )
             }
+            <EditExpenseModal
+                isOpen={isExpenseModalOpen}
+                onClose={() => setIsExpenseModalOpen(false)}
+                onSave={handleSaveExpense}
+                expense={editingExpense}
+            />
         </div>
     );
 }
