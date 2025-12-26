@@ -51,6 +51,9 @@ async function ensureSchemaIntegrity() {
             )
         `);
         await db.execute(sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS is_particular boolean DEFAULT false`);
+        await db.execute(sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS is_split_cost boolean DEFAULT false`);
+        await db.execute(sql`ALTER TABLE shifts ADD COLUMN IF NOT EXISTS discount_company real DEFAULT 0`);
+        await db.execute(sql`ALTER TABLE shifts ADD COLUMN IF NOT EXISTS discount_driver real DEFAULT 0`);
 
         // Fix Cost Types (CRITICAL if missing)
         await db.execute(sql`
@@ -64,6 +67,7 @@ async function ensureSchemaIntegrity() {
                 "color" text
             )
         `);
+        await db.execute(sql`ALTER TABLE cost_types ADD COLUMN IF NOT EXISTS visible_to_driver boolean DEFAULT true`);
 
         console.log("✅ Schema verificado: colunas shifts, expenses, cost_types e vehicles garantidas.");
     } catch (error) {

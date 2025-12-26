@@ -92,27 +92,54 @@ export async function recalculateShiftTotals(shiftId: string) {
     const totalCorridasParticular = ridesData.filter(r => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length;
 
     // 5. Calcular Totais de Custos
+    // Separar custos normais de custos divididos (50/50)
+    const normalExpenses = expensesData.filter(e => !e.isSplitCost);
+    const splitExpenses = expensesData.filter(e => e.isSplitCost);
+
     const totalCustosParticular = expensesData
         .filter(e => e.isParticular)
         .reduce((sum, e) => sum + Number(e.value || 0), 0);
 
-    const totalCustos = expensesData.reduce((sum, e) => sum + Number(e.value || 0), 0);
+    // totalCustos (para fins de histórico) pode ser tudo, mas para o LÍQUIDO da regra 60/40, 
+    // usamos o bruto menos TODOS os custos?
+    // REGRA DO CLIENTE: "O custo quando marcado... ela irá fazer com que cada um pague 50%... por isso pedi que tenha dois campos de custo lá no início"
+    // INTERPRETAÇÃO:
+    // O custo dividido NÃO deve ser abatido do BRUTO para gerar o LÍQUIDO da base 60/40.
+    // Se abatermos do bruto, a empresa paga 60% e o motorista 40% desse custo.
+    // Queremos 50/50.
+    // Então: LíquidoBase = Bruto - CustosNormais
+    // RepasseEmpresaBase = LíquidoBase * 0.60
+    // RepasseMotoristaBase = LíquidoBase * 0.40
+    // DescontoEmpresa = CustoDividido * 0.50
+    // DescontoMotorista = CustoDividido * 0.50
+    // RepasseFinal = RepasseBase - Desconto
 
-    console.log(`   💰 Totais Calculados: Custos=${totalCustos}, Part=${totalParticular}, App=${totalApp}`);
+    const totalCustosNormais = normalExpenses.reduce((sum, e) => sum + Number(e.value || 0), 0);
+    const totalCustosDivididos = splitExpenses.reduce((sum, e) => sum + Number(e.value || 0), 0);
+
+    // Total Custos Geral (apenas para registro)
+    const totalCustos = totalCustosNormais + totalCustosDivididos;
+
+    console.log(`   💰 Totais Calculados: CustosNormais=${totalCustosNormais}, Divididos=${totalCustosDivididos}, Part=${totalParticular}, App=${totalApp}`);
 
     const totalBruto = totalApp + totalParticular;
     const totalCorridas = ridesData.length;
 
-    // 6. Calcular Líquido e Repasses (50/50 do Líquido)
-    const liquido = totalBruto - totalCustos;
-    const repasseEmpresa = liquido * 0.5; // Ajuste para 50/50 se for a regra do cliente, ou manter logica
-    // O cliente mencionou Empresas 60% e Motorista 40% nas imagens.
-    // O código anterior estava 0.5 (50%), mas a imagem mostra 60/40.
-    // IMAGEM: Liquido 50. Empresa 30 (60%). Motorista 20 (40%).
+    // 6. Calcular Líquido e Repasses
+    // Líquido para base de cálculo 60/40 (apenas custos normais)
+    const liquido = totalBruto - totalCustosNormais;
 
-    // CORREÇÃO DA REGRA DE NEGÓCIO: 60/40
-    const repasseEmpresaFinal = liquido * 0.60;
-    const repasseMotoristaFinal = liquido * 0.40;
+    // Base 60/40
+    let repasseEmpresaFinal = liquido * 0.60;
+    let repasseMotoristaFinal = liquido * 0.40;
+
+    // Calcular Descontos do Split (50/50)
+    const discountCompany = totalCustosDivididos * 0.50;
+    const discountDriver = totalCustosDivididos * 0.50;
+
+    // Aplicar Descontos
+    repasseEmpresaFinal -= discountCompany;
+    repasseMotoristaFinal -= discountDriver;
 
     // 7. Atualizar Turno
     const updatedShift = await shiftsRepository.updateShift(shiftId, {
@@ -122,13 +149,17 @@ export async function recalculateShiftTotals(shiftId: string) {
         totalCorridas,
         totalCorridasApp,
         totalCorridasParticular,
-        totalCustos,
+        totalCustos, // Mantém o total geral para histórico
         totalCustosParticular,
-        liquido,
-        // repasseEmpresa: Number(repasseEmpresaFinal.toFixed(2)), // toFixed retorna string
-        // Drizzle numeric lida com string ou number.
+        liquido, // Mostra o líquido base ou final? O dashboard calcula via Bruto - Custos. 
+        // Se salvarmos 'liquido' diferente de (Bruto - TotalCustos), pode confundir o front existente.
+        // Mas a regra mudou. Vamos salvar o Líquido Base (que gerou o 60/40) para coerência matemática interna?
+        // Ou o Líquido Real (o que sobrou no final)? 
+        // Vamos salvar o Líquido usado para a base 60/40 para que os percentuais façam sentido se alguém conferir.
         repasseEmpresa: repasseEmpresaFinal,
-        repasseMotorista: repasseMotoristaFinal
+        repasseMotorista: repasseMotoristaFinal,
+        discountCompany,
+        discountDriver
     });
 
     console.log("✅ Turno atualizado com sucesso.");

@@ -81,6 +81,8 @@ export const shifts = pgTable("shifts", {
     totalCorridas: integer("total_corridas").default(0),
     duracaoMin: integer("duracao_min").default(0),
     valorKm: real("valor_km").default(0),
+    discountCompany: real("discount_company").default(0),
+    discountDriver: real("discount_driver").default(0),
 });
 
 export const rides = pgTable("rides", {
@@ -104,6 +106,7 @@ export const costTypes = pgTable("cost_types", {
     isActive: boolean("is_active").default(true).notNull(),
     icon: text("icon"),
     color: text("color"),
+    visibleToDriver: boolean("visible_to_driver").default(true),
 });
 
 export const fixedCosts = pgTable("fixed_costs", {
@@ -158,7 +161,8 @@ export const expenses = pgTable("expenses", {
     value: numeric("valor", { precision: 12, scale: 2 }).notNull(),
     date: timestamp("date").notNull(),
     notes: text("notes"),
-    isParticular: boolean("is_particular").default(false),
+    isParticular: boolean("is_particular").default(false), // Legacy/Particular Cost
+    isSplitCost: boolean("is_split_cost").default(false), // 50/50 Split
 });
 
 // Tabela Legacy recuperada do backup

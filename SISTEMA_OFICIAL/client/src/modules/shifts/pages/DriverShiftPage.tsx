@@ -54,7 +54,7 @@ export default function DriverShiftPage() {
     const [costValue, setCostValue] = useState("");
     const [obs, setObs] = useState("");
     const [costTypesList, setCostTypesList] = useState<any[]>([]);
-    const [isParticularCost, setIsParticularCost] = useState(false);
+    const [isSplitCost, setIsSplitCost] = useState(false);
 
     // Finish Shift State
     const [finishPassword, setFinishPassword] = useState("");
@@ -140,7 +140,7 @@ export default function DriverShiftPage() {
         try {
             const res = await api.get("/financial/cost-types");
             const activeTypes = Array.isArray(res.data)
-                ? res.data.filter((t: any) => t.isActive !== false)
+                ? res.data.filter((t: any) => t.isActive !== false && t.visibleToDriver !== false)
                 : [];
             setCostTypesList(activeTypes);
         } catch (err) {
@@ -270,11 +270,11 @@ export default function DriverShiftPage() {
                 value: Number(costValue),
                 date: new Date(),
                 notes: obs,
-                isParticular: isParticularCost
+                isSplitCost: isSplitCost
             });
             setCostValue("");
             setObs("");
-            setIsParticularCost(false);
+            setIsSplitCost(false);
             setSelectedCostType(null);
             setViewMode("dashboard");
             loadData();
@@ -470,6 +470,16 @@ export default function DriverShiftPage() {
                                 R$ {(activeShift.repasseEmpresa || 0).toFixed(2).replace('.', ',')}
                             </div>
                         </div>
+
+                        {/* DESC. EMPRESA */}
+                        <div className="col-span-1 md:col-span-1 futuristic-card p-4 bg-gray-900/50 border-gray-800 border opacity-80">
+                            <div className="flex items-center gap-2 text-gray-500 font-bold text-xs uppercase mb-2">
+                                <Building className="w-3 h-3" /> Desc. Empresa
+                            </div>
+                            <div className="text-xl font-orbitron font-bold text-gray-400">
+                                R$ {(activeShift.discountCompany || 0).toFixed(2).replace('.', ',')}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -480,6 +490,16 @@ export default function DriverShiftPage() {
                             </div>
                             <div className="text-2xl font-orbitron font-bold text-white">
                                 R$ {(activeShift.repasseMotorista || 0).toFixed(2).replace('.', ',')}
+                            </div>
+                        </div>
+
+                        {/* DESC. MOTORISTA */}
+                        <div className="col-span-1 md:col-span-1 futuristic-card p-4 bg-purple-900/10 border-purple-500/30 border opacity-80">
+                            <div className="flex items-center gap-2 text-purple-400/70 font-bold text-xs uppercase mb-2">
+                                <User className="w-3 h-3" /> Desc. Motorista
+                            </div>
+                            <div className="text-xl font-orbitron font-bold text-purple-200/70">
+                                R$ {(activeShift.discountDriver || 0).toFixed(2).replace('.', ',')}
                             </div>
                         </div>
 
@@ -761,15 +781,15 @@ export default function DriverShiftPage() {
                                     <input
                                         type="checkbox"
                                         id="particular-cost"
-                                        checked={isParticularCost}
-                                        onChange={(e) => setIsParticularCost(e.target.checked)}
+                                        checked={isSplitCost}
+                                        onChange={(e) => setIsSplitCost(e.target.checked)}
                                         className="peer h-6 w-6 cursor-pointer appearance-none rounded-md border border-gray-600 bg-gray-700 transition-all checked:border-green-500 checked:bg-green-500 hover:border-gray-500"
                                     />
                                     <CheckCircle2 className="pointer-events-none absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100" />
                                 </div>
                                 <label htmlFor="particular-cost" className="cursor-pointer select-none text-sm font-bold text-gray-300">
-                                    Despesa Particular
-                                    <span className="block text-[10px] font-normal text-gray-500">Separar do caixa do veículo</span>
+                                    Dividir Custos?
+                                    <span className="block text-[10px] font-normal text-gray-500">Dividir 50% empresa / 50% motorista</span>
                                 </label>
                             </div>
 

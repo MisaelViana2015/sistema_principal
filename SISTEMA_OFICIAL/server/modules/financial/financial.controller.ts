@@ -149,6 +149,7 @@ export async function createExpense(req: Request, res: Response) {
             date: validatedData.date,
             notes: validatedData.notes,
             isParticular: validatedData.isParticular,
+            isSplitCost: (validatedData as any).isSplitCost, // Validated via passed through data
         });
 
         res.status(201).json(newExpense);
