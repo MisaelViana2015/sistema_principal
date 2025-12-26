@@ -16,7 +16,6 @@ import { useTheme } from "../contexts/ThemeContext";
 
 type TabValue =
     | "motoristas" | "veiculos" | "turnos" | "corridas"
-    | "financeiro"
     | "analise" | "fraude" | "importar";
 
 interface TabItem {
@@ -30,7 +29,6 @@ const tabs: TabItem[] = [
     { value: "veiculos", label: "Veículos", badge: 3 },
     { value: "turnos", label: "Turnos" },
     { value: "corridas", label: "Corridas" },
-    { value: "financeiro", label: "Financeiro / Custos" }, // Mapeado para CustosTabLegacy
     { value: "analise", label: "Análise" },
     { value: "fraude", label: "Fraude" },
     { value: "importar", label: "Importar" }
@@ -203,7 +201,6 @@ export default function Admin() {
                                 {activeTab === "veiculos" && <VehiclesList />}
                                 {activeTab === "turnos" && <ShiftsList />}
                                 {activeTab === "corridas" && <RidesList />}
-                                {activeTab === "financeiro" && <div className="p-4 text-center text-gray-500">Módulo Financeiro em migração</div>}
                                 {activeTab === "analise" && <PerformanceContent />}
                                 {activeTab === "fraude" && <div className="p-4 text-center text-gray-500">Módulo Fraude em migração</div>}
                                 {activeTab === "importar" && <ImportTab />}
