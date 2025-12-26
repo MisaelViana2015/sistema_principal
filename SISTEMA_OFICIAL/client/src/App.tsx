@@ -63,11 +63,6 @@ function App() {
                                         <DriverFinancePage />
                                     </Suspense>
                                 } />
-                                <Route path="/desempenho" element={
-                                    <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
-                                        <PerformancePage />
-                                    </Suspense>
-                                } />
 
                                 {/* Admin Only Routes */}
                                 <Route element={<AdminRoute />}>
@@ -90,6 +85,11 @@ function App() {
                                     <Route path="/turnos" element={
                                         <Suspense fallback={<div className="p-10 text-center">Carregando módulo...</div>}>
                                             <ShiftsPage />
+                                        </Suspense>
+                                    } />
+                                    <Route path="/desempenho" element={
+                                        <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                            <PerformancePage />
                                         </Suspense>
                                     } />
                                 </Route>

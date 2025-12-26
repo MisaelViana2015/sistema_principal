@@ -34,6 +34,9 @@ async function ensureSchemaIntegrity() {
         await db.execute(sql`ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS color text`);
         await db.execute(sql`ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS image_url text`);
 
+        // Fix Tires (CRITICAL for Refactor)
+        await db.execute(sql`ALTER TABLE tires ADD COLUMN IF NOT EXISTS cost NUMERIC(10, 2) DEFAULT 0`);
+
         // Fix Shifts (CRITICAL for Start Shift)
         await db.execute(sql`ALTER TABLE shifts ADD COLUMN IF NOT EXISTS total_custos_particular real DEFAULT 0`);
 
@@ -63,13 +66,25 @@ async function ensureSchemaIntegrity() {
                 "category" text DEFAULT 'Variável' NOT NULL,
                 "description" text,
                 "is_active" boolean DEFAULT true NOT NULL,
+                "visible_to_driver" boolean DEFAULT true NOT NULL,
                 "icon" text,
                 "color" text
             )
         `);
         await db.execute(sql`ALTER TABLE cost_types ADD COLUMN IF NOT EXISTS visible_to_driver boolean DEFAULT true`);
 
-        console.log("✅ Schema verificado: colunas shifts, expenses, cost_types e vehicles garantidas.");
+        // Fix Fixed Costs columns (Prevent 500 on Update)
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS total_installments integer`);
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS start_date timestamp`);
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS description text`);
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS vendor text`);
+        await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT true`);
+
+        // Fix Fixed Cost Installments columns (CRITICAL for payment tracking)
+        await db.execute(sql`ALTER TABLE fixed_cost_installments ADD COLUMN IF NOT EXISTS paid_amount numeric(12,2)`);
+        await db.execute(sql`ALTER TABLE fixed_cost_installments ADD COLUMN IF NOT EXISTS paid_date timestamp`);
+
+        console.log("✅ Schema verificado: colunas shifts, expenses, cost_types, vehicles, fixed_costs e fixed_cost_installments garantidas.");
     } catch (error) {
         console.error("⚠️  Erro ao verificar schema:", error);
     }

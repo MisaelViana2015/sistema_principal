@@ -27,6 +27,8 @@ interface Installment {
     status: 'Pago' | 'Pendente';
     costName?: string;
     vendor?: string;
+    paidAmount?: number;
+    paidDate?: string;
 }
 
 interface Vehicle {
@@ -49,8 +51,9 @@ export interface FixedCostsManagerProps {
 const COLORS = {
     costs: { bg: "#dbeafe", text: "#1e40af", bar: "#3b82f6" },     // Azul claro / Azul
     paid: { bg: "#ccfbf1", text: "#0f766e", bar: "#22c55e" },      // Verde-azulado / Verde
-    pending: { bg: "#e0f2fe", text: "#0369a1", bar: "#f59e0b" },   // Azul céu / Laranja (conforme gráfico)
-    interest: { bg: "#f3e8ff", text: "#7e22ce", bar: "#ef4444" }   // Roxo claro / Vermelho (Juros)
+    pending: { bg: "#e0f2fe", text: "#0369a1", bar: "#f59e0b" },   // Azul céu / Laranja
+    interest: { bg: "#f3e8ff", text: "#7e22ce", bar: "#ef4444" },  // Roxo claro / Vermelho (Juros)
+    discount: { bg: "#fef3c7", text: "#92400e", bar: "#10b981" }   // Amarelo claro / Verde (Desconto)
 };
 
 export function FixedCostsManager({ costs, installments, vehicles, costTypes, onSave, onDelete, onUpdateInstallment }: FixedCostsManagerProps) {
@@ -64,13 +67,119 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
     const [showAll, setShowAll] = useState(false);
     const [statusFilter, setStatusFilter] = useState<'all' | 'Pago' | 'Pendente'>('all');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+    const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
 
-    // Form State
+    // Form State for Cost
     const [formData, setFormData] = useState({
+        id: "", // Added ID
         vehicleId: "", costTypeId: "", description: "", value: "",
         specificDate: "", monthYear: "", isRecurring: false, totalInstallments: "12",
         vendor: "", notes: ""
     });
+
+    // Payment Modal State
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [paymentData, setPaymentData] = useState({
+        installmentId: "",
+        date: new Date().toISOString().split('T')[0],
+        value: "",
+        costName: ""
+    });
+
+    // Edit Installment Modal State
+    const [isEditInstallmentModalOpen, setIsEditInstallmentModalOpen] = useState(false);
+    const [editInstallmentData, setEditInstallmentData] = useState({
+        installmentId: "",
+        dueDate: new Date().toISOString().split('T')[0],
+        value: "",
+        status: "",
+        costName: ""
+    });
+
+    // Edit Handler (Fixed Cost)
+    const handleEditCost = (costId: string) => {
+        const cost = costs.find(c => c.id === costId);
+        if (!cost) return;
+
+        setFormData({
+            id: cost.id,
+            vehicleId: cost.vehicleId || "",
+            costTypeId: (cost as any).costTypeId || "",
+            description: cost.name,
+            value: cost.value.toString(),
+            specificDate: "",
+            monthYear: "",
+            isRecurring: cost.isRecurring,
+            totalInstallments: cost.totalInstallments?.toString() || "12",
+            vendor: (cost as any).vendor || "",
+            notes: (cost as any).notes || ""
+        });
+        setIsModalOpen(true);
+    };
+
+    // Payment Handler
+    const handleOpenPayment = (inst: Installment) => {
+        setPaymentData({
+            installmentId: inst.id,
+            date: new Date().toISOString().split('T')[0],
+            value: inst.value.toString(),
+            costName: inst.costName || "Custo"
+        });
+        setIsPaymentModalOpen(true);
+    };
+
+    const handleConfirmPayment = () => {
+        if (!paymentData.installmentId) return;
+        // Adiciona T12:00:00 para evitar problema de timezone (meia-noite UTC vira dia anterior em BR)
+        const dateWithTime = paymentData.date + 'T12:00:00';
+        onUpdateInstallment(paymentData.installmentId, {
+            status: "Pago",
+            paidDate: new Date(dateWithTime),
+            paidAmount: Number(paymentData.value)
+        });
+        setIsPaymentModalOpen(false);
+    };
+
+    // Unpay Handler
+    const [unpayId, setUnpayId] = useState<string | null>(null);
+    const [isUnpayModalOpen, setIsUnpayModalOpen] = useState(false);
+
+    const handleOpenUnpay = (id: string) => {
+        setUnpayId(id);
+        setIsUnpayModalOpen(true);
+    };
+
+    const handleConfirmUnpay = () => {
+        if (!unpayId) return;
+        onUpdateInstallment(unpayId, {
+            status: "Pendente",
+            paidDate: null,
+            paidAmount: null
+        });
+        setIsUnpayModalOpen(false);
+        setUnpayId(null);
+    };
+
+    const handleEditInstallment = (inst: Installment) => {
+        setEditInstallmentData({
+            installmentId: inst.id,
+            dueDate: new Date(inst.dueDate).toISOString().split('T')[0],
+            value: inst.value.toString(),
+            status: inst.status,
+            costName: inst.costName || "Parcela"
+        });
+        setIsEditInstallmentModalOpen(true);
+    };
+
+    const handleConfirmEditInstallment = () => {
+        if (!editInstallmentData.installmentId) return;
+        onUpdateInstallment(editInstallmentData.installmentId, {
+            dueDate: new Date(editInstallmentData.dueDate),
+            value: Number(editInstallmentData.value),
+            status: editInstallmentData.status
+        });
+        setIsEditInstallmentModalOpen(false);
+    };
 
     // --- Helpers ---
     const getVehicleName = (id: string) => {
@@ -88,61 +197,89 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
         const currentMonth = now.getMonth();
         const currentDay = now.getDate();
 
-        // Helper to filter installments
-        const filter = (period: 'day' | 'week' | 'month' | 'year' | 'total', status?: 'Pago' | 'Pendente') => {
-            return installments.filter(inst => {
-                const d = new Date(inst.dueDate);
-                if (status && inst.status !== status) return false;
+        // Helper to check if installment is within period
+        const isInPeriod = (inst: Installment, period: 'day' | 'week' | 'month' | 'year' | 'total') => {
+            const d = new Date(inst.dueDate);
+            const isSameYear = d.getFullYear() === currentYear;
+            const isSameMonth = d.getMonth() === currentMonth;
+            const isSameDay = d.getDate() === currentDay;
 
-                const isSameYear = d.getFullYear() === currentYear;
-                const isSameMonth = d.getMonth() === currentMonth;
-                const isSameDay = d.getDate() === currentDay;
-
-                if (period === 'total') return true;
-                if (period === 'year') return isSameYear;
-                if (period === 'month') return isSameYear && isSameMonth;
-                if (period === 'day') return isSameYear && isSameMonth && isSameDay;
-                if (period === 'week') {
-                    // Simplificação: Semana atual (Sunday-Saturday)
-                    const firstDayOfWeek = currentDay - now.getDay();
-                    const lastDayOfWeek = firstDayOfWeek + 6;
-                    return isSameYear && isSameMonth && d.getDate() >= firstDayOfWeek && d.getDate() <= lastDayOfWeek;
-                }
-                return false;
-            }).reduce((acc, curr) => acc + Number(curr.value), 0);
+            if (period === 'total') return true;
+            if (period === 'year') return isSameYear;
+            if (period === 'month') return isSameYear && isSameMonth;
+            if (period === 'day') return isSameYear && isSameMonth && isSameDay;
+            if (period === 'week') {
+                const firstDayOfWeek = currentDay - now.getDay();
+                const lastDayOfWeek = firstDayOfWeek + 6;
+                return isSameYear && isSameMonth && d.getDate() >= firstDayOfWeek && d.getDate() <= lastDayOfWeek;
+            }
+            return false;
         };
 
-        const totalCost = installments.reduce((acc, curr) => acc + Number(curr.value), 0);
+        // Calculate values for each period
+        const calculate = (period: 'day' | 'week' | 'month' | 'year' | 'total') => {
+            const filtered = installments.filter(inst => isInPeriod(inst, period));
 
-        // Estrutura para os 4 cards principais (Linhas) x 5 colunas
+            // Custos: Total value of all installments
+            const custos = filtered.reduce((acc, curr) => acc + Number(curr.value), 0);
+
+            // Pago: Sum of paidAmount for paid installments (use paidAmount if exists, else value)
+            const pago = filtered
+                .filter(inst => inst.status === 'Pago')
+                .reduce((acc, curr) => {
+                    const amount = curr.paidAmount != null ? Number(curr.paidAmount) : Number(curr.value);
+                    return acc + amount;
+                }, 0);
+
+            // Pendente: Sum of value for pending installments
+            const pendente = filtered
+                .filter(inst => inst.status === 'Pendente')
+                .reduce((acc, curr) => acc + Number(curr.value), 0);
+
+            // Juros: When paidAmount > value (paid more than original)
+            const juros = filtered
+                .filter(inst => inst.status === 'Pago' && inst.paidAmount != null && Number(inst.paidAmount) > Number(inst.value))
+                .reduce((acc, curr) => acc + (Number(curr.paidAmount) - Number(curr.value)), 0);
+
+            // Desconto: When paidAmount < value (paid less than original)
+            const desconto = filtered
+                .filter(inst => inst.status === 'Pago' && inst.paidAmount != null && Number(inst.paidAmount) < Number(inst.value))
+                .reduce((acc, curr) => acc + (Number(curr.value) - Number(curr.paidAmount)), 0);
+
+            return { custos, pago, pendente, juros, desconto };
+        };
+
+        const dia = calculate('day');
+        const semana = calculate('week');
+        const mes = calculate('month');
+        const ano = calculate('year');
+        const total = calculate('total');
+
         return [
             {
                 label: "Custos",
                 color: COLORS.costs,
-                values: {
-                    dia: filter('day'), semana: filter('week'), mes: filter('month'), ano: filter('year'), total: filter('total')
-                }
+                values: { dia: dia.custos, semana: semana.custos, mes: mes.custos, ano: ano.custos, total: total.custos }
             },
             {
                 label: "Pago",
                 color: COLORS.paid,
-                values: {
-                    dia: filter('day', 'Pago'), semana: filter('week', 'Pago'), mes: filter('month', 'Pago'), ano: filter('year', 'Pago'), total: filter('total', 'Pago')
-                }
+                values: { dia: dia.pago, semana: semana.pago, mes: mes.pago, ano: ano.pago, total: total.pago }
             },
             {
                 label: "Pendente",
                 color: COLORS.pending,
-                values: {
-                    dia: filter('day', 'Pendente'), semana: filter('week', 'Pendente'), mes: filter('month', 'Pendente'), ano: filter('year', 'Pendente'), total: filter('total', 'Pendente')
-                }
+                values: { dia: dia.pendente, semana: semana.pendente, mes: mes.pendente, ano: ano.pendente, total: total.pendente }
             },
             {
                 label: "Juros",
                 color: COLORS.interest,
-                values: {
-                    dia: 0, semana: 0, mes: 0, ano: 810.48, total: 810.48 // Hardcoded conforme screenshot por enquanto
-                }
+                values: { dia: dia.juros, semana: semana.juros, mes: mes.juros, ano: ano.juros, total: total.juros }
+            },
+            {
+                label: "Desconto",
+                color: COLORS.discount,
+                values: { dia: dia.desconto, semana: semana.desconto, mes: mes.desconto, ano: ano.desconto, total: total.desconto }
             }
         ];
     }, [installments]);
@@ -207,19 +344,28 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
         });
 
         return groups;
-    }, [installments, selectedVehicleId, showAll, filterDate]);
+    }, [installments, selectedVehicleId, showAll, filterDate, statusFilter]);
 
     // Handlers para Filtros de Data
     const handlePrevMonth = () => {
-        setFilterDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+        const newDate = new Date(filterDate.getFullYear(), filterDate.getMonth() - 1, 1);
+        setFilterDate(newDate);
+        setSelectedMonth((newDate.getMonth() + 1).toString());
+        setSelectedYear(newDate.getFullYear().toString());
         setShowAll(false);
     };
     const handleNextMonth = () => {
-        setFilterDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+        const newDate = new Date(filterDate.getFullYear(), filterDate.getMonth() + 1, 1);
+        setFilterDate(newDate);
+        setSelectedMonth((newDate.getMonth() + 1).toString());
+        setSelectedYear(newDate.getFullYear().toString());
         setShowAll(false);
     };
     const handleCurrentMonth = () => {
-        setFilterDate(new Date());
+        const now = new Date();
+        setFilterDate(now);
+        setSelectedMonth((now.getMonth() + 1).toString());
+        setSelectedYear(now.getFullYear().toString());
         setShowAll(false);
     };
     const handleAllMonths = () => {
@@ -279,6 +425,7 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
 
     const handleOpenModal = () => {
         setFormData({
+            id: "", // Reset ID
             vehicleId: "", costTypeId: "", description: "", value: "",
             specificDate: "", monthYear: "", isRecurring: false, totalInstallments: "12",
             vendor: "", notes: ""
@@ -287,9 +434,9 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
     };
 
     return (
-        <div style={styles.container}>
+        <div style={styles.container} >
             {/* Header */}
-            <div style={styles.header}>
+            < div style={styles.header} >
                 <div>
                     <h2 style={styles.title}>Custos Fixos Avulsos</h2>
                     <p style={styles.subtitle}>Custos mensais individuais ou recorrentes</p>
@@ -297,34 +444,37 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                 <button style={styles.primaryButton} onClick={handleOpenModal}>
                     <Plus size={16} /> Novo Custo
                 </button>
-            </div>
+            </div >
 
             {/* 4x5 Summary Grid */}
-            <div style={{ ...styles.summaryGrid, gridTemplateRows: "repeat(4, 1fr)" }}>
-                {summaryData.map((row, rIdx) => (
-                    <React.Fragment key={rIdx}>
-                        {Object.entries(row.values).map(([period, val], cIdx) => (
-                            <div key={`${rIdx}-${cIdx}`} style={styles.summaryCard(row.color.bg, row.color.text)}>
-                                <span style={styles.summaryLabel}>{row.label} - {period.charAt(0).toUpperCase() + period.slice(1)}</span>
-                                <div style={styles.summaryValue}>{formatCurrency(val)}</div>
-                                <div style={styles.summaryPercent}>{period === 'total' ? 'Total Geral' : '100%'}</div>
-                            </div>
-                        ))}
-                    </React.Fragment>
-                ))}
-            </div>
+            < div style={{ ...styles.summaryGrid, gridTemplateRows: "repeat(4, 1fr)" }
+            }>
+                {
+                    summaryData.map((row, rIdx) => (
+                        <React.Fragment key={rIdx}>
+                            {Object.entries(row.values).map(([period, val], cIdx) => (
+                                <div key={`${rIdx}-${cIdx}`} style={styles.summaryCard(row.color.bg, row.color.text)}>
+                                    <span style={styles.summaryLabel}>{row.label} - {period.charAt(0).toUpperCase() + period.slice(1)}</span>
+                                    <div style={styles.summaryValue}>{formatCurrency(val)}</div>
+                                    <div style={styles.summaryPercent}>{period === 'total' ? 'Total Geral' : '100%'}</div>
+                                </div>
+                            ))}
+                        </React.Fragment>
+                    ))
+                }
+            </div >
 
             {/* Charts Section */}
-            <div style={styles.chartSection}>
+            < div style={styles.chartSection} >
                 {/* Horizontal Chart: Month */}
-                <div style={styles.header}>
+                < div style={styles.header} >
                     <h3 style={{ ...styles.title, fontSize: "1.1rem" }}>Custos Fixos por Mês</h3>
                     <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                         <button style={styles.iconButton}>{"<"}</button>
                         <span>{selectedYear}</span>
                         <button style={styles.iconButton}>{">"}</button>
                     </div>
-                </div>
+                </div >
                 <div style={{ height: "400px", width: "100%" }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartDataMonths} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
@@ -354,10 +504,10 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                 <div style={{ height: "300px", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: styles.subtitle.color, border: `1px dashed ${isDark ? "#334155" : "#e2e8f0"}` }}>
                     Gráfico por Dia (Dados em desenvolvimento)
                 </div>
-            </div>
+            </div >
 
             {/* Filters Bar */}
-            <div style={{ ...styles.filtersBar, display: "flex" as const }}>
+            < div style={{ ...styles.filtersBar, display: "flex" as const }}>
                 <div style={styles.filterGroup}>
                     <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Veículo</label>
                     <select style={styles.select} value={selectedVehicleId} onChange={e => setSelectedVehicleId(e.target.value)}>
@@ -377,11 +527,57 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                 </div>
 
                 <div style={styles.filterGroup}>
-                    <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Mês/Ano</label>
-                    <div style={{ ...styles.select, display: "flex", alignItems: "center", justifyContent: "space-between", minWidth: "180px" }}>
-                        <span>{showAll ? "Todos" : capitalizedMonthDisplay}</span>
-                        <Calendar size={14} />
-                    </div>
+                    <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Mês</label>
+                    <select
+                        style={styles.select}
+                        value={showAll ? "todos" : selectedMonth}
+                        onChange={e => {
+                            if (e.target.value === "todos") {
+                                setShowAll(true);
+                            } else {
+                                setShowAll(false);
+                                setSelectedMonth(e.target.value);
+                                setFilterDate(new Date(parseInt(selectedYear), parseInt(e.target.value) - 1, 1));
+                            }
+                        }}
+                    >
+                        <option value="todos">Todos</option>
+                        <option value="1">Janeiro</option>
+                        <option value="2">Fevereiro</option>
+                        <option value="3">Março</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Maio</option>
+                        <option value="6">Junho</option>
+                        <option value="7">Julho</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Setembro</option>
+                        <option value="10">Outubro</option>
+                        <option value="11">Novembro</option>
+                        <option value="12">Dezembro</option>
+                    </select>
+                </div>
+
+                <div style={styles.filterGroup}>
+                    <label style={{ fontSize: "0.75rem", fontWeight: 600 }}>Ano</label>
+                    <select
+                        style={styles.select}
+                        value={showAll ? "todos" : selectedYear}
+                        onChange={e => {
+                            if (e.target.value === "todos") {
+                                setShowAll(true);
+                            } else {
+                                setShowAll(false);
+                                setSelectedYear(e.target.value);
+                                setFilterDate(new Date(parseInt(e.target.value), parseInt(selectedMonth) - 1, 1));
+                            }
+                        }}
+                    >
+                        <option value="todos">Todos</option>
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                    </select>
                 </div>
 
                 {/* Status Filter */}
@@ -393,177 +589,373 @@ export function FixedCostsManager({ costs, installments, vehicles, costTypes, on
                         <button onClick={() => setStatusFilter('all')} style={{ ...styles.primaryButton, backgroundColor: statusFilter === 'all' ? (isDark ? "#475569" : "#94a3b8") : (isDark ? "#334155" : "#e2e8f0"), color: statusFilter === 'all' ? "white" : (isDark ? "#e2e8f0" : "#1e293b") }}>Ambos</button>
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* Cards List */}
             <div>
-                {Object.entries(groupedInstallments).map(([key, insts]) => {
-                    const [vid, monthYear] = key.split('|');
-                    const vehicleName = getVehicleName(vid);
-                    const totalVal = insts.reduce((a, b) => a + Number(b.value), 0);
+                {
+                    Object.entries(groupedInstallments).map(([key, insts]) => {
+                        const [vid, monthYear] = key.split('|');
+                        const vehicleName = getVehicleName(vid);
+                        const totalVal = insts.reduce((a, b) => a + Number(b.value), 0);
 
-                    return (
-                        <div key={key} style={styles.card}>
-                            {/* Group Header */}
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, paddingBottom: "0.5rem" }}>
-                                <div style={{ display: "flex", flexDirection: "column" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                        <div style={{ backgroundColor: "#22c55e", padding: "0.25rem", borderRadius: "0.25rem", color: "white" }}><Edit size={12} /></div>
-                                        <span style={{ fontWeight: "bold" }}>{vehicleName}</span>
+                        return (
+                            <div key={key} style={styles.card}>
+                                {/* Group Header */}
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, paddingBottom: "0.5rem" }}>
+                                    <div style={{ display: "flex", flexDirection: "column" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                                <div
+                                                    onClick={() => {
+                                                        // Find first cost in group to get ID (Grouping by vehicle/month means multiple costs... wait. Grouping is by Cost? No, by Vehicle|Month)
+                                                        // The image implies grouping by a specific Cost Period.
+                                                        // Actually, "Editar Custo" usually edits the PARENT Fixed Cost.
+                                                        // We need the Fixed Cost ID.
+                                                        // `insts` array contains installments. `insts[0].fixedCostId` gives the parent ID.
+                                                        if (insts.length > 0) handleEditCost(insts[0].fixedCostId);
+                                                    }}
+                                                    style={{ backgroundColor: "#22c55e", padding: "0.25rem", borderRadius: "0.25rem", color: "white", cursor: "pointer" }}>
+                                                    <Edit size={12} />
+                                                </div>
+                                                <span style={{ fontWeight: "bold" }}>{vehicleName}</span>
+                                            </div>
+                                            <span style={{ fontSize: "0.75rem", color: styles.subtitle.color, marginLeft: "2rem" }}>{monthYear}</span>
+                                        </div>
+                                        <div style={{ textAlign: "right" }}>
+                                            <div style={{ fontWeight: "bold" }}>{formatCurrency(totalVal)}</div>
+                                            <div style={{ fontSize: "0.75rem", color: styles.subtitle.color }}>{insts.length} custo(s)</div>
+                                        </div>
                                     </div>
-                                    <span style={{ fontSize: "0.75rem", color: styles.subtitle.color, marginLeft: "2rem" }}>{monthYear}</span>
                                 </div>
-                                <div style={{ textAlign: "right" }}>
-                                    <div style={{ fontWeight: "bold" }}>{formatCurrency(totalVal)}</div>
-                                    <div style={{ fontSize: "0.75rem", color: styles.subtitle.color }}>{insts.length} custo(s)</div>
-                                </div>
+
+                                {/* Individual Items */}
+                                {insts.map(inst => (
+                                    <div key={inst.id} style={styles.cardRow}>
+                                        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                                            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                                                <span style={{ fontWeight: 600 }}>{inst.costName}</span>
+                                                <span
+                                                    onClick={() => {
+                                                        if (inst.status === 'Pendente') handleOpenPayment(inst);
+                                                        else if (inst.status === 'Pago') handleOpenUnpay(inst.id);
+                                                    }}
+                                                    style={{ ...styles.tag(inst.status), cursor: 'pointer' }}
+                                                    title={inst.status === 'Pendente' ? "Registrar Pagamento" : "Cancelar Pagamento"}
+                                                >
+                                                    {inst.status}
+                                                </span>
+                                            </div>
+                                            {/* Date info: Due date + Paid date if applicable */}
+                                            <div style={{ fontSize: "0.8rem", color: styles.subtitle.color }}>
+                                                <span>Venc: {new Date(inst.dueDate).toLocaleDateString()}</span>
+                                                {inst.status === 'Pago' && inst.paidDate && (
+                                                    <span style={{ marginLeft: "0.5rem", color: "#22c55e" }}>
+                                                        • Pago: {new Date(inst.paidDate).toLocaleDateString()}
+                                                    </span>
+                                                )}
+                                                <span style={{ marginLeft: "0.5rem" }}>
+                                                    • {inst.vendor || inst.costName}
+                                                    {inst.totalInstallments && inst.totalInstallments > 1 && ` (${inst.installmentNumber}/${inst.totalInstallments})`}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
+                                            {/* Original value */}
+                                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                                <span style={{ fontWeight: "bold", fontSize: inst.status === 'Pago' && inst.paidAmount != null && Number(inst.paidAmount) !== Number(inst.value) ? "0.85rem" : "1rem" }}>
+                                                    {formatCurrency(Number(inst.value))}
+                                                </span>
+                                                {inst.status === 'Pago' && inst.paidAmount != null && Number(inst.paidAmount) !== Number(inst.value) && (
+                                                    <span style={{
+                                                        fontSize: "0.7rem",
+                                                        color: Number(inst.paidAmount) > Number(inst.value) ? "#ef4444" : "#22c55e",
+                                                        fontWeight: "bold"
+                                                    }}>
+                                                        {Number(inst.paidAmount) > Number(inst.value)
+                                                            ? `+${formatCurrency(Number(inst.paidAmount) - Number(inst.value))} juros`
+                                                            : `-${formatCurrency(Number(inst.value) - Number(inst.paidAmount))} desc.`
+                                                        }
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {/* Paid value when different */}
+                                            {inst.status === 'Pago' && inst.paidAmount != null && (
+                                                <span style={{
+                                                    fontSize: "0.9rem",
+                                                    fontWeight: "bold",
+                                                    color: Number(inst.paidAmount) > Number(inst.value) ? "#ef4444" : (Number(inst.paidAmount) < Number(inst.value) ? "#22c55e" : isDark ? "#e2e8f0" : "#1e293b")
+                                                }}>
+                                                    Pago: {formatCurrency(Number(inst.paidAmount))}
+                                                </span>
+                                            )}
+                                            <div style={{ display: "flex", gap: "0.25rem" }}>
+                                                <button style={styles.iconButton} onClick={() => handleEditCost(inst.fixedCostId)}><Edit size={14} /></button>
+                                                <button style={styles.iconButton} onClick={() => onDelete(inst.fixedCostId)}><Trash2 size={14} /></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-
-                            {/* Individual Items */}
-                            {insts.map(inst => (
-                                <div key={inst.id} style={styles.cardRow}>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                                            <span style={{ fontWeight: 600 }}>{inst.costName}</span>
-                                            <span style={styles.tag(inst.status)}>{inst.status}</span>
-                                        </div>
-                                        <div style={{ fontSize: "0.8rem", color: styles.subtitle.color }}>
-                                            {new Date(inst.dueDate).toLocaleDateString()} • {inst.vendor || inst.costName}
-                                            {inst.totalInstallments && inst.totalInstallments > 1 && ` (${inst.installmentNumber}/${inst.totalInstallments})`}
-                                        </div>
-                                    </div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                                        <span style={{ fontWeight: "bold" }}>{formatCurrency(inst.value)}</span>
-                                        <div style={{ display: "flex", gap: "0.25rem" }}>
-                                            <button style={styles.iconButton}><Edit size={14} /></button>
-                                            <button style={styles.iconButton} onClick={() => onDelete(inst.fixedCostId)}><Trash2 size={14} /></button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    );
-                })}
-            </div>
+                        );
+                    })
+                }
+            </div >
 
             {/* Modal (Simplified structure to match previous functionality) */}
-            {isModalOpen && (
-                <div style={styles.modalOverlay}>
-                    <div style={{ ...styles.modalContent, width: "600px" }}> {/* Wider modal */}
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-                            <h3 style={styles.title}>Novo Custo Fixo</h3>
-                            <button onClick={() => setIsModalOpen(false)} style={{ background: "transparent", border: "none", color: styles.subtitle.color, cursor: "pointer" }}><X size={20} /></button>
-                        </div>
-
-                        <p style={{ fontSize: "0.875rem", color: styles.subtitle.color, marginBottom: "1.5rem" }}>
-                            Cadastre um novo custo fixo do veículo
-                        </p>
-
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
-                            <div>
-                                <label style={styles.label}>Veículo</label>
-                                <select style={styles.input} value={formData.vehicleId} onChange={e => setFormData({ ...formData, vehicleId: e.target.value })}>
-                                    <option value="">Selecione o veículo</option>
-                                    {vehicles.map((v: any) => <option key={v.id} value={v.id}>{v.plate} - {v.model} {v.driverName ? `(${v.driverName})` : ''}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label style={styles.label}>Tipo de Custo</label>
-                                <select style={styles.input} value={formData.costTypeId} onChange={e => setFormData({ ...formData, costTypeId: e.target.value })}>
-                                    <option value="">Selecione o tipo</option>
-                                    {costTypes && costTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div style={{ marginBottom: "1rem" }}>
-                            <label style={styles.label}>Descrição</label>
-                            <input
-                                style={styles.input}
-                                placeholder="Ex: Prestação BYD Dolphin"
-                                value={formData.description}
-                                onChange={e => setFormData({ ...formData, description: e.target.value })}
-                            />
-                        </div>
-
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
-                            <div>
-                                <label style={styles.label}>Valor (R$)</label>
-                                <input type="number" step="0.01" style={styles.input} placeholder="0.00" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} />
-                            </div>
-                            <div>
-                                <label style={styles.label}>Mês/Ano</label>
-                                <input type="month" style={styles.input} value={formData.monthYear} onChange={e => setFormData({ ...formData, monthYear: e.target.value })} />
-                            </div>
-                            <div>
-                                <label style={styles.label}>Data Específica</label>
-                                <input type="date" style={styles.input} value={formData.specificDate} onChange={e => setFormData({ ...formData, specificDate: e.target.value })} />
-                                <span style={{ fontSize: "0.7rem", color: styles.subtitle.color }}>Opcional</span>
-                            </div>
-                        </div>
-
-                        {/* Recurring Section */}
-                        <div style={{ marginBottom: "1.5rem", borderTop: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, paddingTop: "1rem" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                                <RefreshCw size={16} />
-                                <span style={{ fontWeight: 600 }}>Custos Recorrentes</span>
+            {
+                isModalOpen && (
+                    <div style={styles.modalOverlay}>
+                        <div style={{ ...styles.modalContent, width: "600px" }}> {/* Wider modal */}
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+                                <h3 style={styles.title}>{formData.id ? "Editar Custo Fixo" : "Novo Custo Fixo"}</h3>
+                                <button onClick={() => setIsModalOpen(false)} style={{ background: "transparent", border: "none", color: styles.subtitle.color, cursor: "pointer" }}><X size={20} /></button>
                             </div>
 
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                                <input
-                                    type="checkbox"
-                                    id="isRecurring"
-                                    checked={formData.isRecurring}
-                                    onChange={e => setFormData({ ...formData, isRecurring: e.target.checked })}
-                                    style={{ width: "16px", height: "16px" }}
-                                />
-                                <label htmlFor="isRecurring" style={{ fontSize: "0.9rem", cursor: "pointer" }}>Repetir mensalmente</label>
-                            </div>
-                            <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginLeft: "1.5rem", marginBottom: "1rem" }}>
-                                Gera automaticamente múltiplos lançamentos mensais
+                            <p style={{ fontSize: "0.875rem", color: styles.subtitle.color, marginBottom: "1.5rem" }}>
+                                {formData.id ? "Edite as informações do custo fixo" : "Cadastre um novo custo fixo do veículo"}
                             </p>
 
-                            {formData.isRecurring && (
-                                <div style={{ marginLeft: "1.5rem" }}>
-                                    <label style={styles.label}>Quantidade de Meses</label>
-                                    <input type="number" style={{ ...styles.input, width: "100px" }} value={formData.totalInstallments} onChange={e => setFormData({ ...formData, totalInstallments: e.target.value })} />
-                                    <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginTop: "0.25rem" }}>Será criado 1 lançamento para cada mês</p>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                                <div>
+                                    <label style={styles.label}>Veículo</label>
+                                    <select style={styles.input} value={formData.vehicleId} onChange={e => setFormData({ ...formData, vehicleId: e.target.value })}>
+                                        <option value="">Selecione o veículo</option>
+                                        {vehicles.map((v: any) => <option key={v.id} value={v.id}>{v.plate} - {v.model} {v.driverName ? `(${v.driverName})` : ''}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={styles.label}>Tipo de Custo</label>
+                                    <select style={styles.input} value={formData.costTypeId} onChange={e => setFormData({ ...formData, costTypeId: e.target.value })}>
+                                        <option value="">Selecione o tipo</option>
+                                        {costTypes && costTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: "1rem" }}>
+                                <label style={styles.label}>Descrição</label>
+                                <input
+                                    style={styles.input}
+                                    placeholder="Ex: Prestação BYD Dolphin"
+                                    value={formData.description}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+                                <div>
+                                    <label style={styles.label}>Valor (R$)</label>
+                                    <input type="number" step="0.01" style={styles.input} placeholder="0.00" value={formData.value} onChange={e => setFormData({ ...formData, value: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label style={styles.label}>Mês/Ano</label>
+                                    <input type="month" style={styles.input} value={formData.monthYear} onChange={e => setFormData({ ...formData, monthYear: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label style={styles.label}>Data Específica</label>
+                                    <input type="date" style={styles.input} value={formData.specificDate} onChange={e => setFormData({ ...formData, specificDate: e.target.value })} />
+                                    <span style={{ fontSize: "0.7rem", color: styles.subtitle.color }}>Opcional. Se não informado, assume dia 1.</span>
+                                </div>
+                            </div>
+
+                            {/* Recurring Section - Only show for new costs */}
+                            {!formData.id && (
+                                <div style={{ marginBottom: "1.5rem", borderTop: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, paddingTop: "1rem" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                                        <RefreshCw size={16} />
+                                        <span style={{ fontWeight: 600 }}>Custos Recorrentes</span>
+                                    </div>
+
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                                        <input
+                                            type="checkbox"
+                                            id="isRecurring"
+                                            checked={formData.isRecurring}
+                                            onChange={e => setFormData({ ...formData, isRecurring: e.target.checked })}
+                                            style={{ width: "16px", height: "16px" }}
+                                        />
+                                        <label htmlFor="isRecurring" style={{ fontSize: "0.9rem", cursor: "pointer" }}>Repetir mensalmente</label>
+                                    </div>
+                                    <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginLeft: "1.5rem", marginBottom: "1rem" }}>
+                                        Gera automaticamente múltiplos lançamentos mensais
+                                    </p>
+
+                                    {formData.isRecurring && (
+                                        <div style={{ marginLeft: "1.5rem" }}>
+                                            <label style={styles.label}>Quantidade de Meses</label>
+                                            <input type="number" style={{ ...styles.input, width: "100px" }} value={formData.totalInstallments} onChange={e => setFormData({ ...formData, totalInstallments: e.target.value })} />
+                                            <p style={{ fontSize: "0.8rem", color: styles.subtitle.color, marginTop: "0.25rem" }}>Será criado 1 lançamento para cada mês</p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                        </div>
 
-                        <div style={{ marginBottom: "1.5rem" }}>
-                            <label style={styles.label}>Observação</label>
-                            <textarea
-                                style={{ ...styles.input, height: "80px", resize: "none" }}
-                                placeholder="Informações adicionais"
-                                value={formData.notes}
-                                onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                            />
-                        </div>
+                            <div style={{ marginBottom: "1.5rem" }}>
+                                <label style={styles.label}>Observação</label>
+                                <textarea
+                                    style={{ ...styles.input, height: "80px", resize: "none" }}
+                                    placeholder="Informações adicionais"
+                                    value={formData.notes}
+                                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                />
+                            </div>
 
-                        <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-                            <button onClick={() => setIsModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
-                            <button
-                                onClick={async () => {
-                                    try {
-                                        console.log("Tentando salvar payload:", formData);
-                                        await onSave(formData);
-                                        console.log("Solicitação de salvamento enviada com sucesso.");
-                                        setIsModalOpen(false);
-                                    } catch (err) {
-                                        console.error("ERRO AO SALVAR (Call Stack):", err);
-                                        alert("Erro ao salvar! Verifique o console com F12.");
-                                    }
-                                }}
-                                style={{ ...styles.primaryButton, padding: "0.75rem 1.5rem", height: "auto" }}
-                            >
-                                Salvar
-                            </button>
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                                <button onClick={() => setIsModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            console.log("Tentando salvar payload:", formData);
+                                            await onSave(formData);
+                                            console.log("Solicitação de salvamento enviada com sucesso.");
+                                            setIsModalOpen(false);
+                                        } catch (err) {
+                                            console.error("ERRO AO SALVAR (Call Stack):", err);
+                                            alert("Erro ao salvar! Verifique o console com F12.");
+                                        }
+                                    }}
+                                    style={{ ...styles.primaryButton, padding: "0.75rem 1.5rem", height: "auto" }}
+                                >
+                                    Salvar
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
+
+            {/* Payment Modal */}
+            {
+                isPaymentModalOpen && (
+                    <div style={styles.modalOverlay}>
+                        <div style={{ ...styles.modalContent, width: "400px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+                                <h3 style={styles.title}>Registrar Pagamento</h3>
+                                <button onClick={() => setIsPaymentModalOpen(false)} style={{ background: "transparent", border: "none" }}><X size={20} color={styles.subtitle.color} /></button>
+                            </div>
+                            <p style={{ fontSize: "0.875rem", color: styles.subtitle.color, marginBottom: "1.5rem" }}>
+                                Informe a data e o valor pago para este custo
+                            </p>
+
+                            <div style={{ marginBottom: "1rem" }}>
+                                <label style={styles.label}>Data do Pagamento</label>
+                                <input
+                                    type="date"
+                                    style={styles.input}
+                                    value={paymentData.date}
+                                    onChange={e => setPaymentData({ ...paymentData, date: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ marginBottom: "1.5rem" }}>
+                                <label style={styles.label}>Valor Pago</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    style={styles.input}
+                                    value={paymentData.value}
+                                    onChange={e => setPaymentData({ ...paymentData, value: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                                <button onClick={() => setIsPaymentModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
+                                <button
+                                    onClick={handleConfirmPayment}
+                                    style={{ ...styles.primaryButton, padding: "0.75rem 1.5rem", height: "auto" }}
+                                >
+                                    Confirmar Pagamento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Edit Installment Modal */}
+            {
+                isEditInstallmentModalOpen && (
+                    <div style={styles.modalOverlay}>
+                        <div style={{ ...styles.modalContent, width: "400px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+                                <h3 style={styles.title}>Editar Parcela</h3>
+                                <button onClick={() => setIsEditInstallmentModalOpen(false)} style={{ background: "transparent", border: "none" }}><X size={20} color={styles.subtitle.color} /></button>
+                            </div>
+
+                            <div style={{ marginBottom: "1rem" }}>
+                                <label style={styles.label}>Data de Vencimento</label>
+                                <input
+                                    type="date"
+                                    style={styles.input}
+                                    value={editInstallmentData.dueDate}
+                                    onChange={e => setEditInstallmentData({ ...editInstallmentData, dueDate: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ marginBottom: "1rem" }}>
+                                <label style={styles.label}>Valor (R$)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    style={styles.input}
+                                    value={editInstallmentData.value}
+                                    onChange={e => setEditInstallmentData({ ...editInstallmentData, value: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ marginBottom: "1.5rem" }}>
+                                <label style={styles.label}>Status</label>
+                                <select
+                                    style={styles.input}
+                                    value={editInstallmentData.status}
+                                    onChange={e => setEditInstallmentData({ ...editInstallmentData, status: e.target.value })}
+                                >
+                                    <option value="Pendente">Pendente</option>
+                                    <option value="Pago">Pago</option>
+                                </select>
+                            </div>
+
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                                <button onClick={() => setIsEditInstallmentModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
+                                <button
+                                    onClick={handleConfirmEditInstallment}
+                                    style={{ ...styles.primaryButton, padding: "0.75rem 1.5rem", height: "auto" }}
+                                >
+                                    Salvar Alterações
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+            {/* Unpay Confirmation Modal */}
+            {
+                isUnpayModalOpen && (
+                    <div style={styles.modalOverlay}>
+                        <div style={{ ...styles.modalContent, width: "400px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+                                <h3 style={styles.title}>Cancelar Pagamento?</h3>
+                                <button onClick={() => setIsUnpayModalOpen(false)} style={{ background: "transparent", border: "none" }}><X size={20} color={styles.subtitle.color} /></button>
+                            </div>
+
+                            <p style={{ fontSize: "0.9rem", color: styles.subtitle.color, marginBottom: "1.5rem" }}>
+                                Deseja desfazer o pagamento desta parcela? O status voltará para "Pendente".
+                            </p>
+
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                                <button onClick={() => setIsUnpayModalOpen(false)} style={{ padding: "0.75rem 1.5rem", border: `1px solid ${isDark ? "#475569" : "#ccc"}`, background: "transparent", borderRadius: "0.375rem", cursor: "pointer", color: isDark ? "white" : "black" }}>Cancelar</button>
+                                <button
+                                    onClick={handleConfirmUnpay}
+                                    style={{ ...styles.primaryButton, backgroundColor: "#ef4444", padding: "0.75rem 1.5rem", height: "auto" }}
+                                >
+                                    Desfazer Pagamento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div>
     );
 }

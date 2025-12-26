@@ -104,6 +104,7 @@ export const costTypes = pgTable("cost_types", {
     category: text("category").default('Variável').notNull(), // 'Fixo' or 'Variável'
     description: text("description"),
     isActive: boolean("is_active").default(true).notNull(),
+    visibleToDriver: boolean("visible_to_driver").default(true).notNull(),
     icon: text("icon"),
     color: text("color"),
     visibleToDriver: boolean("visible_to_driver").default(true),
@@ -116,7 +117,7 @@ export const fixedCosts = pgTable("fixed_costs", {
     frequency: text("frequency").default('Mensal').notNull(),
     dueDay: integer("due_day").default(5), // Day of month
     costTypeId: varchar("cost_type_id").references(() => costTypes.id),
-    vehicleId: uuid("vehicle_id").references(() => vehicles.id),
+    vehicleId: varchar("vehicle_id").references(() => vehicles.id),
     vendor: text("vendor"),
     totalInstallments: integer("total_installments"), // 60, 96, etc.
     startDate: timestamp("start_date"),
@@ -145,6 +146,7 @@ export const tires = pgTable("tires", {
     status: text("status").notNull(), // Novo, Meia Vida, etc
     installDate: timestamp("install_date").notNull(),
     installKm: integer("install_km").notNull(),
+    cost: numeric("cost", { precision: 10, scale: 2 }).default('0'),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });

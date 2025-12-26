@@ -1,7 +1,7 @@
 
 import { db } from "../../core/db/connection.js";
-import { expenses, costTypes, fixedCosts, fixedCostInstallments, drivers, shifts, vehicles, legacyMaintenances, legacyShiftCostTypes } from "../../../shared/schema.js";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { expenses, costTypes, fixedCosts, fixedCostInstallments, drivers, shifts, vehicles, legacyMaintenances, legacyShiftCostTypes, tires } from "../../../shared/schema.js";
+import { eq, desc, and, sql, ne } from "drizzle-orm";
 
 export async function findAllExpenses(filters?: { shiftId?: string }) {
     const whereConditions = [];
@@ -18,6 +18,7 @@ export async function findAllExpenses(filters?: { shiftId?: string }) {
             tipoCor: costTypes.description,
             shiftId: expenses.shiftId,
             motoristaNome: drivers.nome, // Add driver name
+            visibleToDriver: costTypes.visibleToDriver, // Add visibleToDriver
         })
         .from(expenses)
         .leftJoin(costTypes, eq(expenses.costTypeId, costTypes.id))
@@ -95,8 +96,17 @@ export async function createFixedCost(data: typeof fixedCosts.$inferInsert) {
 
 export async function updateFixedCost(id: string, data: Partial<typeof fixedCosts.$inferInsert>) {
     const [updated] = await db.update(fixedCosts).set(data).where(eq(fixedCosts.id, id)).returning();
-    // Logic to update future installments if value changed? Complex. 
-    // For now, just update the template.
+
+    if (data.value) {
+        // Update pending installments (or any not paid)
+        await db.update(fixedCostInstallments)
+            .set({ value: String(data.value) })
+            .where(and(
+                eq(fixedCostInstallments.fixedCostId, id),
+                ne(fixedCostInstallments.status, 'Pago')
+            ));
+    }
+
     return updated;
 }
 
@@ -107,9 +117,14 @@ export async function deleteFixedCost(id: string) {
     return deleted;
 }
 
-export async function updateFixedCostInstallment(id: string, data: { status?: string, value?: number, dueDate?: Date }) {
-    const updateData: any = { ...data };
-    if (data.value !== undefined) updateData.value = String(data.value);
+export async function updateFixedCostInstallment(id: string, data: { status?: string, value?: number, dueDate?: Date, paidDate?: Date, paidAmount?: number }) {
+    const updateData: any = {};
+
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.value !== undefined) updateData.value = data.value === null ? null : String(data.value);
+    if (data.dueDate !== undefined) updateData.dueDate = data.dueDate;
+    if (data.paidDate !== undefined) updateData.paidDate = data.paidDate;
+    if (data.paidAmount !== undefined) updateData.paidAmount = data.paidAmount === null ? null : String(data.paidAmount);
 
     const [updated] = await db.update(fixedCostInstallments)
         .set(updateData)
@@ -159,6 +174,8 @@ export async function getFixedCostInstallments(filters?: { month?: string, year?
         dueDate: fixedCostInstallments.dueDate,
         value: fixedCostInstallments.value,
         status: fixedCostInstallments.status,
+        paidAmount: fixedCostInstallments.paidAmount,
+        paidDate: fixedCostInstallments.paidDate,
     })
         .from(fixedCostInstallments)
         .leftJoin(fixedCosts, eq(fixedCostInstallments.fixedCostId, fixedCosts.id))
@@ -217,6 +234,59 @@ export async function findAllLegacyMaintenances() {
         .from(legacyMaintenances)
         .leftJoin(vehicles, eq(legacyMaintenances.vehicleId, vehicles.id))
         .orderBy(desc(legacyMaintenances.date));
+}
+
+// ... existing code ...
+export async function deleteLegacyMaintenance(id: string) {
+    const [deleted] = await db.delete(legacyMaintenances).where(eq(legacyMaintenances.id, id)).returning();
+    return deleted;
+}
+
+export async function createLegacyMaintenance(data: typeof legacyMaintenances.$inferInsert) {
+    const [newMaintenance] = await db.insert(legacyMaintenances).values(data).returning();
+    return newMaintenance;
+}
+
+// ... existing code ...
+
+// ... existing code ...
+
+
+
+// --- TIRES ---
+export async function findAllTires() {
+    try {
+        return await db
+            .select({
+                id: tires.id,
+                position: tires.position,
+                brand: tires.brand,
+                model: tires.model,
+                status: tires.status,
+                installDate: tires.installDate,
+                installKm: tires.installKm,
+                cost: tires.cost,
+                vehicleId: tires.vehicleId,
+                veiculoPlate: vehicles.plate,
+                veiculoModelo: vehicles.modelo
+            })
+            .from(tires)
+            .leftJoin(vehicles, eq(tires.vehicleId, vehicles.id))
+            .orderBy(desc(tires.installDate));
+    } catch (error) {
+        console.error("❌ Erro CRÍTICO em findAllTires:", error);
+        throw error; // Re-throw to let controller catch it, but now we have server logs (if we could see them)
+    }
+}
+
+export async function createTire(data: typeof tires.$inferInsert) {
+    const [newTire] = await db.insert(tires).values(data).returning();
+    return newTire;
+}
+
+export async function deleteTire(id: string) {
+    const [deleted] = await db.delete(tires).where(eq(tires.id, id)).returning();
+    return deleted;
 }
 
 export async function restoreDefaultCostTypes() {

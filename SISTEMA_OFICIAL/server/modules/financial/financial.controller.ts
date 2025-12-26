@@ -29,6 +29,17 @@ export async function getLegacyMaintenances(req: Request, res: Response) {
     }
 }
 
+export async function deleteLegacyMaintenance(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        await service.deleteLegacyMaintenance(id);
+        res.json({ message: "Manutenção removida com sucesso" });
+    } catch (error) {
+        console.error("Erro ao remover manutenção legada:", error);
+        res.status(500).json({ error: "Erro interno ao remover manutenção" });
+    }
+}
+
 export async function getCostTypes(req: Request, res: Response) {
     try {
         const types = await service.getAllCostTypes();
@@ -62,20 +73,13 @@ export async function createFixedCost(req: Request, res: Response) {
             costTypeId: validatedData.costTypeId,
             notes: validatedData.notes,
             totalInstallments: validatedData.totalInstallments,
-            startDate: validatedData.startDate ? validatedData.startDate.toISOString() : undefined // Service/Repo expects Date or string? Repo uses new Date(startDate) so string is safer if repository expects string, but schema says timestamp. Repository: `newCost.startDate` is used in `new Date(newCost.startDate)`. Drizzle handles Date object to timestamp.
-            // Actually, let's pass it as Date if repository handles it. Repo uses `startDate` from `fixedCosts` table insert.
-            // Let's check repository again. Line 44: `const start = new Date(newCost.startDate);`.
-            // So if `newCost.startDate` is a Date object, `new Date(Date object)` works.
-            // So passing Date is fine.
-            // HOWEVER, the `createFixedCost` types in `service` are `any`, but `repository` says `typeof fixedCosts.$inferInsert`.
-            // `fixedCosts` schema definition in `shared/schema.ts`: `start_date: timestamp('start_date')`.
-            // Drizzle expects Date object for timestamp.
+            startDate: validatedData.startDate
         });
         res.status(201).json(newCost);
     } catch (error: any) {
         console.error("Erro ao criar custo fixo:", error);
         if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
-        res.status(500).json({ error: "Erro interno" });
+        res.status(500).json({ error: "Erro interno", detail: error.message, code: error.code });
     }
 }
 
@@ -89,7 +93,7 @@ export async function updateFixedCost(req: Request, res: Response) {
     } catch (error: any) {
         console.error("Erro ao atualizar custo fixo:", error);
         if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
-        res.status(500).json({ error: "Erro interno" });
+        res.status(500).json({ error: "Erro interno", message: error.message, code: error.code });
     }
 }
 
@@ -230,6 +234,53 @@ export async function deleteCostType(req: Request, res: Response) {
     }
 }
 
+// ... existing code ...
+
+export async function createLegacyMaintenance(req: Request, res: Response) {
+    try {
+        const data = req.body;
+        // Basic validation could go here or use Zod
+        const newMaintenance = await service.createLegacyMaintenance(data);
+        res.status(201).json(newMaintenance);
+    } catch (error) {
+        console.error("Erro ao criar manutenção legada:", error);
+        res.status(500).json({ error: "Erro interno ao criar manutenção" });
+    }
+}
+
+// --- TIRES ---
+export async function getTires(req: Request, res: Response) {
+    try {
+        const tires = await service.getAllTires();
+        res.json(tires);
+    } catch (error) {
+        console.error("Erro ao buscar pneus:", error);
+        res.status(500).json({ error: "Erro interno ao buscar pneus" });
+    }
+}
+
+export async function createTire(req: Request, res: Response) {
+    try {
+        const data = req.body;
+        const newTire = await service.createTire(data);
+        res.status(201).json(newTire);
+    } catch (error) {
+        console.error("Erro ao criar pneu:", error);
+        res.status(500).json({ error: "Erro interno ao criar pneu" });
+    }
+}
+
+export async function deleteTire(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        await service.deleteTire(id);
+        res.json({ message: "Pneu removido com sucesso" });
+    } catch (error) {
+        console.error("Erro ao remover pneu:", error);
+        res.status(500).json({ error: "Erro interno ao remover pneu" });
+    }
+}
+
 export async function restoreDefaultCostTypes(req: Request, res: Response) {
     try {
         await service.restoreDefaultCostTypes();
@@ -239,3 +290,4 @@ export async function restoreDefaultCostTypes(req: Request, res: Response) {
         res.status(500).json({ error: "Erro interno ao restaurar tipos de custo" });
     }
 }
+

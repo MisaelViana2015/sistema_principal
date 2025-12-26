@@ -78,24 +78,26 @@ const HeaderNew = ({
                 {/* Desktop Navigation */}
                 {showDesktopNav && (
                     <nav className="hidden md:flex items-center gap-1 ml-8">
-                        {navItems.map((item) => {
-                            const isActive = location.pathname.startsWith(item.path);
-                            const Icon = item.icon;
+                        {navItems
+                            .filter(item => item.path !== "/desempenho" || isUserAdmin) // Hide Desempenho if not admin
+                            .map((item) => {
+                                const isActive = location.pathname.startsWith(item.path);
+                                const Icon = item.icon;
 
-                            return (
-                                <Link
-                                    key={item.path}
-                                    to={item.path}
-                                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${isActive
-                                        ? "bg-primary text-primary-foreground"
-                                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                                        }`}
-                                >
-                                    <Icon className="w-4 h-4" />
-                                    <span className="hidden lg:inline">{item.label}</span>
-                                </Link>
-                            );
-                        })}
+                                return (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${isActive
+                                            ? "bg-primary text-primary-foreground"
+                                            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                                            }`}
+                                    >
+                                        <Icon className="w-4 h-4" />
+                                        <span className="hidden lg:inline">{item.label}</span>
+                                    </Link>
+                                );
+                            })}
                     </nav>
                 )}
 

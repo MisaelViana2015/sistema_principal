@@ -112,3 +112,24 @@ export async function updateCostType(id: string, data: any) {
 export async function deleteCostType(id: string) {
     return await repository.deleteCostType(id);
 }
+
+export async function deleteLegacyMaintenance(id: string) {
+    return await repository.deleteLegacyMaintenance(id);
+}
+
+export async function createLegacyMaintenance(data: any) {
+    return await repository.createLegacyMaintenance(data);
+}
+
+// --- TIRES ---
+export async function getAllTires() {
+    return await repository.findAllTires();
+}
+
+export async function createTire(data: any) {
+    return await repository.createTire(data);
+}
+
+export async function deleteTire(id: string) {
+    return await repository.deleteTire(id);
+}

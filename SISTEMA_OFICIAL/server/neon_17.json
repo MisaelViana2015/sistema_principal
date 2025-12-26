@@ -1,0 +1,667 @@
+{
+  "drivers": [
+    {
+      "id": "d3818cb2-0192-45e7-9527-93e82b1d39d2",
+      "nome": "Misael",
+      "email": "programacao1215@hotmail.com",
+      "senha": "$2b$10$sYRJatamoy8czUx0w.LvZu/1n4HGiAY/k2KfEwIPk0LN.I.BKS/uW",
+      "telefone": "(11) 99999-0001",
+      "veiculo_favorito_id": "89146774-1d45-46c2-aa6c-abd1884d90c9",
+      "is_active": true,
+      "role": "admin"
+    },
+    {
+      "id": "5bd73070-c385-42ea-9cac-2f8710202bb2",
+      "nome": "zezu brocha",
+      "email": "zezus@gmail.com",
+      "senha": "$2b$10$riqYvYTJRic9oTp7W3yB2upvEC6C03rtlyPvRsMaiuPbO1RJMe1Ou",
+      "telefone": "51997283535",
+      "veiculo_favorito_id": null,
+      "is_active": true,
+      "role": "driver"
+    },
+    {
+      "id": "14f56eca-266d-4be7-8188-325de12c9260",
+      "nome": "Robson",
+      "email": "robson@frota.com",
+      "senha": "$2b$10$JvZA6DBWrkPFRiFNb2mOb.B5yhMeEAs.LHolpV3GnuGEaiLJLaFTC",
+      "telefone": "(11) 99999-0002",
+      "veiculo_favorito_id": "870dec1b-da4c-4e2e-89b9-638678dd864c",
+      "is_active": true,
+      "role": "driver"
+    },
+    {
+      "id": "a66dfd46-57e9-4d3f-aafe-b1233fc2a156",
+      "nome": "Luan",
+      "email": "luan@frota.com",
+      "senha": "$2b$10$JwwKCADbazUBbAUVwfDem.wcpfONrKMSQPAD.9Iok9XqFGnH0DH96",
+      "telefone": "(11) 99999-0003",
+      "veiculo_favorito_id": "47f4e640-f4ef-4636-9838-3e27c89bf839",
+      "is_active": true,
+      "role": "driver"
+    },
+    {
+      "id": "11ed32c1-1ff3-4d37-a821-2528d9036326",
+      "nome": "Gustavo",
+      "email": "gustavo@frota.com",
+      "senha": "$2b$10$4aXWV/P1JmTEutkUgceUCeviMGSQHYE3COglVhmYd8B27kZQNgGHy",
+      "telefone": "(11) 99999-0004",
+      "veiculo_favorito_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+      "is_active": true,
+      "role": "driver"
+    },
+    {
+      "id": "fa6e946f-e89f-47cf-b8ae-948aaaaea4cb",
+      "nome": "Felipe",
+      "email": "felipe@rotaverde.com",
+      "senha": "$2b$10$WtxwGYZrjDOhTMV1gBTsH.Wk9ZKDV52KZAltytTG3Vp7tiCEWMs92",
+      "telefone": null,
+      "veiculo_favorito_id": "47f4e640-f4ef-4636-9838-3e27c89bf839",
+      "is_active": true,
+      "role": "driver"
+    }
+  ],
+  "shifts": [
+    {
+      "id": "bd238835-c7e2-4c2e-bd82-a9f589995fb7",
+      "driver_id": "fa6e946f-e89f-47cf-b8ae-948aaaaea4cb",
+      "vehicle_id": "870dec1b-da4c-4e2e-89b9-638678dd864c",
+      "inicio": "2025-12-17T13:03:30.522Z",
+      "fim": "2025-12-17T19:26:10.842Z",
+      "km_inicial": 42052,
+      "km_final": 42104,
+      "status": "finalizado",
+      "total_app": 111.2,
+      "total_particular": 10,
+      "total_bruto": 121.2,
+      "total_custos": 0,
+      "liquido": 121.2,
+      "repasse_empresa": 72.72,
+      "repasse_motorista": 48.48,
+      "total_corridas_app": 9,
+      "total_corridas_particular": 1,
+      "total_corridas": 10,
+      "duracao_min": 382,
+      "valor_km": 2.33
+    },
+    {
+      "id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "driver_id": "11ed32c1-1ff3-4d37-a821-2528d9036326",
+      "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+      "inicio": "2025-12-17T12:51:52.426Z",
+      "fim": "2025-12-18T03:09:48.888Z",
+      "km_inicial": 19945,
+      "km_final": 20047,
+      "status": "finalizado",
+      "total_app": 79.69,
+      "total_particular": 165,
+      "total_bruto": 244.69,
+      "total_custos": 0,
+      "liquido": 244.69,
+      "repasse_empresa": 146.81,
+      "repasse_motorista": 97.88,
+      "total_corridas_app": 5,
+      "total_corridas_particular": 13,
+      "total_corridas": 18,
+      "duracao_min": 857,
+      "valor_km": 2.4
+    },
+    {
+      "id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "driver_id": "fa6e946f-e89f-47cf-b8ae-948aaaaea4cb",
+      "vehicle_id": "870dec1b-da4c-4e2e-89b9-638678dd864c",
+      "inicio": "2025-12-17T22:32:47.095Z",
+      "fim": "2025-12-18T04:23:53.881Z",
+      "km_inicial": 42217,
+      "km_final": 42320,
+      "status": "finalizado",
+      "total_app": 195.25,
+      "total_particular": 39,
+      "total_bruto": 234.25,
+      "total_custos": 22.79,
+      "liquido": 211.46,
+      "repasse_empresa": 126.88,
+      "repasse_motorista": 84.58,
+      "total_corridas_app": 14,
+      "total_corridas_particular": 2,
+      "total_corridas": 16,
+      "duracao_min": 351,
+      "valor_km": 2.05
+    },
+    {
+      "id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "driver_id": "a66dfd46-57e9-4d3f-aafe-b1233fc2a156",
+      "vehicle_id": "47f4e640-f4ef-4636-9838-3e27c89bf839",
+      "inicio": "2025-12-17T12:44:12.854Z",
+      "fim": "2025-12-18T04:42:38.924Z",
+      "km_inicial": 29209,
+      "km_final": 29484,
+      "status": "finalizado",
+      "total_app": 353.5,
+      "total_particular": 66,
+      "total_bruto": 419.5,
+      "total_custos": 21,
+      "liquido": 398.5,
+      "repasse_empresa": 239.1,
+      "repasse_motorista": 159.4,
+      "total_corridas_app": 25,
+      "total_corridas_particular": 4,
+      "total_corridas": 29,
+      "duracao_min": 958,
+      "valor_km": 1.45
+    }
+  ],
+  "rides": [
+    {
+      "id": "80dbf755-6ea1-41ec-8aab-c0f6b26161bd",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "17.50",
+      "hora": "2025-12-17T13:05:21.961Z"
+    },
+    {
+      "id": "2b457723-6d22-437d-99b2-5b4b46d0393a",
+      "shift_id": "bd238835-c7e2-4c2e-bd82-a9f589995fb7",
+      "tipo": "particular",
+      "valor": "10.00",
+      "hora": "2025-12-17T13:17:55.277Z"
+    },
+    {
+      "id": "57a24162-4a85-40a7-9101-c76288e3fb60",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "14.20",
+      "hora": "2025-12-17T13:25:12.189Z"
+    },
+    {
+      "id": "1453a40a-fd1c-490a-838a-f8a99990f20a",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "15.00",
+      "hora": "2025-12-17T13:40:36.452Z"
+    },
+    {
+      "id": "ef4e62ea-47ee-48aa-8422-dcc8e19ce9e9",
+      "shift_id": "bd238835-c7e2-4c2e-bd82-a9f589995fb7",
+      "tipo": "app",
+      "valor": "20.00",
+      "hora": "2025-12-17T13:46:55.963Z"
+    },
+    {
+      "id": "fa7e4cf2-e8cf-41c5-ad3a-9141f85c77ea",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "10.40",
+      "hora": "2025-12-17T14:00:30.676Z"
+    },
+    {
+      "id": "f39ef03c-773c-46a4-b4d2-c01f45549936",
+      "shift_id": "bd238835-c7e2-4c2e-bd82-a9f589995fb7",
+      "tipo": "app",
+      "valor": "12.60",
+      "hora": "2025-12-17T14:02:18.286Z"
+    },
+    {
+      "id": "ba4b1936-2d35-4691-8a72-32ff8a4fc2dd",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "13.10",
+      "hora": "2025-12-17T14:22:13.494Z"
+    },
+    {
+      "id": "eabb7c32-5e13-479e-8680-f8e2c6a8ac54",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "15.00",
+      "hora": "2025-12-17T14:48:52.604Z"
+    },
+    {
+      "id": "037e5d02-c4d3-4c01-8e2d-fc187c8cec54",
+      "shift_id": "bd238835-c7e2-4c2e-bd82-a9f589995fb7",
+      "tipo": "app",
+      "valor": "11.50",
+      "hora": "2025-12-17T14:49:09.404Z"
+    },
+    {
+      "id": "42c10f7b-2366-491d-b45b-96e706971442",
+      "shift_id": "bd238835-c7e2-4c2e-bd82-a9f589995fb7",
+      "tipo": "app",
+      "valor": "11.30",
+      "hora": "2025-12-17T15:01:06.841Z"
+    },
+    {
+      "id": "cd6e20a6-7b0c-4a43-a342-1cd93ff015ef",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "15.00",
+      "hora": "2025-12-17T15:01:24.281Z"
+    },
+    {
+      "id": "9c0d20a6-9c61-4e5a-b416-9dd7d83e32cd",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "11.80",
+      "hora": "2025-12-17T15:10:47.167Z"
+    },
+    {
+      "id": "abe355e3-7baa-47af-a52b-42dcef6b29a9",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "12.40",
+      "hora": "2025-12-17T15:53:07.100Z"
+    },
+    {
+      "id": "05d8e268-6462-4e01-bc2e-62b2a8ecfd44",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "14.60",
+      "hora": "2025-12-17T16:15:43.695Z"
+    },
+    {
+      "id": "5ffbba32-879b-4e52-bd6a-d38a1682705b",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "particular",
+      "valor": "10.00",
+      "hora": "2025-12-17T16:25:00.812Z"
+    },
+    {
+      "id": "d068689a-8abe-4105-a064-6f72417c690a",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "10.00",
+      "hora": "2025-12-17T16:38:08.198Z"
+    },
+    {
+      "id": "d7a4cdd2-7475-4d15-9bf4-439724bebec1",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "11.20",
+      "hora": "2025-12-17T16:56:36.299Z"
+    },
+    {
+      "id": "e6f3ba9c-bc1b-427e-8581-6af6eb3d76c4",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "app",
+      "valor": "16.79",
+      "hora": "2025-12-17T17:01:13.051Z"
+    },
+    {
+      "id": "d27bc3c7-1e72-4ebd-bd31-cc9a5ac64a7f",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "12.80",
+      "hora": "2025-12-17T17:19:17.476Z"
+    },
+    {
+      "id": "6f836452-c9bd-4adf-ae7c-b2c2f7be41c8",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "10.00",
+      "hora": "2025-12-17T17:23:28.696Z"
+    },
+    {
+      "id": "7915c637-245e-44a0-b899-258dec1863c5",
+      "shift_id": "bd238835-c7e2-4c2e-bd82-a9f589995fb7",
+      "tipo": "app",
+      "valor": "11.00",
+      "hora": "2025-12-17T17:23:56.888Z"
+    },
+    {
+      "id": "f40df16e-a51b-43a8-adad-eba3a96ef675",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "10.00",
+      "hora": "2025-12-17T17:29:54.465Z"
+    },
+    {
+      "id": "991bd97b-f1e6-43d0-90a0-352527a7830e",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "10.00",
+      "hora": "2025-12-17T17:36:21.717Z"
+    },
+    {
+      "id": "dfc103fe-a229-4816-b791-c02e888be2b8",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "app",
+      "valor": "9.10",
+      "hora": "2025-12-17T17:55:25.160Z"
+    },
+    {
+      "id": "1d361129-9e36-4a3c-bfab-0d0ba40623fb",
+      "shift_id": "bd238835-c7e2-4c2e-bd82-a9f589995fb7",
+      "tipo": "app",
+      "valor": "14.00",
+      "hora": "2025-12-17T18:12:37.629Z"
+    },
+    {
+      "id": "f1471863-d6d7-419b-b90d-3777115c6618",
+      "shift_id": "bd238835-c7e2-4c2e-bd82-a9f589995fb7",
+      "tipo": "app",
+      "valor": "11.70",
+      "hora": "2025-12-17T18:27:37.514Z"
+    },
+    {
+      "id": "d4427b62-a2e1-4787-9f54-49ed3a922cdd",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "app",
+      "valor": "27.30",
+      "hora": "2025-12-17T18:27:58.009Z"
+    },
+    {
+      "id": "c31eca07-75d5-4cb8-862b-549315688579",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "10.00",
+      "hora": "2025-12-17T18:36:22.572Z"
+    },
+    {
+      "id": "bb2aaae1-3128-4dce-a835-1b911449d443",
+      "shift_id": "bd238835-c7e2-4c2e-bd82-a9f589995fb7",
+      "tipo": "app",
+      "valor": "8.00",
+      "hora": "2025-12-17T19:02:39.581Z"
+    },
+    {
+      "id": "729a049a-7d39-4147-9ad9-4a705b4162b3",
+      "shift_id": "bd238835-c7e2-4c2e-bd82-a9f589995fb7",
+      "tipo": "app",
+      "valor": "11.10",
+      "hora": "2025-12-17T19:18:20.340Z"
+    },
+    {
+      "id": "7967b351-db33-4c34-b52c-4e0dadef6f1a",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "particular",
+      "valor": "15.00",
+      "hora": "2025-12-17T19:18:29.621Z"
+    },
+    {
+      "id": "0bb67da6-c4a8-49cd-ab22-24493a2bc98b",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "11.90",
+      "hora": "2025-12-17T19:45:25.811Z"
+    },
+    {
+      "id": "913f72f6-1745-49ed-9fce-5f9b9603e3fd",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "12.40",
+      "hora": "2025-12-17T20:00:53.212Z"
+    },
+    {
+      "id": "8e2322ef-74d8-4427-abfb-511bf9c9eb66",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "particular",
+      "valor": "16.00",
+      "hora": "2025-12-17T20:21:43.781Z"
+    },
+    {
+      "id": "ed9d9daf-35c5-4d77-b1bc-d56f258c144a",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "14.50",
+      "hora": "2025-12-17T20:55:14.295Z"
+    },
+    {
+      "id": "62e8c111-dd49-4ee3-915e-c6742cb28b4b",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "app",
+      "valor": "9.60",
+      "hora": "2025-12-17T21:04:37.868Z"
+    },
+    {
+      "id": "35b86400-7006-4f55-a2c4-b78b178c7151",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "15.70",
+      "hora": "2025-12-17T21:12:18.883Z"
+    },
+    {
+      "id": "2e1f70c8-3550-42d9-9575-b7ad36983039",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "13.20",
+      "hora": "2025-12-17T21:31:36.814Z"
+    },
+    {
+      "id": "c3009cd9-bcc2-46a7-bc58-da9bacabb5f8",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "10.00",
+      "hora": "2025-12-17T21:40:17.116Z"
+    },
+    {
+      "id": "360a5b77-2c8b-4001-b6d0-911312252e35",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "14.20",
+      "hora": "2025-12-17T21:59:16.758Z"
+    },
+    {
+      "id": "8ed3b699-03b6-41fa-b7a9-4009e7f7e6be",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "17.90",
+      "hora": "2025-12-17T22:15:00.010Z"
+    },
+    {
+      "id": "e03df250-2099-4e5d-9929-e69e1d488edb",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "app",
+      "valor": "16.90",
+      "hora": "2025-12-17T22:29:19.210Z"
+    },
+    {
+      "id": "a81ba5aa-a248-4f4f-ac60-97b52d09efbe",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "15.00",
+      "hora": "2025-12-17T22:47:12.490Z"
+    },
+    {
+      "id": "050cd411-fcae-4f33-a6d7-4476f12c43f2",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "13.50",
+      "hora": "2025-12-17T22:47:18.379Z"
+    },
+    {
+      "id": "0a79a710-928d-442a-bbd9-7935da7c81e0",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "10.60",
+      "hora": "2025-12-17T22:58:43.483Z"
+    },
+    {
+      "id": "addc894e-a1d2-4eef-b7b0-53ce5682d222",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "10.00",
+      "hora": "2025-12-17T23:03:37.947Z"
+    },
+    {
+      "id": "af9a833a-b3b4-4a5b-a38a-ae90f0c2d9d1",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "16.40",
+      "hora": "2025-12-17T23:04:35.121Z"
+    },
+    {
+      "id": "71e6a2bc-067d-4419-a561-0224b048f085",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "12.00",
+      "hora": "2025-12-17T23:12:55.627Z"
+    },
+    {
+      "id": "0e975d6e-49d4-48cf-b683-cbe94154b649",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "15.00",
+      "hora": "2025-12-17T23:42:48.015Z"
+    },
+    {
+      "id": "fc80e160-c81c-4555-bd2d-cd8f743379f1",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "10.00",
+      "hora": "2025-12-18T00:06:56.848Z"
+    },
+    {
+      "id": "6b863d44-a7ce-41c2-988f-9eb8dcb91bb5",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "12.00",
+      "hora": "2025-12-18T00:07:52.861Z"
+    },
+    {
+      "id": "52b7d058-842f-4d9f-81bb-8cc32ba17b79",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "12.00",
+      "hora": "2025-12-18T00:25:47.459Z"
+    },
+    {
+      "id": "b49a3d4c-26dd-490b-882c-872f4de1a6db",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "19.40",
+      "hora": "2025-12-18T00:43:27.218Z"
+    },
+    {
+      "id": "d65bec1a-f7eb-448a-831c-69cc7ead9268",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "12.50",
+      "hora": "2025-12-18T00:45:43.840Z"
+    },
+    {
+      "id": "d4980d0d-9a38-4f9c-9112-944358c6af23",
+      "shift_id": "9891614b-ad73-4c13-9bc7-58e03bea011c",
+      "tipo": "particular",
+      "valor": "20.00",
+      "hora": "2025-12-18T01:00:01.072Z"
+    },
+    {
+      "id": "a60971bc-7eb4-4e9b-9f5a-edf043d610a6",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "16.40",
+      "hora": "2025-12-18T01:03:51.939Z"
+    },
+    {
+      "id": "36cb4553-9c1c-41e5-9ff4-62ca4fcd5813",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "16.70",
+      "hora": "2025-12-18T01:07:05.044Z"
+    },
+    {
+      "id": "14558cc7-b413-4c36-8535-a2daefbd72cb",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "11.60",
+      "hora": "2025-12-18T01:25:14.528Z"
+    },
+    {
+      "id": "ee619479-62fe-4e47-b0d0-5a76e94f150b",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "22.20",
+      "hora": "2025-12-18T01:29:52.093Z"
+    },
+    {
+      "id": "889dc76f-06f9-49ba-b500-04fc12ae18d6",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "12.00",
+      "hora": "2025-12-18T01:37:16.500Z"
+    },
+    {
+      "id": "3c2f4914-dc1c-47ee-8cf1-d524d2cca303",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "24.50",
+      "hora": "2025-12-18T02:01:33.260Z"
+    },
+    {
+      "id": "5532a074-c09f-475a-990e-da4f071be72d",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "10.45",
+      "hora": "2025-12-18T02:12:28.624Z"
+    },
+    {
+      "id": "09f14e1c-34c2-467d-829d-418c77ca84d8",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "11.80",
+      "hora": "2025-12-18T02:26:36.928Z"
+    },
+    {
+      "id": "99d4b06b-907d-4e99-9b9a-608953a474a4",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "particular",
+      "valor": "25.00",
+      "hora": "2025-12-18T02:39:39.582Z"
+    },
+    {
+      "id": "b225526b-e9c0-4d2a-b9d7-ceeab6c7a248",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "particular",
+      "valor": "14.00",
+      "hora": "2025-12-18T02:47:35.994Z"
+    },
+    {
+      "id": "f481598c-43da-4150-a64f-8018c52939a4",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "18.00",
+      "hora": "2025-12-18T02:58:55.375Z"
+    },
+    {
+      "id": "b8586975-85bc-4bde-af14-7ab08e31aa0f",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "12.80",
+      "hora": "2025-12-18T03:01:38.067Z"
+    },
+    {
+      "id": "15246172-1b09-47c4-b2d6-6cedff061154",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "11.00",
+      "hora": "2025-12-18T03:15:14.603Z"
+    },
+    {
+      "id": "a9c1a102-6f0d-4854-8a3c-023fdb199bd9",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "app",
+      "valor": "17.60",
+      "hora": "2025-12-18T03:23:42.991Z"
+    },
+    {
+      "id": "74e8eb66-2cfa-4613-bd17-b4e6e497570d",
+      "shift_id": "b0df8a8f-2ff3-488e-8bf7-d1230f068549",
+      "tipo": "particular",
+      "valor": "25.00",
+      "hora": "2025-12-18T03:53:18.267Z"
+    },
+    {
+      "id": "88183227-c401-4b18-a405-18d1d6d83305",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "11.20",
+      "hora": "2025-12-18T03:59:30.377Z"
+    },
+    {
+      "id": "28fa7289-43d4-4b4f-9de7-36cbef3b65c0",
+      "shift_id": "9ace8560-4dd2-40d5-ac00-cb480d19ae52",
+      "tipo": "app",
+      "valor": "16.30",
+      "hora": "2025-12-18T04:11:13.920Z"
+    }
+  ]
+}

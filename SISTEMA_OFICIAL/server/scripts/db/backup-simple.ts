@@ -4,6 +4,7 @@ const { Client } = pkg;
 import fs from "fs";
 import path from "path";
 
+
 /**
  * BACKUP SIMPLES DO BANCO - SEM PG_DUMP
  * Exporta dados das tabelas em formato SQL

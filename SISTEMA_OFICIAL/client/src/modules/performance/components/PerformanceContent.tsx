@@ -88,23 +88,16 @@ export default function PerformanceContent() {
 
     // Mutations
     const updateInstallmentMutation = useMutation({
-        mutationFn: (data: { id: string, status?: string, value?: number, dueDate?: Date }) =>
+        mutationFn: (data: { id: string, status?: string, value?: number, dueDate?: Date, paidDate?: Date | null, paidAmount?: number | null }) =>
             api.put(`/financial/fixed-costs/installments/${data.id}`, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["fixedCostInstallments"] });
-            queryClient.invalidateQueries({ queryKey: ["fixedCosts"] }); // Update totals maybe
+            queryClient.invalidateQueries({ queryKey: ["fixedCosts"] });
         }
     });
 
     // --- CALCULATIONS (Financeiro) ---
 
-
-    // Debug Installments
-    useEffect(() => {
-        if (installments) {
-            console.log("Fluxo de Dados: Frontend recebeu parcelas:", installments.length);
-        }
-    }, [installments]);
 
     // 1. Filter Data based on selection
     const filteredShifts = (shifts || []).filter((s: any) => {
@@ -809,7 +802,7 @@ export default function PerformanceContent() {
                                 dueDay
                             });
 
-                            createFixedCostMutation.mutate({
+                            const payload = {
                                 ...data,
                                 name: data.description,
                                 value: Number(data.value),
@@ -817,7 +810,16 @@ export default function PerformanceContent() {
                                 dueDay: dueDay,
                                 totalInstallments: data.isRecurring ? (data.totalInstallments || 12) : 1,
                                 startDate: startDate
-                            });
+                            };
+
+                            if (data.id) {
+                                return updateFixedCostMutation.mutateAsync({
+                                    id: data.id,
+                                    ...payload
+                                });
+                            } else {
+                                return createFixedCostMutation.mutateAsync(payload);
+                            }
                         }}
                         onDelete={(id) => deleteFixedCostMutation.mutate(id)}
                         onUpdateInstallment={(id, data) => updateInstallmentMutation.mutate({ id, ...data })}

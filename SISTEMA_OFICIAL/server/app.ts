@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import helmet from "helmet";
 import { db } from "./core/db/connection.js";
@@ -139,7 +140,8 @@ app.get("/api/financial/fix-schema", async (req, res) => {
     try {
         await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS total_installments integer`);
         await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS start_date timestamp`);
-        res.json({ success: true, message: "Columns total_installments and start_date added/verified." });
+        await db.execute(sql`ALTER TABLE tires ADD COLUMN IF NOT EXISTS cost NUMERIC(10, 2) DEFAULT 0`);
+        res.json({ success: true, message: "Columns checked/added: fixed_costs, tires." });
     } catch (error: any) {
         res.status(500).json({ success: false, error: error.message });
     }
@@ -179,8 +181,21 @@ if (process.env.NODE_ENV === "production") {
     const __dirname = path.dirname(__filename);
 
     // Caminho para a pasta dist/client (baseado no WORKDIR /app do Docker)
-    // Se process.cwd() for /app/server, precisamos subir um nivel
-    const clientBuildPath = path.join(process.cwd(), "../client/dist");
+    // Tenta resolver relativo ao CWD (/app/server) -> /app/client/dist
+    let clientBuildPath = path.resolve(process.cwd(), "../client/dist");
+
+    // Validação robusta para Docker
+    if (!fs.existsSync(clientBuildPath)) {
+        console.warn(`⚠️ Path resolution failed: ${clientBuildPath} not found.`);
+        // Fallback para caminho absoluto do Dockerfile
+        const dockerPath = "/app/client/dist";
+        if (fs.existsSync(dockerPath)) {
+            console.log(`✅ Using Docker absolute path: ${dockerPath}`);
+            clientBuildPath = dockerPath;
+        } else {
+            console.error(`❌ CRITICAL: Frontend build not found at ${clientBuildPath} OR ${dockerPath}`);
+        }
+    }
 
     // Serve arquivos estáticos
     app.use(express.static(clientBuildPath));
