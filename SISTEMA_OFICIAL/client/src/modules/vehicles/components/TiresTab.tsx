@@ -120,7 +120,7 @@ export function TiresTab() {
                 position: "Estoque", // Default value as requested
                 brand: newItem.brand,
                 model: newItem.model,
-                status: newItem.status,
+                status: "Novo", // Default to Novo
                 installDate: newItem.installDate,
                 installKm: newItem.installKm ? parseInt(newItem.installKm) : 0,
                 cost: newItem.cost ? parseFloat(newItem.cost.replace(',', '.')) : 0
@@ -147,7 +147,7 @@ export function TiresTab() {
 
     const filtered = tires.filter(t => {
         if (filterVehicle !== "all" && t.vehicleId !== filterVehicle) return false;
-        if (filterStatus !== "all" && t.status !== filterStatus) return false;
+
 
         const date = new Date(t.installDate);
         const isValidDate = !isNaN(date.getTime());
@@ -236,7 +236,7 @@ export function TiresTab() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4">
                                 <div className="space-y-2">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Valor (R$)</Label>
                                     <div className="relative">
@@ -250,19 +250,6 @@ export function TiresTab() {
                                             onChange={e => setNewItem({ ...newItem, cost: e.target.value })}
                                         />
                                     </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Estado</Label>
-                                    <select
-                                        className="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm focus:border-orange-500 outline-none"
-                                        value={newItem.status}
-                                        onChange={e => setNewItem({ ...newItem, status: e.target.value })}
-                                    >
-                                        <option value="Novo">Novo</option>
-                                        <option value="Seminovo">Seminovo</option>
-                                        <option value="Usado">Usado</option>
-                                        <option value="Reformado">Reformado</option>
-                                    </select>
                                 </div>
                             </div>
 
@@ -316,7 +303,7 @@ export function TiresTab() {
                     <Filter className="w-4 h-4" />
                     Filtros de Pneus
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Veículo</label>
                         <select
@@ -330,20 +317,7 @@ export function TiresTab() {
                             ))}
                         </select>
                     </div>
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</label>
-                        <select
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-orange-500 transition-colors"
-                        >
-                            <option value="all">Todos os Estados</option>
-                            <option value="Novo">Novo</option>
-                            <option value="Seminovo">Seminovo</option>
-                            <option value="Usado">Usado</option>
-                            <option value="Reformado">Reformado</option>
-                        </select>
-                    </div>
+
                     <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ano</label>
                         <select
@@ -370,6 +344,7 @@ export function TiresTab() {
                             ))}
                         </select>
                     </div>
+                    {/* Empty placeholder to keep grid layout nice if needed, or just let it be 3 cols */}
                 </div>
             </div>
 
@@ -388,7 +363,6 @@ export function TiresTab() {
                                 <th className="px-4 py-3">Data Inst.</th>
                                 <th className="px-4 py-3">Veículo</th>
                                 <th className="px-4 py-3">Marca/Modelo</th>
-                                <th className="px-4 py-3">Estado</th>
                                 <th className="px-4 py-3">Valor</th>
                                 <th className="px-4 py-3">KM Inst.</th>
                                 <th className="px-4 py-3 text-right">Ações</th>
@@ -404,11 +378,7 @@ export function TiresTab() {
                                         {tire.veiculoPlate || "N/A"}
                                     </td>
                                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{tire.brand} {tire.model}</td>
-                                    <td className="px-4 py-3">
-                                        <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase font-bold text-[10px]">
-                                            {tire.status}
-                                        </span>
-                                    </td>
+
                                     <td className="px-4 py-3 font-mono text-green-500 font-bold">
                                         {tire.cost ? `R$ ${parseFloat(tire.cost).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
                                     </td>
