@@ -385,7 +385,7 @@ export default function DriverShiftPage() {
                                     Turno Ativo • Iniciado às {new Date(activeShift.inicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </div>
                                 <h1 className="text-3xl font-orbitron font-bold text-white mb-1">
-                                    Motorista
+                                    {user?.nome || 'Motorista'}
                                 </h1>
                                 <div className="text-gray-400 font-rajdhani font-semibold text-lg flex items-center gap-2">
                                     <span className="text-emerald-400">{currentVehicle?.plate || '---'}</span>
