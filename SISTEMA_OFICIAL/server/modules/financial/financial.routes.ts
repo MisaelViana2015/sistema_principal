@@ -92,4 +92,118 @@ router.post("/fix-legacy-visuals", requireAdmin, async (req, res) => {
     }
 });
 
+// Rota para corrigir cálculos 60/40 de turnos antigos (antes de 15/12/2024)
+router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
+    try {
+        const { db } = await import("../../core/db/connection.js");
+        const { sql } = await import("drizzle-orm");
+
+        const dryRun = req.query.dryRun === "true";
+        const cutoffDate = req.query.cutoffDate || "2024-12-15";
+
+        // Buscar turnos finalizados antes da data de corte
+        const legacyShifts = await db.execute(sql`
+            SELECT id, total_bruto, repasse_empresa, repasse_motorista
+            FROM shifts 
+            WHERE status = 'finalizado' 
+              AND inicio < ${cutoffDate}::timestamp
+        `);
+
+        const results: any[] = [];
+        let corrected = 0;
+        let skipped = 0;
+
+        for (const shift of legacyShifts.rows as any[]) {
+            const shiftId = shift.id;
+
+            // Buscar corridas
+            const ridesResult = await db.execute(sql`
+                SELECT tipo, valor FROM rides WHERE shift_id = ${shiftId}
+            `);
+            const ridesData = ridesResult.rows as any[];
+
+            // Buscar despesas
+            const expensesResult = await db.execute(sql`
+                SELECT valor, is_split_cost FROM expenses WHERE shift_id = ${shiftId}
+            `);
+            const expensesData = expensesResult.rows as any[];
+
+            // Calcular totais
+            const totalApp = ridesData
+                .filter(r => ['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase()))
+                .reduce((sum, r) => sum + Number(r.valor || 0), 0);
+
+            const totalParticular = ridesData
+                .filter(r => !['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase()))
+                .reduce((sum, r) => sum + Number(r.valor || 0), 0);
+
+            const normalExpenses = expensesData.filter(e => !e.is_split_cost);
+            const splitExpenses = expensesData.filter(e => e.is_split_cost);
+
+            const totalCustosNormais = normalExpenses.reduce((sum, e) => sum + Number(e.valor || 0), 0);
+            const totalCustosDivididos = splitExpenses.reduce((sum, e) => sum + Number(e.valor || 0), 0);
+            const totalCustos = totalCustosNormais + totalCustosDivididos;
+
+            const totalBruto = totalApp + totalParticular;
+            const liquido = totalBruto;
+
+            // CÁLCULO CORRETO 60/40
+            let repasseEmpresaFinal = liquido * 0.60;
+            let repasseMotoristaFinal = liquido * 0.40;
+            repasseEmpresaFinal -= totalCustosNormais;
+            const discountCompany = totalCustosDivididos * 0.50;
+            const discountDriver = totalCustosDivididos * 0.50;
+            repasseEmpresaFinal -= discountCompany;
+            repasseMotoristaFinal -= discountDriver;
+
+            // Verificar se precisa corrigir
+            const currentEmpresa = Number(shift.repasse_empresa || 0);
+            const currentMotorista = Number(shift.repasse_motorista || 0);
+
+            const needsCorrection =
+                Math.abs(currentEmpresa - repasseEmpresaFinal) > 0.01 ||
+                Math.abs(currentMotorista - repasseMotoristaFinal) > 0.01;
+
+            if (!needsCorrection) {
+                skipped++;
+                continue;
+            }
+
+            results.push({
+                id: shiftId,
+                before: { empresa: currentEmpresa, motorista: currentMotorista },
+                after: { empresa: repasseEmpresaFinal, motorista: repasseMotoristaFinal }
+            });
+
+            if (!dryRun) {
+                await db.execute(sql`
+                    UPDATE shifts SET
+                        total_app = ${totalApp},
+                        total_particular = ${totalParticular},
+                        total_bruto = ${totalBruto},
+                        total_custos = ${totalCustos},
+                        liquido = ${liquido},
+                        repasse_empresa = ${repasseEmpresaFinal},
+                        repasse_motorista = ${repasseMotoristaFinal}
+                    WHERE id = ${shiftId}
+                `);
+            }
+
+            corrected++;
+        }
+
+        res.json({
+            success: true,
+            dryRun,
+            total: legacyShifts.rows.length,
+            corrected,
+            skipped,
+            details: results.slice(0, 10) // Limitar para não sobrecarregar resposta
+        });
+    } catch (error: any) {
+        console.error("Erro ao corrigir turnos:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 export default router;

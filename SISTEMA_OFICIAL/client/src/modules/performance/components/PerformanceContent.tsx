@@ -398,6 +398,9 @@ export default function PerformanceContent() {
                 <button style={styles.subTabButton(activeSubTab === "custos-fixos")} onClick={() => setActiveSubTab("custos-fixos")}>
                     <Filter size={14} /> Custos Fixos
                 </button>
+                <button style={styles.subTabButton(activeSubTab === "ferramentas")} onClick={() => setActiveSubTab("ferramentas")}>
+                    <Wrench size={14} /> Ferramentas
+                </button>
             </div>
 
             {activeSubTab === "financeiro" && (
@@ -923,9 +926,53 @@ export default function PerformanceContent() {
 
 
             {
-                activeSubTab !== "financeiro" && activeSubTab !== "repasses" && activeSubTab !== "tipos-custo" && activeSubTab !== "custos-fixos" && activeSubTab !== "motoristas" && activeSubTab !== "manutencao" && activeSubTab !== "veiculos" && (
+                activeSubTab !== "financeiro" && activeSubTab !== "repasses" && activeSubTab !== "tipos-custo" && activeSubTab !== "custos-fixos" && activeSubTab !== "motoristas" && activeSubTab !== "manutencao" && activeSubTab !== "veiculos" && activeSubTab !== "ferramentas" && (
                     <div style={styles.chartPlaceholder}>
                         <p>Conteúdo da aba <strong>{activeSubTab.charAt(0).toUpperCase() + activeSubTab.slice(1)}</strong> em desenvolvimento.</p>
+                    </div>
+                )
+            }
+
+            {
+                activeSubTab === "ferramentas" && (
+                    <div style={{ padding: "1.5rem" }}>
+                        <h3 style={{ ...styles.title, marginBottom: "1.5rem" }}>🛠️ Ferramentas de Manutenção</h3>
+
+                        <div style={{ ...styles.filtersCard, padding: "1.5rem", marginBottom: "1rem" }}>
+                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>Corrigir Cálculos 60/40 de Turnos Antigos</h4>
+                            <p style={{ color: isDark ? "#94a3b8" : "#64748b", marginBottom: "1rem", fontSize: "0.875rem" }}>
+                                Esta ferramenta recalcula os repasses (60% Empresa / 40% Motorista) para turnos finalizados antes de 15/12/2024 que estão com valores incorretos.
+                            </p>
+                            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            const res = await api.post("/financial/fix-legacy-shifts?dryRun=true");
+                                            alert(`DRY-RUN:\nTotal de turnos: ${res.data.total}\nNecessitam correção: ${res.data.corrected}\nJá corretos: ${res.data.skipped}\n\nNenhuma alteração foi feita.`);
+                                        } catch (err: any) {
+                                            alert("Erro: " + (err.response?.data?.error || err.message));
+                                        }
+                                    }}
+                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#3b82f6", color: "#fff", cursor: "pointer", fontWeight: "500" }}
+                                >
+                                    🔍 Simular (Dry-Run)
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        if (!window.confirm("⚠️ ATENÇÃO: Esta ação irá ALTERAR os dados de turnos antigos.\n\nTem certeza que deseja prosseguir?")) return;
+                                        try {
+                                            const res = await api.post("/financial/fix-legacy-shifts");
+                                            alert(`✅ CORREÇÃO APLICADA!\n\nTotal de turnos: ${res.data.total}\nCorrigidos: ${res.data.corrected}\nJá estavam corretos: ${res.data.skipped}`);
+                                        } catch (err: any) {
+                                            alert("Erro: " + (err.response?.data?.error || err.message));
+                                        }
+                                    }}
+                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#ef4444", color: "#fff", cursor: "pointer", fontWeight: "500" }}
+                                >
+                                    ⚠️ Executar Correção
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )
             }
