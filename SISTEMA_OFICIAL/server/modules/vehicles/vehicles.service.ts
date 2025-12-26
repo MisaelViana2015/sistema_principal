@@ -28,9 +28,10 @@ export const vehiclesService = {
                 throw new Error(`Veículo não encontrado: ${id}`);
             }
 
-            if (Number(data.kmInicial) < Number(currentVehicle.kmInicial)) {
-                throw new Error(`A quilometragem não pode ser reduzida. Atual: ${currentVehicle.kmInicial}, Tentativa: ${data.kmInicial}`);
-            }
+            // TRAVA REMOVIDA A PEDIDO (26/12): Admin pode reduzir KM para corrigir erros.
+            // if (Number(data.kmInicial) < Number(currentVehicle.kmInicial)) {
+            //    throw new Error(`A quilometragem não pode ser reduzida. Atual: ${currentVehicle.kmInicial}, Tentativa: ${data.kmInicial}`);
+            // }
         }
 
         return await vehiclesRepository.update(id, data);
