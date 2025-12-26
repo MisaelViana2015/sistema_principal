@@ -160,8 +160,9 @@ export default function PerformanceContent() {
         }
     });
 
-    // --- EXPENSE MODAL LOGIC ---
+    // --- EXPENSE MODAL & DELETE CONFIRM ---
     const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [editingExpense, setEditingExpense] = useState<any>(null);
 
     const handleSaveExpense = async (id: string | null, data: any) => {
@@ -687,7 +688,10 @@ export default function PerformanceContent() {
                                 return yearMatch && monthMatch && driverMatch && typeMatch;
                             });
 
-                            const filteredTotal = filteredCosts.reduce((acc: number, cost: any) => acc + Number(cost.valor), 0);
+                            const filteredTotal = filteredCosts.reduce((acc: number, cost: any) => {
+                                const valorEmpresa = cost.isSplitCost ? Number(cost.valor) * 0.5 : Number(cost.valor);
+                                return acc + valorEmpresa;
+                            }, 0);
                             const avgCost = filteredCosts.length > 0 ? filteredTotal / filteredCosts.length : 0;
 
                             return (
@@ -730,11 +734,12 @@ export default function PerformanceContent() {
                                                             </span>
                                                         </td>
                                                         <td style={{ ...styles.td, fontWeight: "600" }}>
-                                                            R$ {Number(cost.valor).toFixed(2)}
+                                                            R$ {(cost.isSplitCost ? Number(cost.valor) * 0.5 : Number(cost.valor)).toFixed(2)}
+                                                            {cost.isSplitCost && <span style={{ fontSize: '0.7rem', color: '#f59e0b', marginLeft: '4px' }}>(50%)</span>}
                                                         </td>
                                                         <td style={styles.td}>
                                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                                <button style={{ ...styles.actionButton, color: '#ef4444' }}><Trash2 size={16} /></button>
+                                                                <button style={{ ...styles.actionButton, color: '#ef4444' }} onClick={() => setDeleteConfirmId(cost.id)}><Trash2 size={16} /></button>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -930,6 +935,18 @@ export default function PerformanceContent() {
                 onSave={handleSaveExpense}
                 expense={editingExpense}
             />
+
+            {deleteConfirmId && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+                    <div style={{ background: isDark ? '#1e293b' : '#fff', padding: '1.5rem', borderRadius: '0.5rem', maxWidth: '400px', textAlign: 'center', border: `1px solid ${isDark ? '#4b5563' : '#e5e7eb'}` }}>
+                        <p style={{ marginBottom: '1rem', color: isDark ? '#fff' : '#000', fontWeight: '500' }}>Tem certeza que deseja excluir este custo?</p>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                            <button onClick={() => setDeleteConfirmId(null)} style={{ padding: '0.5rem 1rem', borderRadius: '0.25rem', border: `1px solid ${isDark ? '#4b5563' : '#9ca3af'}`, background: 'transparent', color: isDark ? '#d1d5db' : '#374151', cursor: 'pointer' }}>Cancelar</button>
+                            <button onClick={async () => { await api.delete(`/financial/expenses/${deleteConfirmId}`); refetchExpenses(); setDeleteConfirmId(null); }} style={{ padding: '0.5rem 1rem', borderRadius: '0.25rem', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontWeight: '500' }}>Excluir</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

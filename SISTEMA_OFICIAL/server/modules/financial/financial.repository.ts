@@ -24,7 +24,7 @@ export async function findAllExpenses(filters?: { shiftId?: string }) {
         .from(expenses)
         .leftJoin(costTypes, eq(expenses.costTypeId, costTypes.id))
         .leftJoin(shifts, eq(expenses.shiftId, shifts.id)) // Join shifts
-        .leftJoin(drivers, eq(shifts.driverId, drivers.id)) // Join drivers via shift
+        .leftJoin(drivers, sql`${drivers.id} = COALESCE(${expenses.driverId}, ${shifts.driverId})`) // Join drivers via expense OR shift
         .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
         .orderBy(desc(expenses.date));
 }
