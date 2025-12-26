@@ -63,10 +63,12 @@ async function ensureSchemaIntegrity() {
                 "category" text DEFAULT 'Variável' NOT NULL,
                 "description" text,
                 "is_active" boolean DEFAULT true NOT NULL,
+                "visible_to_driver" boolean DEFAULT true NOT NULL,
                 "icon" text,
                 "color" text
             )
         `);
+        await db.execute(sql`ALTER TABLE cost_types ADD COLUMN IF NOT EXISTS visible_to_driver boolean DEFAULT true`);
 
         // Fix Fixed Costs columns (Prevent 500 on Update)
         await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS total_installments integer`);

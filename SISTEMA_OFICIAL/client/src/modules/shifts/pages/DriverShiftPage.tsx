@@ -140,7 +140,7 @@ export default function DriverShiftPage() {
         try {
             const res = await api.get("/financial/cost-types");
             const activeTypes = Array.isArray(res.data)
-                ? res.data.filter((t: any) => t.isActive !== false)
+                ? res.data.filter((t: any) => t.isActive !== false && t.visibleToDriver !== false)
                 : [];
             setCostTypesList(activeTypes);
         } catch (err) {

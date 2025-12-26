@@ -30,7 +30,7 @@ const COLORS = [
 export function CostTypesManager({ costTypes, isDark, refetch }: CostTypesManagerProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingType, setEditingType] = useState<any>(null);
-    const [formData, setFormData] = useState({ name: "", icon: "DollarSign", color: "blue", category: "Variável" });
+    const [formData, setFormData] = useState({ name: "", icon: "DollarSign", color: "blue", category: "Variável", visibleToDriver: true });
     const [loading, setLoading] = useState(false);
 
     const handleOpenModal = (type?: any) => {
@@ -40,11 +40,12 @@ export function CostTypesManager({ costTypes, isDark, refetch }: CostTypesManage
                 name: type.name || type.tipo, // Handle legacy 'tipo' field
                 icon: type.icon || "DollarSign",
                 color: type.color || "blue",
-                category: type.category || "Variável"
+                category: type.category || "Variável",
+                visibleToDriver: type.visibleToDriver !== false // Default to true if undefined
             });
         } else {
             setEditingType(null);
-            setFormData({ name: "", icon: "DollarSign", color: "blue", category: "Variável" });
+            setFormData({ name: "", icon: "DollarSign", color: "blue", category: "Variável", visibleToDriver: true });
         }
         setIsModalOpen(true);
     };
@@ -168,6 +169,11 @@ export function CostTypesManager({ costTypes, isDark, refetch }: CostTypesManage
                                     <Icon size={20} />
                                 </div>
                                 <span style={{ fontWeight: '500', color: isDark ? '#fff' : '#111827' }}>{type.name || type.tipo}</span>
+                                {type.visibleToDriver === false && (
+                                    <span title="Invisível para Motorista" style={{ marginLeft: '0.5rem', color: '#ef4444' }}>
+                                        <Users size={16} />
+                                    </span>
+                                )}
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <button style={styles.actionButton} onClick={() => handleOpenModal(type)}><Edit size={16} /></button>
@@ -233,6 +239,18 @@ export function CostTypesManager({ costTypes, isDark, refetch }: CostTypesManage
                                     />
                                 ))}
                             </div>
+                        </div>
+
+                        <div style={styles.inputGroup}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.875rem', color: isDark ? '#fff' : '#000' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={formData.visibleToDriver}
+                                    onChange={e => setFormData({ ...formData, visibleToDriver: e.target.checked })}
+                                    style={{ width: '1rem', height: '1rem' }}
+                                />
+                                Visível para Motorista
+                            </label>
                         </div>
 
                         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.5rem", gap: "0.5rem" }}>

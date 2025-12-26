@@ -18,6 +18,7 @@ export async function findAllExpenses(filters?: { shiftId?: string }) {
             tipoCor: costTypes.description,
             shiftId: expenses.shiftId,
             motoristaNome: drivers.nome, // Add driver name
+            visibleToDriver: costTypes.visibleToDriver, // Add visibleToDriver
         })
         .from(expenses)
         .leftJoin(costTypes, eq(expenses.costTypeId, costTypes.id))

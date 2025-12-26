@@ -102,6 +102,7 @@ export const costTypes = pgTable("cost_types", {
     category: text("category").default('Variável').notNull(), // 'Fixo' or 'Variável'
     description: text("description"),
     isActive: boolean("is_active").default(true).notNull(),
+    visibleToDriver: boolean("visible_to_driver").default(true).notNull(),
     icon: text("icon"),
     color: text("color"),
 });
