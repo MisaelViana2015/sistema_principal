@@ -101,12 +101,11 @@ router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
         const dryRun = req.query.dryRun === "true";
         const cutoffDate = req.query.cutoffDate || "2024-12-15";
 
-        // Buscar turnos encerrados antes da data de corte (qualquer status exceto em_andamento)
+        // Buscar TODOS os turnos encerrados (ignora data - verifica pelo cálculo incorreto)
         const legacyShifts = await db.execute(sql`
             SELECT id, status, total_bruto, repasse_empresa, repasse_motorista, inicio
             FROM shifts 
-            WHERE status != 'em_andamento' 
-              AND inicio < ${cutoffDate}::timestamp
+            WHERE status != 'em_andamento'
         `);
 
         const results: any[] = [];
