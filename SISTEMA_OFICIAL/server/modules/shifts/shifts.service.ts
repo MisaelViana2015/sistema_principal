@@ -41,12 +41,28 @@ export async function finishShift(shiftId: string, kmFinal: number) {
     if (!shift) throw new Error("Turno não encontrado");
     if (shift.status !== 'em_andamento' && shift.status !== 'aberto') throw new Error("Turno já finalizado");
 
+    // Validação de KM Final >= KM Inicial do Turno
+    if (kmFinal < shift.kmInicial) {
+        throw new Error(`KM Final (${kmFinal}) não pode ser menor que o KM Inicial do turno (${shift.kmInicial}).`);
+    }
+
     // Atualiza dados básicos de finalização primeiro
     await shiftsRepository.updateShift(shiftId, {
         kmFinal,
         fim: new Date(),
         status: 'finalizado',
     });
+
+    // Atualizar KM do Veículo com o KM Final do Turno (Lógica Acumulativa)
+    const { db } = await import("../../core/db/connection.js");
+    const { vehicles } = await import("../../../shared/schema.js");
+    const { eq } = await import("drizzle-orm");
+
+    await db.update(vehicles)
+        .set({ kmInicial: kmFinal })
+        .where(eq(vehicles.id, shift.vehicleId));
+
+    console.log(`✅ Veículo ${shift.vehicleId} atualizado para ${kmFinal} km.`);
 
     // Recalcula totais (financeiro)
     return await recalculateShiftTotals(shiftId);

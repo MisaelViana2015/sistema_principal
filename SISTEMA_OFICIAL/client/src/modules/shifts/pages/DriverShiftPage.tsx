@@ -240,7 +240,7 @@ export default function DriverShiftPage() {
                 hora: new Date().toISOString()
             });
 
-            setRideCooldown(30);
+            setRideCooldown(300);
             setRideValue("");
             setViewMode("dashboard");
             loadData();
@@ -275,7 +275,7 @@ export default function DriverShiftPage() {
                 isSplitCost: isSplitCost
             });
 
-            setRideCooldown(30);
+            setRideCooldown(300);
             setCostValue("");
             setObs("");
             setIsSplitCost(false);
