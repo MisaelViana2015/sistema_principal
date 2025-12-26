@@ -175,7 +175,7 @@ export function TiresTab() {
                 <div className="flex flex-col">
                     <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-gray-100 uppercase tracking-wide">
                         <Disc className="w-6 h-6 text-orange-500" />
-                        Controle de Pneus (v2)
+                        Controle de Pneus
                     </h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                         Monitoramento de vida útil e custos de pneus.

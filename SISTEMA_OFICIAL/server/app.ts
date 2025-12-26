@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import helmet from "helmet";
 import { db } from "./core/db/connection.js";
@@ -179,9 +180,21 @@ if (process.env.NODE_ENV === "production") {
     const __dirname = path.dirname(__filename);
 
     // Caminho para a pasta dist/client (baseado no WORKDIR /app do Docker)
-    // __dirname em produção é /app/server/dist
-    // Voltamos 2 niveis para /app, depois entramos em client/dist
-    const clientBuildPath = path.resolve(__dirname, "../../client/dist");
+    // Tenta resolver relativo ao CWD (/app/server) -> /app/client/dist
+    let clientBuildPath = path.resolve(process.cwd(), "../client/dist");
+
+    // Validação robusta para Docker
+    if (!fs.existsSync(clientBuildPath)) {
+        console.warn(`⚠️ Path resolution failed: ${clientBuildPath} not found.`);
+        // Fallback para caminho absoluto do Dockerfile
+        const dockerPath = "/app/client/dist";
+        if (fs.existsSync(dockerPath)) {
+            console.log(`✅ Using Docker absolute path: ${dockerPath}`);
+            clientBuildPath = dockerPath;
+        } else {
+            console.error(`❌ CRITICAL: Frontend build not found at ${clientBuildPath} OR ${dockerPath}`);
+        }
+    }
 
     // Serve arquivos estáticos
     app.use(express.static(clientBuildPath));
