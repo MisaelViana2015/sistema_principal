@@ -37,6 +37,7 @@ export const createCostTypeSchema = z.object({
     name: z.string({ required_error: "Nome é obrigatório" }),
     category: z.enum(["Fixo", "Variável"]).default("Variável"),
     description: z.string().optional(),
+    visibleToDriver: z.boolean().default(true).optional(),
     icon: z.string().optional(),
     color: z.string().optional()
 });
