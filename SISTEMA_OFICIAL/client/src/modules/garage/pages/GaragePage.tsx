@@ -134,31 +134,31 @@ export default function GaragePage() {
                 </div>
 
                 {/* Dashboard Stats (Mini) */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-                    <div className="futuristic-card p-6 flex flex-col items-start bg-black/40 backdrop-blur border border-primary/20">
-                        <div className="p-3 bg-gradient-to-br from-green-500/20 to-green-500/5 rounded-lg border border-green-500/20 mb-3">
-                            <ShieldCheck className="w-6 h-6 text-green-500" />
+                <div className="grid grid-cols-3 gap-2 mb-12">
+                    <div className="futuristic-card p-3 flex flex-col items-center justify-center text-center bg-black/40 backdrop-blur border border-primary/20">
+                        <div className="mb-2">
+                            <ShieldCheck className="w-5 h-5 text-green-500" />
                         </div>
-                        <span className="text-3xl font-display font-bold text-white mb-1">{visibleVehicles.length}</span>
-                        <span className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Unidades Visíveis</span>
+                        <span className="text-xl font-display font-bold text-white mb-0">{visibleVehicles.length}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Visíveis</span>
                     </div>
 
-                    <div className="futuristic-card p-6 flex flex-col items-start bg-black/40 backdrop-blur border border-primary/20">
-                        <div className="p-3 bg-gradient-to-br from-orange-500/20 to-orange-500/5 rounded-lg border border-orange-500/20 mb-3">
-                            <Activity className="w-6 h-6 text-orange-500" />
+                    <div className="futuristic-card p-3 flex flex-col items-center justify-center text-center bg-black/40 backdrop-blur border border-primary/20">
+                        <div className="mb-2">
+                            <Activity className="w-5 h-5 text-orange-500" />
                         </div>
-                        <span className="text-3xl font-display font-bold text-white mb-1">{activeShift ? 1 : 0}</span>
-                        <span className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Seu Turno Ativo</span>
+                        <span className="text-xl font-display font-bold text-white mb-0">{activeShift ? 1 : 0}</span>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Seu Turno</span>
                     </div>
 
-                    <div className="futuristic-card p-6 flex flex-col items-start bg-black/40 backdrop-blur border border-primary/20">
-                        <div className="p-3 bg-gradient-to-br from-yellow-500/20 to-yellow-500/5 rounded-lg border border-yellow-500/20 mb-3">
-                            <AlertTriangle className="w-6 h-6 text-yellow-500" />
+                    <div className="futuristic-card p-3 flex flex-col items-center justify-center text-center bg-black/40 backdrop-blur border border-primary/20">
+                        <div className="mb-2">
+                            <AlertTriangle className="w-5 h-5 text-yellow-500" />
                         </div>
-                        <span className="text-3xl font-display font-bold text-white mb-1">
+                        <span className="text-xl font-display font-bold text-white mb-0">
                             {visibleVehicles.filter(v => v.status === "manutencao").length}
                         </span>
-                        <span className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Em Manutenção</span>
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Manutenção</span>
                     </div>
                 </div>
 
