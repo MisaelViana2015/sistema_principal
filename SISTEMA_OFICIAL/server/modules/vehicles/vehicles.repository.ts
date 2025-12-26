@@ -24,6 +24,7 @@ export const vehiclesRepository = {
                 kmInicial: vehicles.kmInicial,
                 color: vehicles.color,
                 imageUrl: vehicles.imageUrl,
+                status: vehicles.status,
                 driverName: drivers.nome
             })
             .from(vehicles)
