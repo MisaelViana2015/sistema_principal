@@ -92,6 +92,48 @@ router.post("/fix-legacy-visuals", requireAdmin, async (req, res) => {
     }
 });
 
+// DEBUG: Ver turnos no banco (temporário)
+router.get("/debug-shifts", requireAdmin, async (req, res) => {
+    try {
+        const { db } = await import("../../core/db/connection.js");
+        const { sql } = await import("drizzle-orm");
+
+        // Buscar todos os turnos encerrados
+        const shifts = await db.execute(sql`
+            SELECT id, status, inicio, total_bruto, repasse_empresa, repasse_motorista
+            FROM shifts 
+            WHERE status != 'em_andamento'
+            ORDER BY inicio DESC
+            LIMIT 20
+        `);
+
+        // Verificar quais estão com cálculo errado (empresa != 60% do bruto)
+        const analyzed = (shifts.rows as any[]).map(s => {
+            const bruto = Number(s.total_bruto || 0);
+            const empresaAtual = Number(s.repasse_empresa || 0);
+            const empresaCorreto = bruto * 0.60;
+            const diferenca = Math.abs(empresaAtual - empresaCorreto);
+            return {
+                id: s.id,
+                status: s.status,
+                inicio: s.inicio,
+                bruto,
+                empresaAtual,
+                empresaCorreto: empresaCorreto.toFixed(2),
+                errado: diferenca > 0.01
+            };
+        });
+
+        res.json({
+            total: shifts.rows.length,
+            errados: analyzed.filter(a => a.errado).length,
+            turnos: analyzed
+        });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Rota para corrigir cálculos 60/40 de turnos antigos (antes de 15/12/2024)
 router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
     try {
