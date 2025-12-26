@@ -1,12 +1,16 @@
 import { db } from "../core/db/connection.js";
-import { shifts, rides, drivers } from "../../shared/schema.js";
-import { eq, and, gte, lte, isNull } from "drizzle-orm";
+import { shifts, rides } from "../../shared/schema.js";
+import { eq, sql } from "drizzle-orm";
 
 /**
- * Script para associar corridas aos turnos e recalcular totais
+ * Script SEGURO para recalcular totais de turnos
+ * - Preserva custos existentes
+ * - Aplica regra 60/40 para turnos antes de 15/12/2024
+ * - Aplica regra 50/50 para turnos novos
+ * - Não associa corridas automaticamente (evita duplicação)
  */
 export async function recalculateAllShifts() {
-    console.log("🔄 Iniciando recálculo de turnos...");
+    console.log("🔄 Iniciando recálculo SEGURO de turnos...");
 
     // Buscar todos os turnos finalizados
     const allShifts = await db
@@ -18,39 +22,16 @@ export async function recalculateAllShifts() {
 
     let updated = 0;
     let errors = 0;
-    let ridesAssociated = 0;
 
     for (const shift of allShifts) {
         try {
-            // PASSO 1: Associar corridas ao turno (se ainda não estiverem associadas)
-            // Buscar corridas sem shiftId que estejam no período do turno
-            const unassociatedRides = await db
-                .select()
-                .from(rides)
-                .where(
-                    and(
-                        isNull(rides.shiftId),
-                        gte(rides.hora, shift.inicio),
-                        shift.fim ? lte(rides.hora, shift.fim) : undefined
-                    )
-                );
-
-            // Associar essas corridas ao turno
-            for (const ride of unassociatedRides) {
-                await db
-                    .update(rides)
-                    .set({ shiftId: shift.id })
-                    .where(eq(rides.id, ride.id));
-                ridesAssociated++;
-            }
-
-            // PASSO 2: Buscar TODAS as corridas do turno (incluindo as recém-associadas)
+            // Buscar corridas do turno
             const ridesData = await db
                 .select()
                 .from(rides)
                 .where(eq(rides.shiftId, shift.id));
 
-            // Calcular totais
+            // Calcular totais das corridas
             const totalApp = ridesData
                 .filter(r => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || ''))
                 .reduce((sum, r) => sum + Number(r.valor || 0), 0);
@@ -61,35 +42,54 @@ export async function recalculateAllShifts() {
 
             const totalCorridasApp = ridesData.filter(r => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length;
             const totalCorridasParticular = ridesData.filter(r => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length;
-
-            const totalBruto = totalApp + totalParticular;
             const totalCorridas = ridesData.length;
-            const totalCustos = 0; // Por enquanto
+            const totalBruto = totalApp + totalParticular;
 
-            // Calcular líquido e repasses
+            // PRESERVAR CUSTOS EXISTENTES DO BANCO
+            // O script original zerava isso (totalCustos = 0), o que era perigoso.
+            const totalCustos = Number(shift.totalCustos || 0);
+
+            // Calcular líquido
             const liquido = totalBruto - totalCustos;
-            const repasseEmpresa = liquido * 0.5;
-            const repasseMotorista = liquido * 0.5;
 
-            // Atualizar turno
+            // Determinar regra de repasse baseada na data
+            // Antes de 15/12/2024: 60% Empresa / 40% Motorista
+            // Depois: 50% / 50%
+            const CUTOFF_DATE = new Date('2024-12-15T00:00:00');
+            const shiftDate = new Date(shift.inicio);
+
+            let repasseEmpresa = 0;
+            let repasseMotorista = 0;
+
+            if (shiftDate < CUTOFF_DATE) {
+                // Regra Antiga (60/40)
+                repasseEmpresa = liquido * 0.60;
+                repasseMotorista = liquido * 0.40;
+            } else {
+                // Regra Nova (50/50)
+                repasseEmpresa = liquido * 0.50;
+                repasseMotorista = liquido * 0.50;
+            }
+
+            // Atualizar turno apenas com valores financeiros recalculados
             await db
                 .update(shifts)
                 .set({
-                    totalApp,
-                    totalParticular,
-                    totalBruto,
+                    totalApp: Number(totalApp.toFixed(2)),
+                    totalParticular: Number(totalParticular.toFixed(2)),
+                    totalBruto: Number(totalBruto.toFixed(2)),
                     totalCorridas,
                     totalCorridasApp,
                     totalCorridasParticular,
-                    totalCustos,
-                    liquido,
-                    repasseEmpresa,
-                    repasseMotorista
+                    // Não alteramos totalCustos aqui, mantemos o original
+                    liquido: Number(liquido.toFixed(2)),
+                    repasseEmpresa: Number(repasseEmpresa.toFixed(2)),
+                    repasseMotorista: Number(repasseMotorista.toFixed(2))
                 })
                 .where(eq(shifts.id, shift.id));
 
             updated++;
-            console.log(`✅ Turno ${shift.id}: ${unassociatedRides.length} corridas associadas, ${totalCorridas} total, R$ ${totalBruto.toFixed(2)}`);
+            // Log menos verboso para não poluir
         } catch (error) {
             errors++;
             console.error(`❌ Erro ao recalcular turno ${shift.id}:`, error);
@@ -98,8 +98,7 @@ export async function recalculateAllShifts() {
 
     console.log(`\n✨ Recálculo concluído!`);
     console.log(`   ✅ Turnos atualizados: ${updated}`);
-    console.log(`   🔗 Corridas associadas: ${ridesAssociated}`);
     console.log(`   ❌ Erros: ${errors}`);
 
-    return { updated, errors, total: allShifts.length, ridesAssociated };
+    return { updated, errors, total: allShifts.length };
 }
