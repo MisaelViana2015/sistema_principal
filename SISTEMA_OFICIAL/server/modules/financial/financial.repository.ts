@@ -263,6 +263,7 @@ export async function findAllTires() {
             status: tires.status,
             installDate: tires.installDate,
             installKm: tires.installKm,
+            cost: tires.cost,
             vehicleId: tires.vehicleId,
             veiculoPlate: vehicles.plate,
             veiculoModelo: vehicles.modelo

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Disc, Filter, Activity, Calendar } from "lucide-react";
+import { Plus, Trash2, Disc, Filter, Activity, Calendar, DollarSign } from "lucide-react";
 import { api } from "../../../lib/api";
 import { vehiclesService } from "../vehicles.service";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -15,6 +15,7 @@ interface Tire {
     status: string;
     installDate: string;
     installKm: number;
+    cost: string; // new field
     vehicleId: string;
     veiculoPlate?: string;
     veiculoModelo?: string;
@@ -49,7 +50,6 @@ export function TiresTab() {
     // Filters
     const [filterVehicle, setFilterVehicle] = useState("all");
     const [filterStatus, setFilterStatus] = useState("all");
-    const [filterPosition, setFilterPosition] = useState("all");
     const [filterMonth, setFilterMonth] = useState("all");
     const [filterYear, setFilterYear] = useState("all");
 
@@ -58,12 +58,12 @@ export function TiresTab() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [newItem, setNewItem] = useState({
         vehicleId: "",
-        position: "",
         brand: "",
         model: "",
         status: "Novo",
         installDate: new Date().toISOString().split('T')[0],
-        installKm: ""
+        installKm: "",
+        cost: ""
     });
 
     useEffect(() => {
@@ -117,23 +117,24 @@ export function TiresTab() {
             setIsSubmitting(true);
             await api.post("/financial/tires", {
                 vehicleId: newItem.vehicleId,
-                position: newItem.position || "Desconhecida",
+                position: "Estoque", // Default value as requested
                 brand: newItem.brand,
                 model: newItem.model,
                 status: newItem.status,
                 installDate: newItem.installDate,
-                installKm: newItem.installKm ? parseInt(newItem.installKm) : 0
+                installKm: newItem.installKm ? parseInt(newItem.installKm) : 0,
+                cost: newItem.cost ? parseFloat(newItem.cost.replace(',', '.')) : 0
             });
 
             setIsModalOpen(false);
             setNewItem({
                 vehicleId: "",
-                position: "",
                 brand: "",
                 model: "",
                 status: "Novo",
                 installDate: new Date().toISOString().split('T')[0],
-                installKm: ""
+                installKm: "",
+                cost: ""
             });
             await loadData();
         } catch (error) {
@@ -147,7 +148,6 @@ export function TiresTab() {
     const filtered = tires.filter(t => {
         if (filterVehicle !== "all" && t.vehicleId !== filterVehicle) return false;
         if (filterStatus !== "all" && t.status !== filterStatus) return false;
-        if (filterPosition !== "all" && t.position !== filterPosition) return false;
 
         const date = new Date(t.installDate);
         const isValidDate = !isNaN(date.getTime());
@@ -178,7 +178,7 @@ export function TiresTab() {
                         Controle de Pneus
                     </h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Monitoramento de vida útil e trocas de pneus.
+                        Monitoramento de vida útil e custos de pneus.
                     </p>
                 </div>
 
@@ -238,19 +238,18 @@ export function TiresTab() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Posição</Label>
-                                    <select
-                                        className="w-full bg-gray-900/50 border border-gray-700 rounded-md px-3 py-2 text-sm focus:border-orange-500 outline-none"
-                                        value={newItem.position}
-                                        onChange={e => setNewItem({ ...newItem, position: e.target.value })}
-                                    >
-                                        <option value="">Selecione...</option>
-                                        <option value="Dianteiro Esq.">Dianteiro Esquerdo</option>
-                                        <option value="Dianteiro Dir.">Dianteiro Direito</option>
-                                        <option value="Traseiro Esq.">Traseiro Esquerdo</option>
-                                        <option value="Traseiro Dir.">Traseiro Direito</option>
-                                        <option value="Estepe">Estepe</option>
-                                    </select>
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Valor (R$)</Label>
+                                    <div className="relative">
+                                        <DollarSign className="absolute left-3 top-2.5 w-4 h-4 text-gray-500" />
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            className="pl-9 bg-gray-900/50 border-gray-700 focus:border-orange-500"
+                                            value={newItem.cost}
+                                            onChange={e => setNewItem({ ...newItem, cost: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-gray-500">Estado</Label>
@@ -317,7 +316,7 @@ export function TiresTab() {
                     <Filter className="w-4 h-4" />
                     Filtros de Pneus
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Veículo</label>
                         <select
@@ -343,21 +342,6 @@ export function TiresTab() {
                             <option value="Seminovo">Seminovo</option>
                             <option value="Usado">Usado</option>
                             <option value="Reformado">Reformado</option>
-                        </select>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Posição</label>
-                        <select
-                            value={filterPosition}
-                            onChange={(e) => setFilterPosition(e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-orange-500 transition-colors"
-                        >
-                            <option value="all">Todas as Posições</option>
-                            <option value="Dianteiro Esq.">Dianteiro Esq.</option>
-                            <option value="Dianteiro Dir.">Dianteiro Dir.</option>
-                            <option value="Traseiro Esq.">Traseiro Esq.</option>
-                            <option value="Traseiro Dir.">Traseiro Dir.</option>
-                            <option value="Estepe">Estepe</option>
                         </select>
                     </div>
                     <div className="space-y-1">
@@ -403,9 +387,9 @@ export function TiresTab() {
                             <tr>
                                 <th className="px-4 py-3">Data Inst.</th>
                                 <th className="px-4 py-3">Veículo</th>
-                                <th className="px-4 py-3">Posição</th>
                                 <th className="px-4 py-3">Marca/Modelo</th>
                                 <th className="px-4 py-3">Estado</th>
+                                <th className="px-4 py-3">Valor</th>
                                 <th className="px-4 py-3">KM Inst.</th>
                                 <th className="px-4 py-3 text-right">Ações</th>
                             </tr>
@@ -419,12 +403,14 @@ export function TiresTab() {
                                     <td className="px-4 py-3 font-bold text-gray-700 dark:text-gray-200">
                                         {tire.veiculoPlate || "N/A"}
                                     </td>
-                                    <td className="px-4 py-3 text-gray-500 dark:text-gray-300">{tire.position}</td>
                                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{tire.brand} {tire.model}</td>
                                     <td className="px-4 py-3">
                                         <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase font-bold text-[10px]">
                                             {tire.status}
                                         </span>
+                                    </td>
+                                    <td className="px-4 py-3 font-mono text-green-500 font-bold">
+                                        {tire.cost ? `R$ ${parseFloat(tire.cost).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
                                     </td>
                                     <td className="px-4 py-3 font-mono text-gray-500">
                                         {tire.installKm} km

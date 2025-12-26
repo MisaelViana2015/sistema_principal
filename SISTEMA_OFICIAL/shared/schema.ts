@@ -142,6 +142,7 @@ export const tires = pgTable("tires", {
     status: text("status").notNull(), // Novo, Meia Vida, etc
     installDate: timestamp("install_date").notNull(),
     installKm: integer("install_km").notNull(),
+    cost: numeric("cost", { precision: 10, scale: 2 }).default('0'),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });
