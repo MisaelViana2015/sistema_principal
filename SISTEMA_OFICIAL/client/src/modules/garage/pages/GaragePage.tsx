@@ -262,7 +262,7 @@ export default function GaragePage() {
                                             KM
                                         </div>
                                     </div>
-                                    {selectedVehicle.stats.kmTotal && kmInicial && Number(kmInicial) < Number(selectedVehicle.stats.kmTotal) && (
+                                    {selectedVehicle.stats.kmTotal > 0 && kmInicial && Number(kmInicial) < Number(selectedVehicle.stats.kmTotal) && (
                                         <div className="text-red-500 text-xs mt-2 font-bold flex items-center gap-1">
                                             <AlertTriangle size={12} />
                                             KM informado menor que o atual ({Number(selectedVehicle.stats.kmTotal).toLocaleString()} km).
