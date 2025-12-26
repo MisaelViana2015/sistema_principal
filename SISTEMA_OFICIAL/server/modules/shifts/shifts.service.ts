@@ -126,12 +126,16 @@ export async function recalculateShiftTotals(shiftId: string) {
     const totalCorridas = ridesData.length;
 
     // 6. Calcular Líquido e Repasses
-    // Líquido para base de cálculo 60/40 (apenas custos normais)
-    const liquido = totalBruto - totalCustosNormais;
+    // LÓGICA CORRIGIDA (26/12)
+    // 1. O Líquido base para divisão é o BRUTO (custos normais não abatem antes da partilha)
+    const liquido = totalBruto;
 
-    // Base 60/40
+    // 2. Cálculo Base 60/40 sobre o Bruto
     let repasseEmpresaFinal = liquido * 0.60;
     let repasseMotoristaFinal = liquido * 0.40;
+
+    // 3. Custos Normais: Descontados 100% da parte da Empresa
+    repasseEmpresaFinal -= totalCustosNormais;
 
     // Calcular Descontos do Split (50/50)
     const discountCompany = totalCustosDivididos * 0.50;
