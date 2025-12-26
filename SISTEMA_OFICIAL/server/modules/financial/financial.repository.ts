@@ -19,6 +19,7 @@ export async function findAllExpenses(filters?: { shiftId?: string }) {
             shiftId: expenses.shiftId,
             motoristaNome: drivers.nome, // Add driver name
             visibleToDriver: costTypes.visibleToDriver, // Add visibleToDriver
+            isSplitCost: expenses.isSplitCost, // Show if cost is split
         })
         .from(expenses)
         .leftJoin(costTypes, eq(expenses.costTypeId, costTypes.id))

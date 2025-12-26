@@ -575,7 +575,15 @@ export default function DriverShiftPage() {
                                                         <span className="text-gray-500 text-[10px]">{new Date(e.data).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                     </div>
                                                 </div>
-                                                <span className="text-red-400 font-bold font-mono">R$ {Number(e.valor).toFixed(2).replace('.', ',')}</span>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="text-red-400 font-bold font-mono">R$ {Number(e.valor).toFixed(2).replace('.', ',')}</span>
+                                                    {(e as any).isSplitCost && (
+                                                        <div className="text-[10px] text-gray-500 mt-1 flex flex-col items-end opacity-80">
+                                                            <span>🏢 Emp: R$ {(Number(e.valor) / 2).toFixed(2).replace('.', ',')}</span>
+                                                            <span>👤 Mot: R$ {(Number(e.valor) / 2).toFixed(2).replace('.', ',')}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         )
                                     })}
