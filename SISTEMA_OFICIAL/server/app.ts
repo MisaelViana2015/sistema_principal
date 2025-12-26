@@ -179,8 +179,9 @@ if (process.env.NODE_ENV === "production") {
     const __dirname = path.dirname(__filename);
 
     // Caminho para a pasta dist/client (baseado no WORKDIR /app do Docker)
-    // Se process.cwd() for /app/server, precisamos subir um nivel
-    const clientBuildPath = path.join(process.cwd(), "../client/dist");
+    // __dirname em produção é /app/server/dist
+    // Voltamos 2 niveis para /app, depois entramos em client/dist
+    const clientBuildPath = path.resolve(__dirname, "../../client/dist");
 
     // Serve arquivos estáticos
     app.use(express.static(clientBuildPath));
