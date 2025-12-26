@@ -57,6 +57,7 @@ async function ensureSchemaIntegrity() {
         await db.execute(sql`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS is_split_cost boolean DEFAULT false`);
         await db.execute(sql`ALTER TABLE shifts ADD COLUMN IF NOT EXISTS discount_company real DEFAULT 0`);
         await db.execute(sql`ALTER TABLE shifts ADD COLUMN IF NOT EXISTS discount_driver real DEFAULT 0`);
+        await db.execute(sql`ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS status text DEFAULT 'ativo'`);
 
         // Fix Cost Types (CRITICAL if missing)
         await db.execute(sql`

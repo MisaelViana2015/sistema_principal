@@ -44,6 +44,7 @@ export const vehicles = pgTable("vehicles", {
     kmInicial: real("km_inicial").notNull(),
     color: text("color"),
     imageUrl: text("image_url"),
+    status: text("status").default('ativo'), // 'ativo' | 'manutencao' | 'indisponivel'
 },
     (table) => {
         return {

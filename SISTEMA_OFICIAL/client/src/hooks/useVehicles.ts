@@ -8,7 +8,7 @@ import { useToast } from "../components/ui/use-toast";
 export interface VehicleWithUI extends Vehicle {
     image: string;
     isFavorite: boolean;
-    status: "disponivel" | "manutencao" | "em_uso";
+    status: "disponivel" | "manutencao" | "em_uso" | "indisponivel";
     stats: {
         revenue: number;
         kmTotal: number;
@@ -28,19 +28,31 @@ export function useVehicles() {
         try {
             const data = await vehiclesService.getAll();
 
-            const processedVehicles: VehicleWithUI[] = data.map((v) => ({
-                ...v,
-                image: resolveVehicleImage(v),
-                isFavorite: false, // Pode vir do localStorage ou API futuramente
-                status: !v.isActive ? "manutencao" : (v.currentShiftId ? "em_uso" : "disponivel"),
-                stats: {
-                    revenue: 0, // Placeholder
-                    kmTotal: Number(v.kmInicial) || 0,
-                    corridas: 0, // Placeholder
-                    meta: 85, // Placeholder
-                    metaLastMonth: 80 // Placeholder
-                }
-            }));
+            const processedVehicles: VehicleWithUI[] = data.map((v) => {
+                let status: VehicleWithUI["status"] = "disponivel";
+
+                if (v.status === 'indisponivel') status = 'indisponivel';
+                else if (v.status === 'manutencao') status = 'manutencao';
+                else if (v.currentShiftId) status = 'em_uso';
+                else status = 'disponivel'; // 'ativo' maps to 'disponivel'
+
+                // Fallback for legacy isActive if status is not set (should not happen with new schema default)
+                if (!v.status && !v.isActive) status = 'manutencao';
+
+                return {
+                    ...v,
+                    image: resolveVehicleImage(v),
+                    isFavorite: false, // Pode vir do localStorage ou API futuramente
+                    status,
+                    stats: {
+                        revenue: 0, // Placeholder
+                        kmTotal: Number(v.kmInicial) || 0,
+                        corridas: 0, // Placeholder
+                        meta: 85, // Placeholder
+                        metaLastMonth: 80 // Placeholder
+                    }
+                };
+            });
 
             setVehicles(processedVehicles);
         } catch (error) {

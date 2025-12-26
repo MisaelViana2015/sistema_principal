@@ -4,7 +4,7 @@ import { MaintenanceTab } from "./components/MaintenanceTab";
 import { TiresTab } from "./components/TiresTab";
 import { driversService } from "../drivers/drivers.service";
 import { Vehicle, Driver } from "../../../../shared/schema";
-import { Car, AlertCircle, CheckCircle, Wrench, Gauge, Plus, Disc, X, Save, Edit2, Trash2, Image as ImageIcon } from "lucide-react";
+import { Car, AlertCircle, CheckCircle, Wrench, Gauge, Plus, Disc, X, Save, Edit2, Trash2, Ban } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 
 import { api } from "../../lib/api";
@@ -27,7 +27,8 @@ export default function VehiclesList() {
         kmInicial: "",
         motoristaPadraoId: "",
         color: "",
-        imageUrl: ""
+        imageUrl: "",
+        status: "ativo" // Default status
     });
 
     // Safe Delete State
@@ -65,7 +66,7 @@ export default function VehiclesList() {
 
     const handleOpenCreate = () => {
         setEditingId(null);
-        setFormData({ plate: "", modelo: "", kmInicial: "", motoristaPadraoId: "", color: "", imageUrl: "" });
+        setFormData({ plate: "", modelo: "", kmInicial: "", motoristaPadraoId: "", color: "", imageUrl: "", status: "ativo" });
         setIsModalOpen(true);
     };
 
@@ -77,7 +78,8 @@ export default function VehiclesList() {
             kmInicial: vehicle.kmInicial.toString(),
             motoristaPadraoId: vehicle.motoristaPadraoId || "",
             color: vehicle.color || "",
-            imageUrl: vehicle.imageUrl || ""
+            imageUrl: vehicle.imageUrl || "",
+            status: vehicle.status || "ativo"
         });
         setIsModalOpen(true);
     };
@@ -91,7 +93,8 @@ export default function VehiclesList() {
                 kmInicial: Number(formData.kmInicial),
                 motoristaPadraoId: formData.motoristaPadraoId || null,
                 color: formData.color || null,
-                imageUrl: formData.imageUrl || null
+                imageUrl: formData.imageUrl || null,
+                status: formData.status
             };
 
             if (editingId) {
@@ -99,10 +102,10 @@ export default function VehiclesList() {
                 await api.put(`/vehicles/${editingId}`, payload);
             } else {
                 // Create
-                await api.post("/vehicles", { ...payload, isActive: true });
+                await api.post("/vehicles", payload);
             }
             setIsModalOpen(false);
-            setFormData({ plate: "", modelo: "", kmInicial: "", motoristaPadraoId: "", color: "", imageUrl: "" });
+            setFormData({ plate: "", modelo: "", kmInicial: "", motoristaPadraoId: "", color: "", imageUrl: "", status: "ativo" });
             setEditingId(null);
             loadVehicles();
         } catch (error) {
@@ -134,11 +137,11 @@ export default function VehiclesList() {
         }
     };
 
-    // Hardcoded stats for now
+    // Stats based on Status
     const stats = {
-        disponiveis: vehicles.filter(v => v.isActive).length,
-        emUso: 0,
-        manutencao: 0
+        ativos: vehicles.filter(v => v.status === 'ativo' || !v.status).length, // Fallback for old records
+        manutencao: vehicles.filter(v => v.status === 'manutencao').length,
+        indisponivel: vehicles.filter(v => v.status === 'indisponivel').length
     };
 
     const s = {
@@ -197,8 +200,11 @@ export default function VehiclesList() {
             border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         },
-        badge: (status: boolean) => {
-            const color = status ? { bg: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7', text: '#16a34a', border: '#22c55e' } : { bg: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2', text: '#dc2626', border: '#ef4444' };
+        badge: (status: string) => {
+            let color = { bg: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7', text: '#16a34a', border: '#22c55e' }; // Default Active
+            if (status === 'manutencao') color = { bg: isDark ? 'rgba(234, 179, 8, 0.2)' : '#fef9c3', text: '#ca8a04', border: '#eab308' };
+            if (status === 'indisponivel') color = { bg: isDark ? 'rgba(239, 68, 68, 0.2)' : '#fee2e2', text: '#dc2626', border: '#ef4444' };
+
             return {
                 display: 'inline-block',
                 padding: '0.25rem 0.75rem',
@@ -207,7 +213,8 @@ export default function VehiclesList() {
                 fontWeight: '600',
                 backgroundColor: color.bg,
                 color: color.text,
-                border: `1px solid ${color.border}`
+                border: `1px solid ${color.border}`,
+                textTransform: 'capitalize' as const
             };
         }
     };
@@ -238,6 +245,42 @@ export default function VehiclesList() {
                             </button>
                         </div>
                         <form onSubmit={handleSaveVehicle} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, status: 'ativo' })}
+                                        className={`py-2 px-1 text-xs font-bold rounded-lg border-2 transition-all ${formData.status === 'ativo'
+                                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                                                : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        🟢 ATIVO
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, status: 'manutencao' })}
+                                        className={`py-2 px-1 text-xs font-bold rounded-lg border-2 transition-all ${formData.status === 'manutencao'
+                                                ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300'
+                                                : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        🟡 MANUTENÇÃO
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, status: 'indisponivel' })}
+                                        className={`py-2 px-1 text-xs font-bold rounded-lg border-2 transition-all ${formData.status === 'indisponivel'
+                                                ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                                                : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        🔴 INDISPONÍVEL
+                                    </button>
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Placa</label>
                                 <input
@@ -301,7 +344,7 @@ export default function VehiclesList() {
                                         placeholder="https://exemplo.com/carro.jpg"
                                     />
                                     {formData.imageUrl && (
-                                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-600">
+                                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 dark:border-gray-600">
                                             <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
                                         </div>
                                     )}
@@ -436,7 +479,21 @@ export default function VehiclesList() {
                             <CheckCircle style={{ width: '32px', height: '32px', color: '#22c55e' }} />
                             <div>
                                 <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>Ativos</p>
-                                <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: isDark ? '#fff' : '#111827' }}>{stats.disponiveis}</p>
+                                <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: isDark ? '#fff' : '#111827' }}>{stats.ativos}</p>
+                            </div>
+                        </div>
+                        <div style={s.statCard('#eab308')}>
+                            <Wrench style={{ width: '32px', height: '32px', color: '#eab308' }} />
+                            <div>
+                                <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>Manutenção</p>
+                                <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: isDark ? '#fff' : '#111827' }}>{stats.manutencao}</p>
+                            </div>
+                        </div>
+                        <div style={s.statCard('#ef4444')}>
+                            <Ban style={{ width: '32px', height: '32px', color: '#ef4444' }} />
+                            <div>
+                                <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>Indisponível</p>
+                                <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: isDark ? '#fff' : '#111827' }}>{stats.indisponivel}</p>
                             </div>
                         </div>
                     </div>
@@ -476,7 +533,9 @@ export default function VehiclesList() {
                                         </div>
                                     </div>
                                 </div>
-                                <span style={s.badge(veiculo.isActive)}>{veiculo.isActive ? 'Ativo' : 'Inativo'}</span>
+                                <span style={s.badge(veiculo.status || 'ativo')}>
+                                    {veiculo.status || 'Ativo'}
+                                </span>
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>

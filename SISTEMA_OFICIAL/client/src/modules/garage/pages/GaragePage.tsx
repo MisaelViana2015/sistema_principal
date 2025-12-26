@@ -103,8 +103,8 @@ export default function GaragePage() {
 
     const isLoading = vehiclesLoading || shiftLoading;
 
-    // Filter logic specific to Driver View: Show all unless inactive
-    const visibleVehicles = vehicles.filter(v => v.isActive !== false);
+    // Filter logic specific to Driver View: Show all unless unavailable
+    const visibleVehicles = vehicles.filter(v => v.status !== 'indisponivel');
 
     if (isLoading) {
         return (
@@ -140,7 +140,7 @@ export default function GaragePage() {
                             <ShieldCheck className="w-6 h-6 text-green-500" />
                         </div>
                         <span className="text-3xl font-display font-bold text-white mb-1">{visibleVehicles.length}</span>
-                        <span className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Unidades Ativas</span>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider font-bold">Unidades Visíveis</span>
                     </div>
 
                     <div className="futuristic-card p-6 flex flex-col items-start bg-black/40 backdrop-blur border border-primary/20">
@@ -170,6 +170,9 @@ export default function GaragePage() {
                     <AnimatePresence>
                         {visibleVehicles.map((vehicle, index) => {
                             const hasActiveShiftHere = activeShift?.vehicleId === vehicle.id;
+                            const isAvailable = vehicle.status === 'disponivel';
+                            // Allow access if available OR if user already has active shift here
+                            const canAccess = isAvailable || hasActiveShiftHere;
 
                             return (
                                 <div key={vehicle.id} className="relative">
@@ -187,9 +190,9 @@ export default function GaragePage() {
                                         vehicle={vehicle}
                                         index={index}
                                         onAction={handleAccessVehicle}
-                                        actionLabel={hasActiveShiftHere ? "CONTINUAR TURNO" : "INICIAR TURNO"}
+                                        actionLabel={hasActiveShiftHere ? "CONTINUAR TURNO" : (vehicle.status === 'manutencao' ? 'EM MANUTENÇÃO' : (vehicle.status === 'em_uso' ? 'EM USO' : 'INICIAR TURNO'))}
                                         actionIcon={Zap}
-                                        isActionDisabled={!hasActiveShiftHere && vehicle.status !== "disponivel"}
+                                        isActionDisabled={!canAccess}
                                     />
                                 </div>
                             );
