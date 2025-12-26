@@ -292,6 +292,10 @@ export default function RidesHistoryPage() {
                                         <div className="text-xs text-gray-400 mb-1">Particular (Período)</div>
                                         <div className="text-lg font-bold text-green-500">{formatCurrency(periodTotals.totalPrivate)}</div>
                                     </div>
+                                    <div className="bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 min-w-[120px]">
+                                        <div className="text-xs text-gray-400 mb-1">Total (Período)</div>
+                                        <div className="text-lg font-bold text-indigo-400">{formatCurrency(periodTotals.totalApp + periodTotals.totalPrivate)}</div>
+                                    </div>
                                 </div>
                             )}
 
