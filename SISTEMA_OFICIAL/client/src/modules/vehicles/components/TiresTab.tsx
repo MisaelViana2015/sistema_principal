@@ -71,17 +71,23 @@ export function TiresTab() {
     }, []);
 
     async function loadData() {
+        setIsLoading(true);
+
+        // Load vehicles independent of tires
         try {
-            setIsLoading(true);
-            const [tRes, vRes] = await Promise.all([
-                api.get("/financial/tires"),
-                vehiclesService.getAll()
-            ]);
-            setTires(tRes.data);
+            const vRes = await vehiclesService.getAll();
             setVehicles(vRes || []);
         } catch (error) {
-            console.error("Failed to load data:", error);
-            setTires([]); // Fallback
+            console.error("Failed to load vehicles:", error);
+        }
+
+        // Load tires
+        try {
+            const tRes = await api.get("/financial/tires");
+            setTires(tRes.data);
+        } catch (error) {
+            console.error("Failed to load tires:", error);
+            setTires([]);
         } finally {
             setIsLoading(false);
         }
