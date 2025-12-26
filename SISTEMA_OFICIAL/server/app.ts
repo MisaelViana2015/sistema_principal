@@ -140,7 +140,8 @@ app.get("/api/financial/fix-schema", async (req, res) => {
     try {
         await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS total_installments integer`);
         await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS start_date timestamp`);
-        res.json({ success: true, message: "Columns total_installments and start_date added/verified." });
+        await db.execute(sql`ALTER TABLE tires ADD COLUMN IF NOT EXISTS cost NUMERIC(10, 2) DEFAULT 0`);
+        res.json({ success: true, message: "Columns checked/added: fixed_costs, tires." });
     } catch (error: any) {
         res.status(500).json({ success: false, error: error.message });
     }

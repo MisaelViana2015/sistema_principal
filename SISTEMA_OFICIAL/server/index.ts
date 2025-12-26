@@ -34,6 +34,9 @@ async function ensureSchemaIntegrity() {
         await db.execute(sql`ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS color text`);
         await db.execute(sql`ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS image_url text`);
 
+        // Fix Tires (CRITICAL for Refactor)
+        await db.execute(sql`ALTER TABLE tires ADD COLUMN IF NOT EXISTS cost NUMERIC(10, 2) DEFAULT 0`);
+
         // Fix Shifts (CRITICAL for Start Shift)
         await db.execute(sql`ALTER TABLE shifts ADD COLUMN IF NOT EXISTS total_custos_particular real DEFAULT 0`);
 
