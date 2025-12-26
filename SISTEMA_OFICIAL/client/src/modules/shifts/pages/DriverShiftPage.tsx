@@ -233,6 +233,24 @@ export default function DriverShiftPage() {
 
         setIsSubmitting(true);
         try {
+            // Verificar lançamento duplicado recente (mesmo valor nos últimos 5 minutos)
+            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            const recentDuplicateRide = rides.find(r =>
+                Number(r.valor) === Number(rideValue) &&
+                new Date(r.hora).getTime() > fiveMinutesAgo
+            );
+
+            if (recentDuplicateRide) {
+                const minutesAgo = Math.round((Date.now() - new Date(recentDuplicateRide.hora).getTime()) / 60000);
+                const confirmDuplicate = window.confirm(
+                    `⚠️ Atenção: Uma corrida de R$ ${Number(rideValue).toFixed(2)} foi lançada há ${minutesAgo} minuto(s).\n\nDeseja lançar novamente?`
+                );
+                if (!confirmDuplicate) {
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
+
             await api.post("/rides", {
                 shiftId: activeShift.id,
                 tipo: rideType,
@@ -265,6 +283,24 @@ export default function DriverShiftPage() {
 
         setIsSubmitting(true);
         try {
+            // Verificar custo duplicado recente (mesmo valor nos últimos 5 minutos)
+            const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+            const recentDuplicateCost = expenses.find(e =>
+                Number(e.value || e.valor) === Number(costValue) &&
+                new Date(e.date || e.data).getTime() > fiveMinutesAgo
+            );
+
+            if (recentDuplicateCost) {
+                const minutesAgo = Math.round((Date.now() - new Date(recentDuplicateCost.date || recentDuplicateCost.data).getTime()) / 60000);
+                const confirmDuplicate = window.confirm(
+                    `⚠️ Atenção: Um custo de R$ ${Number(costValue).toFixed(2)} foi lançado há ${minutesAgo} minuto(s).\n\nDeseja lançar novamente?`
+                );
+                if (!confirmDuplicate) {
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
+
             await api.post("/financial/expenses", {
                 driverId: user?.id,
                 shiftId: activeShift.id,

@@ -94,8 +94,13 @@ export async function deleteExpense(id: string) {
 
     await repository.deleteExpense(id);
 
+    // Tentar recalcular turno, mas não falhar se o turno não existir mais (despesa órfã)
     if (expense.shiftId) {
-        await recalculateShiftTotals(expense.shiftId);
+        try {
+            await recalculateShiftTotals(expense.shiftId);
+        } catch (error: any) {
+            console.warn(`[deleteExpense] Não foi possível recalcular turno ${expense.shiftId} (pode ter sido deletado): ${error.message}`);
+        }
     }
 
     return true;
