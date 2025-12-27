@@ -208,6 +208,71 @@ function ruleKmBetweenShifts(
     return hits;
 }
 
+/**
+ * REGRA 11: Sequência de Corridas com Valores Iguais
+ * Detecta padrão suspeito de múltiplas corridas com exatamente o mesmo valor.
+ */
+function ruleRepeatedRideValues(
+    rideValues: number[]
+): FraudRuleHit[] {
+    const hits: FraudRuleHit[] = [];
+    if (rideValues.length < 3) return hits;
+
+    // Conta ocorrências de cada valor
+    const valueCounts: Record<string, number> = {};
+    for (const val of rideValues) {
+        const key = val.toFixed(2);
+        valueCounts[key] = (valueCounts[key] || 0) + 1;
+    }
+
+    // Verifica se algum valor aparece 4 ou mais vezes
+    for (const [valor, count] of Object.entries(valueCounts)) {
+        if (count >= 4) {
+            hits.push({
+                code: "SEQUENCIA_VALORES_IGUAIS",
+                label: "Corridas com valores repetidos",
+                description: `${count} corridas com valor de R$ ${valor} no mesmo turno.`,
+                severity: "high",
+                score: THRESHOLDS.SCORE.HIGH,
+                data: { valor, count },
+            });
+        } else if (count >= 3) {
+            hits.push({
+                code: "SEQUENCIA_VALORES_SUSPEITA",
+                label: "Padrão de valores suspeito",
+                description: `${count} corridas com valor de R$ ${valor} no mesmo turno.`,
+                severity: "medium",
+                score: THRESHOLDS.SCORE.MEDIUM,
+                data: { valor, count },
+            });
+        }
+    }
+
+    // Detecta sequência consecutiva (3+ corridas seguidas com mesmo valor)
+    let streak = 1;
+    let streakValue = rideValues[0];
+    for (let i = 1; i < rideValues.length; i++) {
+        if (Math.abs(rideValues[i] - streakValue) < 0.01) {
+            streak++;
+            if (streak >= 3 && !hits.some(h => h.code === "SEQUENCIA_CONSECUTIVA")) {
+                hits.push({
+                    code: "SEQUENCIA_CONSECUTIVA",
+                    label: "Sequência consecutiva de valores",
+                    description: `${streak}+ corridas consecutivas de R$ ${streakValue.toFixed(2)}.`,
+                    severity: "high",
+                    score: THRESHOLDS.SCORE.HIGH,
+                    data: { streakValue, streak },
+                });
+            }
+        } else {
+            streak = 1;
+            streakValue = rideValues[i];
+        }
+    }
+
+    return hits;
+}
+
 // --- HELPER SCORE ---
 
 function severityFromScore(score: number): FraudSeverity {
@@ -231,7 +296,8 @@ export function analyzeShiftRules(
     totalBruto: number,
     totalCorridas: number,
     durationHours: number,
-    ctx: ShiftContext
+    ctx: ShiftContext,
+    rideValues: number[] = [] // NEW: Array of ride values for pattern detection
 ): FraudScore {
     const kmTotal = Math.max(0, kmEnd - kmStart);
     const ruleHits: FraudRuleHit[] = [];
@@ -240,7 +306,8 @@ export function analyzeShiftRules(
         ...ruleShiftKmAndRevenue(kmTotal, totalBruto, ctx),
         ...ruleShiftRevenueAndRidesPerHour(totalBruto, totalCorridas, durationHours, ctx),
         ...ruleShiftDuration(durationHours, totalCorridas),
-        ...ruleKmBetweenShifts(kmStart, ctx.prevShiftKmEnd)
+        ...ruleKmBetweenShifts(kmStart, ctx.prevShiftKmEnd),
+        ...ruleRepeatedRideValues(rideValues) // NEW: Check for repeated values
     );
 
     return computeScore(ruleHits);

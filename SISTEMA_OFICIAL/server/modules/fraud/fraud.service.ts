@@ -61,14 +61,16 @@ export const FraudService = {
             prevShiftKmEnd: prevShift ? Number(prevShift.kmFinal || 0) : null,
         };
 
-        // 4. Executar Engine de Regras
+        // 4. Executar Engine de Regras (inclui valores das corridas para detecção de padrões)
+        const rideValues = shiftRides.map(r => Number(r.valor));
         const score = analyzeShiftRules(
             kmStart,
             kmEnd,
             totalBruto,
             totalCorridas,
             durationHours,
-            ctx
+            ctx,
+            rideValues // NEW: Pass ride values for sequence detection
         );
 
         // 5. Montar Objeto de Análise

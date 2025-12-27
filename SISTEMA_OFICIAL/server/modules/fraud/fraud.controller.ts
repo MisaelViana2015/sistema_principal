@@ -169,9 +169,12 @@ export const FraudController = {
             const ridesResult = await db.execute(sql`SELECT valor FROM rides WHERE shift_id = ${shift.id}`);
             const ridesData = ridesResult.rows as any[];
 
+            let rideValues: number[] = [];
+
             if (ridesData.length > 0) {
                 totalBruto = ridesData.reduce((acc, r) => acc + Number(r.valor), 0);
                 totalCorridas = ridesData.length;
+                rideValues = ridesData.map(r => Number(r.valor));
             }
 
             // Importar engine
@@ -183,7 +186,8 @@ export const FraudController = {
                 totalBruto,
                 totalCorridas,
                 durationHours,
-                { baseline: null, prevShiftKmEnd: null } // Preview simplificado
+                { baseline: null, prevShiftKmEnd: null }, // Preview simplificado
+                rideValues // Pass values for pattern detection
             );
 
             res.json({
