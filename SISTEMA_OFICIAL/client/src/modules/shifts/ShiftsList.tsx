@@ -236,12 +236,16 @@ export default function ShiftsList() {
                                 {/* Repasses em destaque */}
                                 <div className="col-span-2 md:col-span-2 mt-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg flex justify-between items-center border border-gray-100 dark:border-gray-700">
                                     <div>
-                                        <div className="text-xs text-gray-500 uppercase font-bold">Empresa (60%)</div>
+                                        <div className="text-xs text-gray-500 uppercase font-bold">
+                                            Empresa ({new Date(shift.inicio) >= new Date('2024-12-15T00:00:00') ? '50%' : '60%'})
+                                        </div>
                                         <div className="font-mono font-bold text-blue-400 text-lg">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(shift.repasseEmpresa || 0))}</div>
                                     </div>
                                     <div className="h-8 w-px bg-gray-200 dark:bg-gray-600 mx-4"></div>
                                     <div className="text-right">
-                                        <div className="text-xs text-gray-500 uppercase font-bold">Motorista (40%)</div>
+                                        <div className="text-xs text-gray-500 uppercase font-bold">
+                                            Motorista ({new Date(shift.inicio) >= new Date('2024-12-15T00:00:00') ? '50%' : '40%'})
+                                        </div>
                                         <div className="font-mono font-bold text-purple-400 text-lg">{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(shift.repasseMotorista || 0))}</div>
                                     </div>
                                 </div>
