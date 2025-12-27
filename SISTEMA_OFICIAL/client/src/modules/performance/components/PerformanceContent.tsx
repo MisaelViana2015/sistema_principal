@@ -938,53 +938,44 @@ export default function PerformanceContent() {
                     <div style={{ padding: "1.5rem" }}>
                         <h3 style={{ ...styles.title, marginBottom: "1.5rem" }}>🛠️ Ferramentas de Manutenção</h3>
 
+                        {/* Corrigir Contagem de Corridas */}
                         <div style={{ ...styles.filtersCard, padding: "1.5rem", marginBottom: "1rem" }}>
-                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>Corrigir Cálculos 60/40 de TODOS os Turnos</h4>
+                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>🔢 Corrigir Contagem de Corridas</h4>
                             <p style={{ color: isDark ? "#94a3b8" : "#64748b", marginBottom: "1rem", fontSize: "0.875rem" }}>
-                                Esta ferramenta recalcula os repasses (60% Empresa / 40% Motorista) para TODOS os turnos finalizados que estão com valores incorretos.
+                                Esta ferramenta corrige o campo "Total de Corridas" e "Ticket Médio" que estão zerados em turnos migrados.
                             </p>
-                            <div id="dry-run-results" style={{ display: "none", marginBottom: "1rem", maxHeight: "400px", overflowY: "auto" }}></div>
+                            <div id="ride-count-results" style={{ display: "none", marginBottom: "1rem", maxHeight: "300px", overflowY: "auto" }}></div>
                             <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
                                 <button
                                     onClick={async () => {
                                         try {
-                                            const res = await api.post("/financial/fix-legacy-shifts?dryRun=true");
-                                            const container = document.getElementById("dry-run-results");
+                                            const res = await api.post("/financial/fix-ride-counts?dryRun=true");
+                                            const container = document.getElementById("ride-count-results");
                                             if (container && res.data.details && res.data.details.length > 0) {
                                                 container.style.display = "block";
                                                 container.innerHTML = `
-                                                    <div style="background: ${isDark ? '#0f172a' : '#f8fafc'}; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                                                        <h5 style="margin-bottom: 1rem; color: ${isDark ? '#fff' : '#000'};">📋 Total: ${res.data.total} turnos | Necessitam correção: ${res.data.corrected} | Já corretos: ${res.data.skipped}</h5>
-                                                        <table style="width: 100%; font-size: 0.75rem; border-collapse: collapse;">
+                                                    <div style="background: ${isDark ? '#0f172a' : '#f8fafc'}; border-radius: 8px; padding: 1rem;">
+                                                        <h5 style="margin-bottom: 1rem; color: ${isDark ? '#fff' : '#000'};">📋 Total: ${res.data.total} | Precisam correção: ${res.data.corrected} | OK: ${res.data.skipped}</h5>
+                                                        <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
                                                             <thead>
                                                                 <tr style="background: ${isDark ? '#1e293b' : '#e2e8f0'};">
-                                                                    <th style="padding: 8px; text-align: left; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">ID</th>
-                                                                    <th style="padding: 8px; text-align: left; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">Data</th>
-                                                                    <th style="padding: 8px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">Bruto</th>
-                                                                    <th style="padding: 8px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">Custos</th>
-                                                                    <th style="padding: 8px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">Líquido</th>
-                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fee2e2;">ATUAL Emp</th>
-                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fee2e2;">ATUAL Mot</th>
-                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fee2e2;">%</th>
-                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #dcfce7;">NOVO Emp</th>
-                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #dcfce7;">NOVO Mot</th>
-                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #dcfce7;">%</th>
+                                                                    <th style="padding: 8px; text-align: left;">ID</th>
+                                                                    <th style="padding: 8px; text-align: left;">Data</th>
+                                                                    <th style="padding: 8px; text-align: center; background: #fee2e2;">Atual</th>
+                                                                    <th style="padding: 8px; text-align: center; background: #dcfce7;">Correto</th>
+                                                                    <th style="padding: 8px; text-align: center;">App</th>
+                                                                    <th style="padding: 8px; text-align: center;">Part.</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
                                                                 ${res.data.details.map((d: any) => `
-                                                                    <tr style="background: ${isDark ? '#1e293b' : '#fff'};">
-                                                                        <td style="padding: 6px; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">${d.id}</td>
-                                                                        <td style="padding: 6px; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">${d.data}</td>
-                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">R$ ${d.bruto}</td>
-                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">R$ ${d.custos}</td>
-                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; font-weight: bold;">R$ ${d.liquido}</td>
-                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fef2f2; color: #dc2626;">R$ ${d.atual.empresa}</td>
-                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fef2f2; color: #dc2626;">R$ ${d.atual.motorista}</td>
-                                                                        <td style="padding: 6px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fef2f2; color: #dc2626;">${d.atual.percentual}</td>
-                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #f0fdf4; color: #16a34a; font-weight: bold;">R$ ${d.corrigido.empresa}</td>
-                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #f0fdf4; color: #16a34a; font-weight: bold;">R$ ${d.corrigido.motorista}</td>
-                                                                        <td style="padding: 6px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #f0fdf4; color: #16a34a; font-weight: bold;">${d.corrigido.percentual}</td>
+                                                                    <tr>
+                                                                        <td style="padding: 6px;">${d.id}</td>
+                                                                        <td style="padding: 6px;">${d.data}</td>
+                                                                        <td style="padding: 6px; text-align: center; background: #fef2f2; color: #dc2626;">${d.atual}</td>
+                                                                        <td style="padding: 6px; text-align: center; background: #f0fdf4; color: #16a34a; font-weight: bold;">${d.correto}</td>
+                                                                        <td style="padding: 6px; text-align: center;">${d.app}</td>
+                                                                        <td style="padding: 6px; text-align: center;">${d.particular}</td>
                                                                     </tr>
                                                                 `).join('')}
                                                             </tbody>
@@ -993,7 +984,7 @@ export default function PerformanceContent() {
                                                 `;
                                             } else if (container) {
                                                 container.style.display = "block";
-                                                container.innerHTML = `<div style="padding: 1rem; background: #dcfce7; border-radius: 8px; color: #16a34a;">✅ Todos os ${res.data.total} turnos já estão corretos! Nada a corrigir.</div>`;
+                                                container.innerHTML = `<div style="padding: 1rem; background: #dcfce7; border-radius: 8px; color: #16a34a;">✅ Todos os turnos já têm contagem correta!</div>`;
                                             }
                                         } catch (err: any) {
                                             alert("Erro: " + (err.response?.data?.error || err.message));
@@ -1001,92 +992,23 @@ export default function PerformanceContent() {
                                     }}
                                     style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#3b82f6", color: "#fff", cursor: "pointer", fontWeight: "500" }}
                                 >
-                                    🔍 Simular (Dry-Run)
+                                    🔍 Simular
                                 </button>
                                 <button
                                     onClick={async () => {
-                                        if (!window.confirm("⚠️ ATENÇÃO: Esta ação irá ALTERAR os dados de turnos.\n\nTem certeza que deseja prosseguir?")) return;
+                                        if (!window.confirm("Isso irá corrigir a contagem de corridas dos turnos. Continuar?")) return;
                                         try {
-                                            const res = await api.post("/financial/fix-legacy-shifts");
-                                            alert(`✅ CORREÇÃO APLICADA!\n\nTotal de turnos: ${res.data.total}\nCorrigidos: ${res.data.corrected}\nJá estavam corretos: ${res.data.skipped}`);
-                                            const container = document.getElementById("dry-run-results");
+                                            const res = await api.post("/financial/fix-ride-counts");
+                                            alert(`✅ Correção aplicada!\n\nTotal: ${res.data.total}\nCorrigidos: ${res.data.corrected}\nJá estavam OK: ${res.data.skipped}`);
+                                            const container = document.getElementById("ride-count-results");
                                             if (container) container.style.display = "none";
                                         } catch (err: any) {
                                             alert("Erro: " + (err.response?.data?.error || err.message));
                                         }
                                     }}
-                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#ef4444", color: "#fff", cursor: "pointer", fontWeight: "500" }}
+                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#22c55e", color: "#fff", cursor: "pointer", fontWeight: "500" }}
                                 >
-                                    ⚠️ Executar Correção
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Teste de turno único */}
-                        <div style={{ ...styles.filtersCard, padding: "1.5rem", marginBottom: "1rem", marginTop: "1rem" }}>
-                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>🧪 Testar Correção em 1 Turno</h4>
-                            <p style={{ color: isDark ? "#94a3b8" : "#64748b", marginBottom: "1rem", fontSize: "0.875rem" }}>
-                                Digite o início do ID do turno (ex: 9616de76) para testar a correção antes de aplicar em todos.
-                            </p>
-                            <div id="single-shift-result" style={{ display: "none", marginBottom: "1rem" }}></div>
-                            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
-                                <input
-                                    type="text"
-                                    id="single-shift-id"
-                                    placeholder="ID do turno (ex: 9616de76)"
-                                    style={{ padding: "0.75rem", borderRadius: "0.5rem", border: `1px solid ${isDark ? "#475569" : "#cbd5e1"}`, background: isDark ? "#0f172a" : "#fff", color: isDark ? "#fff" : "#000", minWidth: "200px" }}
-                                />
-                                <button
-                                    onClick={async () => {
-                                        const shiftId = (document.getElementById("single-shift-id") as HTMLInputElement)?.value;
-                                        if (!shiftId) { alert("Digite o ID do turno"); return; }
-                                        try {
-                                            const res = await api.post(`/financial/fix-single-shift/${shiftId}?dryRun=true`);
-                                            const container = document.getElementById("single-shift-result");
-                                            if (container) {
-                                                container.style.display = "block";
-                                                container.innerHTML = `
-                                                    <div style="padding: 1rem; background: ${isDark ? '#1e293b' : '#f8fafc'}; border-radius: 8px; border: 1px solid ${isDark ? '#334155' : '#e2e8f0'};">
-                                                        <h5 style="margin-bottom: 0.5rem; color: ${isDark ? '#fff' : '#000'};">📋 Turno: ${res.data.id?.substring(0, 8)} | Data: ${res.data.data}</h5>
-                                                        <p style="margin: 0.5rem 0; color: ${isDark ? '#94a3b8' : '#64748b'};">Bruto: R$ ${res.data.bruto} | Líquido: R$ ${res.data.liquido}</p>
-                                                        <div style="display: flex; gap: 2rem; margin-top: 1rem;">
-                                                            <div style="padding: 1rem; background: #fef2f2; border-radius: 8px;">
-                                                                <strong style="color: #dc2626;">ATUAL (50/50)</strong><br/>
-                                                                Empresa: R$ ${res.data.atual.empresa}<br/>
-                                                                Motorista: R$ ${res.data.atual.motorista}
-                                                            </div>
-                                                            <div style="padding: 1rem; background: #f0fdf4; border-radius: 8px;">
-                                                                <strong style="color: #16a34a;">NOVO (60/40)</strong><br/>
-                                                                Empresa: R$ ${res.data.novo.empresa}<br/>
-                                                                Motorista: R$ ${res.data.novo.motorista}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                `;
-                                            }
-                                        } catch (err: any) {
-                                            alert("Erro: " + (err.response?.data?.error || err.message));
-                                        }
-                                    }}
-                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#8b5cf6", color: "#fff", cursor: "pointer", fontWeight: "500" }}
-                                >
-                                    🔍 Simular 1 Turno
-                                </button>
-                                <button
-                                    onClick={async () => {
-                                        const shiftId = (document.getElementById("single-shift-id") as HTMLInputElement)?.value;
-                                        if (!shiftId) { alert("Digite o ID do turno"); return; }
-                                        if (!window.confirm("⚠️ Isso irá ALTERAR este turno. Continuar?")) return;
-                                        try {
-                                            const res = await api.post(`/financial/fix-single-shift/${shiftId}`);
-                                            alert(`✅ Turno corrigido!\n\nID: ${res.data.id?.substring(0, 8)}\nData: ${res.data.data}\n\nANTES:\nEmpresa: R$ ${res.data.atual.empresa}\nMotorista: R$ ${res.data.atual.motorista}\n\nDEPOIS:\nEmpresa: R$ ${res.data.novo.empresa}\nMotorista: R$ ${res.data.novo.motorista}`);
-                                        } catch (err: any) {
-                                            alert("Erro: " + (err.response?.data?.error || err.message));
-                                        }
-                                    }}
-                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#f59e0b", color: "#fff", cursor: "pointer", fontWeight: "500" }}
-                                >
-                                    ⚡ Corrigir 1 Turno
+                                    ✅ Executar Correção
                                 </button>
                             </div>
                         </div>

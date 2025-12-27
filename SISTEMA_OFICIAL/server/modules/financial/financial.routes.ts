@@ -363,4 +363,88 @@ router.post("/fix-single-shift/:shiftId", requireAdmin, async (req, res) => {
     }
 });
 
+// ============================================================
+// ENDPOINT ISOLADO: Corrigir APENAS contagem de corridas
+// NÃO MEXE em 60/40, custos, repasses - APENAS total_corridas
+// ============================================================
+router.post("/fix-ride-counts", requireAdmin, async (req, res) => {
+    try {
+        const { db } = await import("../../core/db/connection.js");
+        const { sql } = await import("drizzle-orm");
+
+        const dryRun = req.query.dryRun === "true";
+
+        // Buscar TODOS os turnos finalizados
+        const allShifts = await db.execute(sql`
+            SELECT id, inicio, total_corridas, total_corridas_app, total_corridas_particular
+            FROM shifts 
+            WHERE status != 'em_andamento'
+        `);
+
+        const results: any[] = [];
+        let corrected = 0;
+        let skipped = 0;
+
+        for (const shift of allShifts.rows as any[]) {
+            const shiftId = shift.id;
+
+            // Contar corridas do turno
+            const ridesResult = await db.execute(sql`SELECT tipo FROM rides WHERE shift_id = ${shiftId}`);
+            const ridesData = ridesResult.rows as any[];
+
+            const totalCorridasApp = ridesData.filter(r => ['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase())).length;
+            const totalCorridasParticular = ridesData.filter(r => !['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase())).length;
+            const totalCorridas = ridesData.length;
+
+            // Verificar se precisa corrigir
+            const currentTotal = Number(shift.total_corridas || 0);
+
+            if (totalCorridas === currentTotal && totalCorridas > 0) {
+                skipped++;
+                continue;
+            }
+
+            // Se tem corridas mas o campo está zerado, precisa corrigir
+            if (totalCorridas === 0) {
+                skipped++;
+                continue;
+            }
+
+            results.push({
+                id: shiftId.substring(0, 8),
+                data: new Date(shift.inicio).toLocaleDateString('pt-BR'),
+                atual: currentTotal,
+                correto: totalCorridas,
+                app: totalCorridasApp,
+                particular: totalCorridasParticular
+            });
+
+            if (!dryRun) {
+                // APENAS atualiza contagem - NÃO MEXE em nada mais
+                await db.execute(sql`
+                    UPDATE shifts SET
+                        total_corridas = ${totalCorridas},
+                        total_corridas_app = ${totalCorridasApp},
+                        total_corridas_particular = ${totalCorridasParticular}
+                    WHERE id = ${shiftId}
+                `);
+            }
+
+            corrected++;
+        }
+
+        res.json({
+            success: true,
+            dryRun,
+            total: allShifts.rows.length,
+            corrected,
+            skipped,
+            details: results.slice(0, 100)
+        });
+    } catch (error: any) {
+        console.error("Erro ao corrigir contagem:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 export default router;
