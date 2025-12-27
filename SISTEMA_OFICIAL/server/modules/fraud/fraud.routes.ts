@@ -3,12 +3,16 @@ import { FraudController } from "./fraud.controller.js";
 
 const router = Router();
 
+// Todas as rotas de fraude exigem autenticação e nível ADMIN
+import { requireAuth, requireAdmin } from "../../core/middlewares/authMiddleware.js";
+router.use(requireAuth, requireAdmin);
+
 // Dashboard Data
 router.get("/dashboard-stats", FraudController.getDashboardStats);
 router.get("/heatmap", FraudController.getHeatmapData);
 router.get("/alerts", FraudController.getRecentAlerts);
+router.get("/events", FraudController.getEventsList);
 
-// Actions
 // Actions
 router.post("/seed", FraudController.seedData);
 router.post("/analyze/:shiftId", FraudController.manualAnalyze);

@@ -4,6 +4,10 @@ import { FraudRepository } from "./fraud.repository.js";
 import { db } from "../../core/db/connection.js";
 import { fraudEvents } from "../../../shared/schema.js";
 import { desc, eq, sql } from "drizzle-orm";
+// Static imports for better performance
+import { analyzeShiftRules } from "./fraud.engine.js";
+import { generateEventPdf } from "./fraud.pdf.js";
+import { randomUUID } from "node:crypto";
 
 export const FraudController = {
     // POST /api/fraud/analyze/:shiftId
@@ -26,30 +30,23 @@ export const FraudController = {
     // GET /api/fraud/dashboard-stats
     async getDashboardStats(req: Request, res: Response) {
         try {
-            // Stats reais
-            const allEvents = await db.query.fraudEvents.findMany({
-                orderBy: (f, { desc }) => desc(f.detectedAt),
-                limit: 1000
-            });
+            // Optimization: Use direct SQL aggregation for performance
+            const statsResult = await db.execute(sql`
+                SELECT 
+                    AVG(risk_score) as avg_score,
+                    COUNT(*) FILTER (WHERE status = 'pendente' OR status = 'em_analise') as active_alerts,
+                    COUNT(*) FILTER (WHERE risk_level = 'high' OR risk_level = 'critical') as high_risk_count,
+                    COUNT(*) as processed_shifts
+                FROM fraud_events
+            `);
 
-            const activeAlerts = allEvents.filter(e => e.status === 'pendente' || e.status === 'em_analise').length;
-
-            const scoreSum = allEvents.reduce((acc, curr) => acc + (curr.riskScore || 0), 0);
-            const avgScore = allEvents.length > 0 ? scoreSum / allEvents.length : 0;
-
-            const highRiskCount = allEvents.filter(e =>
-                e.riskLevel === 'high' || e.riskLevel === 'critical'
-            ).length;
-
-            // Mockado até termos tabela de controle de 'turnos processados total'
-            // ou fazemos um count na tabela shifts
-            const processedShifts = allEvents.length;
+            const row = statsResult.rows[0] as any;
 
             res.json({
-                riskScore: Number(avgScore.toFixed(1)),
-                activeAlerts,
-                processedShifts,
-                highRiskDrivers: highRiskCount // Simplificação: count de eventos high risk
+                riskScore: Number(Number(row.avg_score || 0).toFixed(1)),
+                activeAlerts: Number(row.active_alerts || 0),
+                processedShifts: Number(row.processed_shifts || 0),
+                highRiskDrivers: Number(row.high_risk_count || 0)
             });
         } catch (error: any) {
             res.status(500).json({ error: error.message });
@@ -59,11 +56,7 @@ export const FraudController = {
     // GET /api/fraud/heatmap
     async getHeatmapData(req: Request, res: Response) {
         try {
-            const { db } = await import("../../core/db/connection.js");
-            const { sql } = await import("drizzle-orm");
-
-            // Query otimizada para agrupar por dia
-            // Retorna: date, count, avgScore, maxScore
+            // Optimization: Aggregate by date in SQL
             const result = await db.execute(sql`
                 SELECT 
                     DATE(detected_at) as date,
@@ -93,8 +86,38 @@ export const FraudController = {
     // GET /api/fraud/alerts
     async getRecentAlerts(req: Request, res: Response) {
         try {
-            const alerts = await FraudRepository.getFraudEvents(10);
+            const alerts = await FraudRepository.getFraudEvents({ limit: 10 });
             res.json(alerts);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // GET /api/fraud/events
+    async getEventsList(req: Request, res: Response) {
+        try {
+            const page = Number(req.query.page) || 1;
+            const limit = Number(req.query.limit) || 20;
+            const statusQuery = req.query.status;
+            const status = Array.isArray(statusQuery) ? statusQuery.join(',') : (statusQuery as string);
+            const offset = (page - 1) * limit;
+
+            const events = await FraudRepository.getFraudEvents({ limit, offset, status });
+
+            // Fetch total count for pagination
+            const whereClause = status ? sql`status = ${status}` : undefined;
+            const countResult = await db.select({ count: sql<number>`count(*)` })
+                .from(fraudEvents)
+                .where(whereClause);
+
+            const total = Number(countResult[0]?.count || 0);
+
+            res.json({
+                data: events,
+                total,
+                page,
+                limit
+            });
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
@@ -103,42 +126,51 @@ export const FraudController = {
     // POST /api/fraud/analyze-all
     async analyzeAllShifts(req: Request, res: Response) {
         try {
-            const { db } = await import("../../core/db/connection.js");
-            const { sql } = await import("drizzle-orm");
-
-            // Buscar todos os turnos finalizados
+            // Fetch all finished shifts
             const allShifts = await db.execute(sql`
-            SELECT id FROM shifts WHERE status != 'em_andamento'
-        `);
+                SELECT id FROM shifts WHERE status != 'em_andamento'
+            `);
 
+            const shifts = allShifts.rows as any[];
             let analyzed = 0;
             let errors = 0;
             const results: any[] = [];
 
-            for (const shift of allShifts.rows as any[]) {
-                try {
-                    const result = await FraudService.analyzeShift(shift.id);
-                    if (result && result.score.totalScore > 0) {
-                        results.push({
-                            shiftId: shift.id.substring(0, 8),
-                            score: result.score.totalScore,
-                            level: result.score.level,
-                            reasons: result.score.reasons.map((r: any) => r.label)
-                        });
+            // Batch processing configuration to prevent server freeze
+            const BATCH_SIZE = 50;
+
+            for (let i = 0; i < shifts.length; i += BATCH_SIZE) {
+                const batch = shifts.slice(i, i + BATCH_SIZE);
+
+                await Promise.all(batch.map(async (shift) => {
+                    try {
+                        const result = await FraudService.analyzeShift(shift.id);
+                        if (result && result.score.totalScore > 0) {
+                            results.push({
+                                shiftId: shift.id.substring(0, 8),
+                                score: result.score.totalScore,
+                                level: result.score.level,
+                                reasons: result.score.reasons.map((r: any) => r.label)
+                            });
+                        }
+                        analyzed++;
+                    } catch (err) {
+                        errors++;
+                        console.error(`Error processing shift ${shift.id}:`, err);
                     }
-                    analyzed++;
-                } catch (err) {
-                    errors++;
-                }
+                }));
+
+                // Small pause to yield to event loop
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
 
             res.json({
                 success: true,
-                total: allShifts.rows.length,
+                total: shifts.length,
                 analyzed,
                 errors,
                 alertsFound: results.length,
-                details: results.slice(0, 50) // Limitar a 50 resultados
+                details: results.slice(0, 50) // Limit to top 50
             });
         } catch (error: any) {
             res.status(500).json({ error: error.message });
@@ -150,8 +182,6 @@ export const FraudController = {
         try {
             const { shiftId } = req.params;
 
-            // Usar o engine diretamente sem salvar
-            const { db } = await import("../../core/db/connection.js");
             const shift = await db.query.shifts.findFirst({
                 where: (s, { eq }) => eq(s.id, shiftId)
             });
@@ -160,23 +190,17 @@ export const FraudController = {
                 return res.status(404).json({ error: "Turno não encontrado" });
             }
 
-            // Calcular dados atuais
+            // Calculate current metrics
             const inicio = new Date(shift.inicio);
             const agora = new Date();
             const durationHours = Math.max(0.01, (agora.getTime() - inicio.getTime()) / (1000 * 60 * 60));
 
-            // Dados parciais
-            const kmTotal = Math.max(0, Number(shift.kmFinal || 0) - Number(shift.kmInicial || 0)); // Se kmFinal null, usa 0
-
-            // Tratamento de segurança para dados numéricos
-            let totalBruto = Number(shift.totalBruto || 0);
-            let totalCorridas = Number(shift.totalCorridas || 0);
-
-            // Buscar corridas atuais para garantir precisão no preview
-            const { sql } = await import("drizzle-orm");
+            // Fetch rides for the shift
             const ridesResult = await db.execute(sql`SELECT valor FROM rides WHERE shift_id = ${shift.id}`);
             const ridesData = ridesResult.rows as any[];
 
+            let totalBruto = Number(shift.totalBruto || 0);
+            let totalCorridas = Number(shift.totalCorridas || 0);
             let rideValues: number[] = [];
 
             if (ridesData.length > 0) {
@@ -185,17 +209,14 @@ export const FraudController = {
                 rideValues = ridesData.map(r => Number(r.valor));
             }
 
-            // Importar engine
-            const { analyzeShiftRules } = await import("./fraud.engine.js");
-
             const score = analyzeShiftRules(
                 Number(shift.kmInicial || 0),
-                Number(shift.kmFinal || shift.kmInicial || 0), // Se null, assume 0 percorrido
+                Number(shift.kmFinal || shift.kmInicial || 0),
                 totalBruto,
                 totalCorridas,
                 durationHours,
-                { baseline: null, prevShiftKmEnd: null }, // Preview simplificado
-                rideValues // Pass values for pattern detection
+                { baseline: null, prevShiftKmEnd: null }, // Simplified context for preview
+                rideValues
             );
 
             res.json({
@@ -229,8 +250,6 @@ export const FraudController = {
                 return res.status(404).json({ error: "Evento sem turno associado" });
             }
 
-            // Buscar turno associado
-            const { db } = await import("../../core/db/connection.js");
             const shift = await db.query.shifts.findFirst({
                 where: (s, { eq }) => eq(s.id, event.shiftId as string)
             });
@@ -270,6 +289,11 @@ export const FraudController = {
                 return res.status(400).json({ error: "Status inválido ou não fornecido." });
             }
 
+            // Input Validation
+            if (comment && typeof comment !== 'string') {
+                return res.status(400).json({ error: "Comentário inválido." });
+            }
+
             const validStatuses = ['em_analise', 'confirmado', 'descartado', 'bloqueado'];
             if (!validStatuses.includes(status)) {
                 return res.status(400).json({ error: "Status desconhecido." });
@@ -291,11 +315,16 @@ export const FraudController = {
     // POST /api/fraud/seed
     async seedData(req: Request, res: Response) {
         try {
-            const { db } = await import("../../core/db/connection.js");
-            const { fraudEvents } = await import("../../../shared/schema.js");
-            const { randomUUID } = await import("node:crypto");
+            // Clean old seed data to prevent duplicates
+            try {
+                // Remove data marked as seed in metadata
+                await db.delete(fraudEvents)
+                    .where(sql`metadata->>'seed' = 'true'`);
+            } catch (e) {
+                console.warn("Could not clean old seed data", e);
+            }
 
-            // Buscar turnos recentes
+            // Get recent shifts
             const recentShifts = await db.query.shifts.findMany({
                 orderBy: (s, { desc }) => desc(s.inicio),
                 limit: 50
@@ -308,16 +337,15 @@ export const FraudController = {
             const eventsToCreate: any[] = [];
             const getRandomShift = () => recentShifts[Math.floor(Math.random() * recentShifts.length)];
 
-            // Distribuir nos últimos 30 dias
+            // Distribute over last 30 days
             const today = new Date();
             const levels = ['low', 'medium', 'high', 'critical'];
-            const counts = { low: 5, medium: 4, high: 3, critical: 2 };
 
             for (let d = 0; d < 30; d++) {
                 const date = new Date(today);
                 date.setDate(date.getDate() - d);
 
-                // Chance de ter evento no dia (70%)
+                // 30% chance of event per day
                 if (Math.random() > 0.3) {
                     const level = levels[Math.floor(Math.random() * levels.length)];
                     const shift = getRandomShift();
@@ -354,8 +382,8 @@ export const FraudController = {
                         rules: reasons,
                         details: { reasons },
                         metadata: { seed: true, generatedAt: new Date() },
-                        status: 'pendente', // Sempre começa como pendente
-                        detectedAt: date, // Data retroativa para heatmap
+                        status: 'pendente',
+                        detectedAt: date,
                         updatedAt: new Date()
                     });
                 }
@@ -386,7 +414,6 @@ export const FraudController = {
                 return res.status(404).json({ error: "Evento sem turno associado" });
             }
 
-            const { db } = await import("../../core/db/connection.js");
             const shift = await db.query.shifts.findFirst({
                 where: (s, { eq }) => eq(s.id, event.shiftId as string)
             });
@@ -395,7 +422,6 @@ export const FraudController = {
                 return res.status(404).json({ error: "Turno associado não encontrado" });
             }
 
-            const { generateEventPdf } = await import("./fraud.pdf.js");
             const pdfBuffer = await generateEventPdf(event, {
                 id: shift.id,
                 driverId: shift.driverId,

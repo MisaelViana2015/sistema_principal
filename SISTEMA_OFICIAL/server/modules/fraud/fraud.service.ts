@@ -87,6 +87,7 @@ export const FraudService = {
             revenuePerHour: totalBruto / durationHours,
             ridesPerHour: totalCorridas / durationHours,
             score,
+            baseline: baseline || undefined, // Persist for PDF
         };
 
         // 6. Persistir Resultado

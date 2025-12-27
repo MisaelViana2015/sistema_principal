@@ -1,7 +1,7 @@
 import { db } from "../../core/db/connection.js";
 import { fraudEvents } from "../../../shared/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
-import { FraudShiftAnalysis } from "./fraud.types.js";
+import { FraudShiftAnalysis, FraudEventStatus } from "./fraud.types.js";
 
 export const FraudRepository = {
     async saveFraudEvent(analysis: FraudShiftAnalysis) {
@@ -22,7 +22,8 @@ export const FraudRepository = {
                 date: analysis.date,
                 kmTotal: analysis.kmTotal,
                 revenueTotal: analysis.revenueTotal,
-                revenuePerKm: analysis.revenuePerKm
+                revenuePerKm: analysis.revenuePerKm,
+                baseline: analysis.baseline // Persist baseline for PDF reports
             },
             status: existing ? existing.status : "pendente",
             detectedAt: new Date(),
@@ -40,13 +41,22 @@ export const FraudRepository = {
         }
     },
 
-    async getFraudEvents(limit = 50) {
+    async getFraudEvents(options: { limit?: number, offset?: number, status?: string } = {}) {
+        const { limit = 50, offset = 0, status } = options;
         return await db.query.fraudEvents.findMany({
+            where: (f, { eq, inArray }) => {
+                if (status && status !== 'all') {
+                    if (status.includes(',')) {
+                        const statuses = status.split(',').map(s => s.trim());
+                        return inArray(f.status, statuses);
+                    }
+                    return eq(f.status, status);
+                }
+                return undefined;
+            },
             orderBy: (f, { desc }) => desc(f.detectedAt),
             limit,
-            with: {
-                // Aqui poderíamos incluir relações se definidas no schema relations
-            }
+            offset
         });
     },
 
@@ -63,7 +73,7 @@ export const FraudRepository = {
         });
     },
 
-    async updateEventStatus(eventId: string, status: string, comment?: string) {
+    async updateEventStatus(eventId: string, status: FraudEventStatus, comment?: string) {
         // Buscar evento atual para preservar metadata
         const current = await db.query.fraudEvents.findFirst({
             where: (f, { eq }) => eq(f.id, eventId)

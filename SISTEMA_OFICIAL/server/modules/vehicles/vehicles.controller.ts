@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { vehiclesService } from "./vehicles.service.js";
 import { createVehicleSchema, updateVehicleSchema } from "./vehicles.validators.js";
+import { db } from "../../core/db/connection.js";
+import { shifts } from "../../../shared/schema.js";
+import { eq } from "drizzle-orm";
 
 /**
  * CONTROLLER - VEHICLES
@@ -14,6 +17,30 @@ export const vehiclesController = {
         try {
             const vehicles = await vehiclesService.getAllVehicles();
             res.json(vehicles);
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    async getWithStatus(req: Request, res: Response, next: NextFunction) {
+        try {
+            const vehicles = await vehiclesService.getAllVehicles();
+
+            const activeShifts = await db.query.shifts.findMany({
+                where: eq(shifts.status, 'em_andamento')
+            });
+
+            const vehicleShiftMap = new Map<string, string>();
+            for (const shift of activeShifts) {
+                vehicleShiftMap.set(shift.vehicleId, shift.id);
+            }
+
+            const result = vehicles.map(v => ({
+                ...v,
+                currentShiftId: vehicleShiftMap.get(v.id) || null
+            }));
+
+            res.json(result);
         } catch (error) {
             next(error);
         }

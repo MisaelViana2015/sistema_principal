@@ -26,7 +26,7 @@ export function useVehicles() {
     const loadVehicles = useCallback(async () => {
         setIsLoading(true);
         try {
-            const data = await vehiclesService.getAll();
+            const data = await vehiclesService.getAllWithStatus();
 
             const processedVehicles: VehicleWithUI[] = data.map((v) => {
                 let status: VehicleWithUI["status"] = "disponivel";

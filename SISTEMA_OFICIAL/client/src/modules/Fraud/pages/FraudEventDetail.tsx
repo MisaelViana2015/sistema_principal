@@ -193,9 +193,13 @@ const FraudEventDetail = () => {
                                         <div className="flex gap-2 mt-2 text-xs">
                                             <span className="px-2 py-1 bg-red-100 text-red-700 rounded capitalize">Severidade: {rule.severity || 'info'}</span>
                                             {rule.data && (
-                                                <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-mono truncate max-w-md">
-                                                    {JSON.stringify(rule.data)}
-                                                </span>
+                                                <div className="flex flex-wrap gap-2 mt-1">
+                                                    {Object.entries(rule.data).map(([key, value]) => (
+                                                        <span key={key} className="px-2 py-1 bg-blue-50 text-blue-700 rounded font-mono text-xs border border-blue-100">
+                                                            <span className="font-semibold text-blue-900">{key}:</span> {typeof value === 'number' ? value.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : String(value)}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             )}
                                         </div>
                                     </div>

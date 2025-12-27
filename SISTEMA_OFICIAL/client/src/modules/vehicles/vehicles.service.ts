@@ -8,5 +8,10 @@ export const vehiclesService = {
         // looking at lib/api: api is axios instance.
         const response = await api.get<Vehicle[]>("/vehicles");
         return response.data;
+    },
+
+    async getAllWithStatus() {
+        const response = await api.get<(Vehicle & { currentShiftId: string | null })[]>("/vehicles/with-status");
+        return response.data;
     }
 };

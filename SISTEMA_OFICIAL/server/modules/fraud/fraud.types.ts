@@ -1,3 +1,4 @@
+// Basic types for the fraud detection module
 export type FraudSeverity = "low" | "medium" | "high" | "critical";
 
 export type FraudEventStatus =
@@ -48,6 +49,7 @@ export interface FraudShiftAnalysis {
     revenuePerHour: number;
     ridesPerHour: number;
     score: FraudScore;
+    baseline?: DriverBaseline;
 }
 
 export interface ShiftContext {

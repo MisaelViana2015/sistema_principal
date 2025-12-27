@@ -65,7 +65,7 @@ function ruleShiftKmAndRevenue(
             description: `Receita por km muito baixa: R$ ${revPerKm.toFixed(2)}/km.`,
             severity: "high",
             score: THRESHOLDS.SCORE.HIGH,
-            data: { revPerKm },
+            data: { revPerKm, minThreshold: THRESHOLDS.MIN_REVENUE_PER_KM },
         });
     }
 
@@ -77,7 +77,7 @@ function ruleShiftKmAndRevenue(
             description: `Receita por km muito alta: R$ ${revPerKm.toFixed(2)}/km.`,
             severity: "critical",
             score: THRESHOLDS.SCORE.CRITICAL,
-            data: { revPerKm },
+            data: { revPerKm, maxThreshold: THRESHOLDS.MAX_REVENUE_PER_KM },
         });
     }
 
@@ -93,7 +93,7 @@ function ruleShiftKmAndRevenue(
                 description: `Receita/km ${diffFactor.toFixed(1)}x maior que a média do motorista.`,
                 severity: "critical",
                 score: THRESHOLDS.SCORE.CRITICAL,
-                data: { revPerKm, baseline: base.avgRevenuePerKm },
+                data: { revPerKm, baseline: base.avgRevenuePerKm, multiplier: THRESHOLDS.DEVIATION_MULTIPLIER_CRITICAL, actualMultiplier: diffFactor },
             });
         }
     }
@@ -121,7 +121,7 @@ function ruleShiftRevenueAndRidesPerHour(
             description: `Receita/hora muito alta: R$ ${revPerHour.toFixed(2)}/h.`,
             severity: "critical",
             score: THRESHOLDS.SCORE.CRITICAL,
-            data: { revPerHour },
+            data: { revPerHour, maxThreshold: THRESHOLDS.MAX_REVENUE_PER_HOUR },
         });
     }
 
@@ -133,7 +133,7 @@ function ruleShiftRevenueAndRidesPerHour(
             description: `Apenas ${ridesPerHour.toFixed(2)} corridas/hora.`,
             severity: "low",
             score: THRESHOLDS.SCORE.LOW,
-            data: { ridesPerHour, ridesCount },
+            data: { ridesPerHour, ridesCount, minThreshold: THRESHOLDS.MIN_RIDES_PER_HOUR },
         });
     }
 
@@ -154,7 +154,7 @@ function ruleShiftDuration(
             description: `Turno com apenas ${(durationHours * 60).toFixed(0)} min e com corridas.`,
             severity: "medium",
             score: THRESHOLDS.SCORE.MEDIUM,
-            data: { durationHours, ridesCount },
+            data: { durationHours, ridesCount, minThresholdHours: THRESHOLDS.MIN_SHIFT_HOURS },
         });
     }
 
@@ -166,7 +166,7 @@ function ruleShiftDuration(
             description: `Turno com ${durationHours.toFixed(1)} horas.`,
             severity: "high",
             score: THRESHOLDS.SCORE.HIGH,
-            data: { durationHours },
+            data: { durationHours, maxThresholdHours: THRESHOLDS.MAX_SHIFT_HOURS },
         });
     }
 

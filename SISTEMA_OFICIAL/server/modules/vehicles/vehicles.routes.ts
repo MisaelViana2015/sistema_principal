@@ -8,6 +8,7 @@ const router = Router();
 router.use(requireAuth);
 
 // 2. Listar todos - Permitido para todos os usuários autenticados (motoristas precisam ver a garagem)
+router.get("/with-status", vehiclesController.getWithStatus);
 router.get("/", vehiclesController.getAll);
 
 // 3. Exige admin para criar novos
