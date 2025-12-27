@@ -27,6 +27,9 @@ const FraudEventsList = lazy(() => import("./modules/Fraud/pages/FraudEventsList
 const FraudAnalysisQueue = lazy(() => import("./modules/Fraud/pages/FraudAnalysisQueue"));
 const FraudDriverProfile = lazy(() => import("./modules/Fraud/pages/FraudDriverProfile"));
 const FraudReports = lazy(() => import("./modules/Fraud/pages/FraudReports"));
+const FraudVehicleProfile = lazy(() => import("./modules/Fraud/pages/FraudVehicleProfile"));
+const FraudConfiguration = lazy(() => import("./modules/Fraud/pages/FraudConfiguration"));
+const FraudLogs = lazy(() => import("./modules/Fraud/pages/FraudLogs"));
 
 import MainLayout from "./components/MainLayout"; // Not currently used in layout but imported
 
@@ -126,6 +129,21 @@ function App() {
                                     <Route path="/fraude/relatorios" element={
                                         <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
                                             <FraudReports />
+                                        </Suspense>
+                                    } />
+                                    <Route path="/fraude/veiculo/:vehicleId" element={
+                                        <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                            <FraudVehicleProfile />
+                                        </Suspense>
+                                    } />
+                                    <Route path="/fraude/configuracao" element={
+                                        <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                            <FraudConfiguration />
+                                        </Suspense>
+                                    } />
+                                    <Route path="/fraude/logs" element={
+                                        <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                            <FraudLogs />
                                         </Suspense>
                                     } />
                                 </Route>

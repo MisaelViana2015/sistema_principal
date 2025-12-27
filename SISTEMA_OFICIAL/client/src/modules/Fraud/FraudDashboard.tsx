@@ -116,6 +116,12 @@ export const FraudDashboard = () => {
                     <Button variant="ghost" onClick={() => navigate('/fraude/eventos')} className="gap-2">
                         📋 Histórico
                     </Button>
+                    <Button variant="ghost" onClick={() => navigate('/fraude/configuracao')} className="gap-2">
+                        ⚙️ Config
+                    </Button>
+                    <Button variant="ghost" onClick={() => navigate('/fraude/logs')} className="gap-2">
+                        📜 Logs
+                    </Button>
                     <Button
                         onClick={async () => {
                             if (!confirm("Tem certeza que deseja gerar dados de teste? Isso criará eventos fictícios.")) return;
