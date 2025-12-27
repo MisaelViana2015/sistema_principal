@@ -107,6 +107,9 @@ export const FraudDashboard = () => {
                     <p className="text-muted-foreground mt-1">Monitoramento em tempo real de anomalias financeiras e operacionais.</p>
                 </div>
                 <div className="flex gap-2">
+                    <Button variant="ghost" onClick={() => navigate('/fraude/relatorios')} className="gap-2">
+                        📊 Relatórios
+                    </Button>
                     <Button variant="ghost" onClick={() => navigate('/fraude/fila')} className="gap-2">
                         🕐 Fila
                     </Button>

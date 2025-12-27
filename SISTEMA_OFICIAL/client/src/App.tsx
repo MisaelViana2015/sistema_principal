@@ -25,6 +25,8 @@ import { FraudDashboard } from "./modules/Fraud/FraudDashboard";
 const FraudEventDetail = lazy(() => import("./modules/Fraud/pages/FraudEventDetail"));
 const FraudEventsList = lazy(() => import("./modules/Fraud/pages/FraudEventsList"));
 const FraudAnalysisQueue = lazy(() => import("./modules/Fraud/pages/FraudAnalysisQueue"));
+const FraudDriverProfile = lazy(() => import("./modules/Fraud/pages/FraudDriverProfile"));
+const FraudReports = lazy(() => import("./modules/Fraud/pages/FraudReports"));
 
 import MainLayout from "./components/MainLayout"; // Not currently used in layout but imported
 
@@ -114,6 +116,16 @@ function App() {
                                     <Route path="/fraude/evento/:id" element={
                                         <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
                                             <FraudEventDetail />
+                                        </Suspense>
+                                    } />
+                                    <Route path="/fraude/motorista/:driverId" element={
+                                        <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                            <FraudDriverProfile />
+                                        </Suspense>
+                                    } />
+                                    <Route path="/fraude/relatorios" element={
+                                        <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                            <FraudReports />
                                         </Suspense>
                                     } />
                                 </Route>

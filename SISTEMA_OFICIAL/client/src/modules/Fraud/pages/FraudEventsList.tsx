@@ -145,7 +145,14 @@ const FraudEventsList = () => {
                                                     {event.status.toUpperCase().replace('_', ' ')}
                                                 </span>
                                             </td>
-                                            <td className="p-3 font-mono text-xs">{event.driverId}</td>
+                                            <td className="p-3 font-mono text-xs">
+                                                <button
+                                                    onClick={() => navigate(`/fraude/motorista/${event.driverId}`)}
+                                                    className="hover:underline text-primary hover:text-primary/80 transition-colors"
+                                                >
+                                                    {event.driverId}
+                                                </button>
+                                            </td>
                                             <td className="p-3 truncate max-w-[200px]">
                                                 {event.rules && event.rules.length > 0 ? event.rules[0].label : 'Anomalia Detectada'}
                                             </td>

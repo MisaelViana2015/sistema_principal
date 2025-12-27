@@ -100,17 +100,11 @@ export const FraudController = {
             const limit = Number(req.query.limit) || 20;
             const statusQuery = req.query.status;
             const status = Array.isArray(statusQuery) ? statusQuery.join(',') : (statusQuery as string);
+            const driverId = req.query.driverId as string;
             const offset = (page - 1) * limit;
 
-            const events = await FraudRepository.getFraudEvents({ limit, offset, status });
-
-            // Fetch total count for pagination
-            const whereClause = status ? sql`status = ${status}` : undefined;
-            const countResult = await db.select({ count: sql<number>`count(*)` })
-                .from(fraudEvents)
-                .where(whereClause);
-
-            const total = Number(countResult[0]?.count || 0);
+            const events = await FraudRepository.getFraudEvents({ limit, offset, status, driverId });
+            const total = await FraudRepository.getEventsCount({ status, driverId });
 
             res.json({
                 data: events,
@@ -442,5 +436,15 @@ export const FraudController = {
             console.error("[FRAUD] Error generating PDF:", error);
             res.status(500).json({ error: error.message });
         }
-    }
+    },
+
+    async getTopDrivers(req: Request, res: Response) {
+        try {
+            const limit = Number(req.query.limit) || 5;
+            const topDrivers = await FraudRepository.getTopRiskyDrivers(limit);
+            res.json(topDrivers);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    },
 };

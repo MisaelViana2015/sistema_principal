@@ -11,6 +11,7 @@ router.use(requireAuth, requireAdmin);
 router.get("/dashboard-stats", FraudController.getDashboardStats);
 router.get("/heatmap", FraudController.getHeatmapData);
 router.get("/alerts", FraudController.getRecentAlerts);
+router.get("/stats/top-drivers", FraudController.getTopDrivers);
 router.get("/events", FraudController.getEventsList);
 
 // Actions
