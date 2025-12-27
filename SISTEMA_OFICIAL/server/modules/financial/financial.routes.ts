@@ -456,4 +456,66 @@ router.post("/fix-ride-counts", requireAdmin, async (req, res) => {
     }
 });
 
+// Corrigir contagem de UM turno específico
+router.post("/fix-single-ride-count/:shiftId", requireAdmin, async (req, res) => {
+    try {
+        const { db } = await import("../../core/db/connection.js");
+        const { sql } = await import("drizzle-orm");
+
+        const shiftId = req.params.shiftId;
+
+        // Buscar turno pelo ID parcial
+        const shiftResult = await db.execute(sql`
+            SELECT id, inicio, total_corridas, total_corridas_app, total_corridas_particular
+            FROM shifts 
+            WHERE id LIKE ${shiftId + '%'}
+            LIMIT 1
+        `);
+
+        if (shiftResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: "Turno não encontrado" });
+        }
+
+        const shift = shiftResult.rows[0] as any;
+
+        // Contar corridas
+        const ridesResult = await db.execute(sql`SELECT tipo FROM rides WHERE shift_id = ${shift.id}`);
+        const ridesData = ridesResult.rows as any[];
+
+        const totalCorridasApp = ridesData.filter(r => ['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase())).length;
+        const totalCorridasParticular = ridesData.filter(r => !['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase())).length;
+        const totalCorridas = ridesData.length;
+
+        const antes = {
+            total: Number(shift.total_corridas || 0),
+            app: Number(shift.total_corridas_app || 0),
+            particular: Number(shift.total_corridas_particular || 0)
+        };
+
+        // Atualizar
+        await db.execute(sql`
+            UPDATE shifts SET
+                total_corridas = ${totalCorridas},
+                total_corridas_app = ${totalCorridasApp},
+                total_corridas_particular = ${totalCorridasParticular}
+            WHERE id = ${shift.id}
+        `);
+
+        res.json({
+            success: true,
+            id: shift.id.substring(0, 8),
+            data: new Date(shift.inicio).toLocaleDateString('pt-BR'),
+            antes,
+            depois: {
+                total: totalCorridas,
+                app: totalCorridasApp,
+                particular: totalCorridasParticular
+            }
+        });
+    } catch (error: any) {
+        console.error("Erro:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 export default router;

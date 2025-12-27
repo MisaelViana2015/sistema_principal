@@ -1008,7 +1008,38 @@ export default function PerformanceContent() {
                                     }}
                                     style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#22c55e", color: "#fff", cursor: "pointer", fontWeight: "500" }}
                                 >
-                                    ✅ Executar Correção
+                                    ✅ Executar Correção em TODOS
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Testar 1 Turno */}
+                        <div style={{ ...styles.filtersCard, padding: "1.5rem", marginTop: "1rem" }}>
+                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>🧪 Testar em 1 Turno</h4>
+                            <p style={{ color: isDark ? "#94a3b8" : "#64748b", marginBottom: "1rem", fontSize: "0.875rem" }}>
+                                Digite o ID de um turno da lista acima para testar antes de executar em todos.
+                            </p>
+                            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+                                <input
+                                    type="text"
+                                    id="single-ride-count-id"
+                                    placeholder="Ex: fa93d658"
+                                    style={{ padding: "0.75rem", borderRadius: "0.5rem", border: `1px solid ${isDark ? "#475569" : "#cbd5e1"}`, background: isDark ? "#0f172a" : "#fff", color: isDark ? "#fff" : "#000", minWidth: "150px" }}
+                                />
+                                <button
+                                    onClick={async () => {
+                                        const shiftId = (document.getElementById("single-ride-count-id") as HTMLInputElement)?.value;
+                                        if (!shiftId) { alert("Digite o ID do turno"); return; }
+                                        try {
+                                            const res = await api.post(`/financial/fix-single-ride-count/${shiftId}`);
+                                            alert(`✅ Turno corrigido!\n\nID: ${res.data.id}\nData: ${res.data.data}\n\nANTES:\nTotal: ${res.data.antes.total}\nAPP: ${res.data.antes.app}\nParticular: ${res.data.antes.particular}\n\nDEPOIS:\nTotal: ${res.data.depois.total}\nAPP: ${res.data.depois.app}\nParticular: ${res.data.depois.particular}`);
+                                        } catch (err: any) {
+                                            alert("Erro: " + (err.response?.data?.error || err.message));
+                                        }
+                                    }}
+                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#f59e0b", color: "#fff", cursor: "pointer", fontWeight: "500" }}
+                                >
+                                    ⚡ Corrigir 1 Turno
                                 </button>
                             </div>
                         </div>
