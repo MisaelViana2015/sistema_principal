@@ -939,16 +939,62 @@ export default function PerformanceContent() {
                         <h3 style={{ ...styles.title, marginBottom: "1.5rem" }}>🛠️ Ferramentas de Manutenção</h3>
 
                         <div style={{ ...styles.filtersCard, padding: "1.5rem", marginBottom: "1rem" }}>
-                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>Corrigir Cálculos 60/40 de Turnos Antigos</h4>
+                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>Corrigir Cálculos 60/40 de TODOS os Turnos</h4>
                             <p style={{ color: isDark ? "#94a3b8" : "#64748b", marginBottom: "1rem", fontSize: "0.875rem" }}>
-                                Esta ferramenta recalcula os repasses (60% Empresa / 40% Motorista) para turnos finalizados antes de 15/12/2024 que estão com valores incorretos.
+                                Esta ferramenta recalcula os repasses (60% Empresa / 40% Motorista) para TODOS os turnos finalizados que estão com valores incorretos.
                             </p>
+                            <div id="dry-run-results" style={{ display: "none", marginBottom: "1rem", maxHeight: "400px", overflowY: "auto" }}></div>
                             <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
                                 <button
                                     onClick={async () => {
                                         try {
                                             const res = await api.post("/financial/fix-legacy-shifts?dryRun=true");
-                                            alert(`DRY-RUN:\nTotal de turnos: ${res.data.total}\nNecessitam correção: ${res.data.corrected}\nJá corretos: ${res.data.skipped}\n\nNenhuma alteração foi feita.`);
+                                            const container = document.getElementById("dry-run-results");
+                                            if (container && res.data.details && res.data.details.length > 0) {
+                                                container.style.display = "block";
+                                                container.innerHTML = `
+                                                    <div style="background: ${isDark ? '#0f172a' : '#f8fafc'}; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                                                        <h5 style="margin-bottom: 1rem; color: ${isDark ? '#fff' : '#000'};">📋 Total: ${res.data.total} turnos | Necessitam correção: ${res.data.corrected} | Já corretos: ${res.data.skipped}</h5>
+                                                        <table style="width: 100%; font-size: 0.75rem; border-collapse: collapse;">
+                                                            <thead>
+                                                                <tr style="background: ${isDark ? '#1e293b' : '#e2e8f0'};">
+                                                                    <th style="padding: 8px; text-align: left; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">ID</th>
+                                                                    <th style="padding: 8px; text-align: left; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">Data</th>
+                                                                    <th style="padding: 8px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">Bruto</th>
+                                                                    <th style="padding: 8px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">Custos</th>
+                                                                    <th style="padding: 8px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">Líquido</th>
+                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fee2e2;">ATUAL Emp</th>
+                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fee2e2;">ATUAL Mot</th>
+                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fee2e2;">%</th>
+                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #dcfce7;">NOVO Emp</th>
+                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #dcfce7;">NOVO Mot</th>
+                                                                    <th style="padding: 8px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #dcfce7;">%</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                ${res.data.details.map((d: any) => `
+                                                                    <tr style="background: ${isDark ? '#1e293b' : '#fff'};">
+                                                                        <td style="padding: 6px; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">${d.id}</td>
+                                                                        <td style="padding: 6px; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">${d.data}</td>
+                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">R$ ${d.bruto}</td>
+                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'};">R$ ${d.custos}</td>
+                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; font-weight: bold;">R$ ${d.liquido}</td>
+                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fef2f2; color: #dc2626;">R$ ${d.atual.empresa}</td>
+                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fef2f2; color: #dc2626;">R$ ${d.atual.motorista}</td>
+                                                                        <td style="padding: 6px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #fef2f2; color: #dc2626;">${d.atual.percentual}</td>
+                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #f0fdf4; color: #16a34a; font-weight: bold;">R$ ${d.corrigido.empresa}</td>
+                                                                        <td style="padding: 6px; text-align: right; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #f0fdf4; color: #16a34a; font-weight: bold;">R$ ${d.corrigido.motorista}</td>
+                                                                        <td style="padding: 6px; text-align: center; border: 1px solid ${isDark ? '#334155' : '#cbd5e1'}; background: #f0fdf4; color: #16a34a; font-weight: bold;">${d.corrigido.percentual}</td>
+                                                                    </tr>
+                                                                `).join('')}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                `;
+                                            } else if (container) {
+                                                container.style.display = "block";
+                                                container.innerHTML = `<div style="padding: 1rem; background: #dcfce7; border-radius: 8px; color: #16a34a;">✅ Todos os ${res.data.total} turnos já estão corretos! Nada a corrigir.</div>`;
+                                            }
                                         } catch (err: any) {
                                             alert("Erro: " + (err.response?.data?.error || err.message));
                                         }
@@ -959,10 +1005,12 @@ export default function PerformanceContent() {
                                 </button>
                                 <button
                                     onClick={async () => {
-                                        if (!window.confirm("⚠️ ATENÇÃO: Esta ação irá ALTERAR os dados de turnos antigos.\n\nTem certeza que deseja prosseguir?")) return;
+                                        if (!window.confirm("⚠️ ATENÇÃO: Esta ação irá ALTERAR os dados de turnos.\n\nTem certeza que deseja prosseguir?")) return;
                                         try {
                                             const res = await api.post("/financial/fix-legacy-shifts");
                                             alert(`✅ CORREÇÃO APLICADA!\n\nTotal de turnos: ${res.data.total}\nCorrigidos: ${res.data.corrected}\nJá estavam corretos: ${res.data.skipped}`);
+                                            const container = document.getElementById("dry-run-results");
+                                            if (container) container.style.display = "none";
                                         } catch (err: any) {
                                             alert("Erro: " + (err.response?.data?.error || err.message));
                                         }
