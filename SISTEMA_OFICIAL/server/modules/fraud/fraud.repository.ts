@@ -1,6 +1,6 @@
 import { db } from "../../core/db/connection.js";
 import { fraudEvents } from "../../../shared/schema.js";
-import { eq, desc, sql, inArray } from "drizzle-orm";
+import { eq, desc, sql, inArray, and } from "drizzle-orm";
 import { FraudShiftAnalysis, FraudEventStatus } from "./fraud.types.js";
 
 export const FraudRepository = {
@@ -75,7 +75,9 @@ export const FraudRepository = {
     async getEventsCount(options: { status?: string, driverId?: string } = {}) {
         const { status, driverId } = options;
 
-        const conditions = [];
+        // Build conditions array using Drizzle ORM operators
+        const conditions: ReturnType<typeof eq>[] = [];
+
         if (status && status !== 'all') {
             if (status.includes(',')) {
                 const statuses = status.split(',').map(s => s.trim());
@@ -84,19 +86,27 @@ export const FraudRepository = {
                 conditions.push(eq(fraudEvents.status, status as FraudEventStatus));
             }
         }
-        if (driverId) conditions.push(eq(fraudEvents.driverId, driverId));
+        if (driverId) {
+            conditions.push(eq(fraudEvents.driverId, driverId));
+        }
 
-        const whereClause = conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)}` : sql``;
+        // Use Drizzle's select().from().where() with count aggregation
+        const result = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(fraudEvents)
+            .where(conditions.length > 0 ? and(...conditions) : undefined);
 
-        const result = await db.execute(sql`SELECT COUNT(*) as count FROM fraud_events ${whereClause}`);
-        return Number(result.rows[0].count);
+        return Number(result[0]?.count || 0);
     },
 
     async getPendingEventsCount() {
-        const events = await db.query.fraudEvents.findMany({
-            where: (f, { eq }) => eq(f.status, 'pendente')
-        });
-        return events.length;
+        // Use efficient count query instead of loading all records
+        const result = await db
+            .select({ count: sql<number>`count(*)` })
+            .from(fraudEvents)
+            .where(eq(fraudEvents.status, 'pendente'));
+
+        return Number(result[0]?.count || 0);
     },
 
     async getEventById(eventId: string) {
