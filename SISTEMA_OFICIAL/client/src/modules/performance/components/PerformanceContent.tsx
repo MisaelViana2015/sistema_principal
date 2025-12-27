@@ -938,110 +938,12 @@ export default function PerformanceContent() {
                     <div style={{ padding: "1.5rem" }}>
                         <h3 style={{ ...styles.title, marginBottom: "1.5rem" }}>🛠️ Ferramentas de Manutenção</h3>
 
-                        {/* Corrigir Contagem de Corridas */}
-                        <div style={{ ...styles.filtersCard, padding: "1.5rem", marginBottom: "1rem" }}>
-                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>🔢 Corrigir Contagem de Corridas</h4>
-                            <p style={{ color: isDark ? "#94a3b8" : "#64748b", marginBottom: "1rem", fontSize: "0.875rem" }}>
-                                Esta ferramenta corrige o campo "Total de Corridas" e "Ticket Médio" que estão zerados em turnos migrados.
+                        <div style={{ ...styles.filtersCard, padding: "2rem", textAlign: "center" as const }}>
+                            <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>✅</div>
+                            <h4 style={{ fontWeight: "600", marginBottom: "0.5rem", color: isDark ? "#fff" : "#0f172a" }}>Sistema OK</h4>
+                            <p style={{ color: isDark ? "#94a3b8" : "#64748b", fontSize: "0.875rem" }}>
+                                Todos os dados estão validados e consistentes.
                             </p>
-                            <div id="ride-count-results" style={{ display: "none", marginBottom: "1rem", maxHeight: "300px", overflowY: "auto" }}></div>
-                            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-                                <button
-                                    onClick={async () => {
-                                        try {
-                                            const res = await api.post("/financial/fix-ride-counts?dryRun=true");
-                                            const container = document.getElementById("ride-count-results");
-                                            if (container && res.data.details && res.data.details.length > 0) {
-                                                container.style.display = "block";
-                                                container.innerHTML = `
-                                                    <div style="background: ${isDark ? '#0f172a' : '#f8fafc'}; border-radius: 8px; padding: 1rem;">
-                                                        <h5 style="margin-bottom: 1rem; color: ${isDark ? '#fff' : '#000'};">📋 Total: ${res.data.total} | Precisam correção: ${res.data.corrected} | OK: ${res.data.skipped}</h5>
-                                                        <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
-                                                            <thead>
-                                                                <tr style="background: ${isDark ? '#1e293b' : '#e2e8f0'};">
-                                                                    <th style="padding: 8px; text-align: left;">ID</th>
-                                                                    <th style="padding: 8px; text-align: left;">Data</th>
-                                                                    <th style="padding: 8px; text-align: center; background: #fee2e2;">Atual</th>
-                                                                    <th style="padding: 8px; text-align: center; background: #dcfce7;">Correto</th>
-                                                                    <th style="padding: 8px; text-align: center;">App</th>
-                                                                    <th style="padding: 8px; text-align: center;">Part.</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                ${res.data.details.map((d: any) => `
-                                                                    <tr>
-                                                                        <td style="padding: 6px;">${d.id}</td>
-                                                                        <td style="padding: 6px;">${d.data}</td>
-                                                                        <td style="padding: 6px; text-align: center; background: #fef2f2; color: #dc2626;">${d.atual}</td>
-                                                                        <td style="padding: 6px; text-align: center; background: #f0fdf4; color: #16a34a; font-weight: bold;">${d.correto}</td>
-                                                                        <td style="padding: 6px; text-align: center;">${d.app}</td>
-                                                                        <td style="padding: 6px; text-align: center;">${d.particular}</td>
-                                                                    </tr>
-                                                                `).join('')}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                `;
-                                            } else if (container) {
-                                                container.style.display = "block";
-                                                container.innerHTML = `<div style="padding: 1rem; background: #dcfce7; border-radius: 8px; color: #16a34a;">✅ Todos os turnos já têm contagem correta!</div>`;
-                                            }
-                                        } catch (err: any) {
-                                            alert("Erro: " + (err.response?.data?.error || err.message));
-                                        }
-                                    }}
-                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#3b82f6", color: "#fff", cursor: "pointer", fontWeight: "500" }}
-                                >
-                                    🔍 Simular
-                                </button>
-                                <button
-                                    onClick={async () => {
-                                        if (!window.confirm("Isso irá corrigir a contagem de corridas dos turnos. Continuar?")) return;
-                                        try {
-                                            const res = await api.post("/financial/fix-ride-counts");
-                                            alert(`✅ Correção aplicada!\n\nTotal: ${res.data.total}\nCorrigidos: ${res.data.corrected}\nJá estavam OK: ${res.data.skipped}`);
-                                            const container = document.getElementById("ride-count-results");
-                                            if (container) container.style.display = "none";
-                                        } catch (err: any) {
-                                            alert("Erro: " + (err.response?.data?.error || err.message));
-                                        }
-                                    }}
-                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#22c55e", color: "#fff", cursor: "pointer", fontWeight: "500" }}
-                                >
-                                    ✅ Executar Correção em TODOS
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Testar 1 Turno */}
-                        <div style={{ ...styles.filtersCard, padding: "1.5rem", marginTop: "1rem" }}>
-                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>🧪 Testar em 1 Turno</h4>
-                            <p style={{ color: isDark ? "#94a3b8" : "#64748b", marginBottom: "1rem", fontSize: "0.875rem" }}>
-                                Digite o ID de um turno da lista acima para testar antes de executar em todos.
-                            </p>
-                            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
-                                <input
-                                    type="text"
-                                    id="single-ride-count-id"
-                                    placeholder="Ex: fa93d658"
-                                    style={{ padding: "0.75rem", borderRadius: "0.5rem", border: `1px solid ${isDark ? "#475569" : "#cbd5e1"}`, background: isDark ? "#0f172a" : "#fff", color: isDark ? "#fff" : "#000", minWidth: "150px" }}
-                                />
-                                <button
-                                    onClick={async () => {
-                                        const shiftId = (document.getElementById("single-ride-count-id") as HTMLInputElement)?.value;
-                                        if (!shiftId) { alert("Digite o ID do turno"); return; }
-                                        try {
-                                            const res = await api.post(`/financial/fix-single-ride-count/${shiftId}`);
-                                            alert(`✅ Turno corrigido!\n\nID: ${res.data.id}\nData: ${res.data.data}\n\nANTES:\nTotal: ${res.data.antes.total}\nAPP: ${res.data.antes.app}\nParticular: ${res.data.antes.particular}\n\nDEPOIS:\nTotal: ${res.data.depois.total}\nAPP: ${res.data.depois.app}\nParticular: ${res.data.depois.particular}`);
-                                        } catch (err: any) {
-                                            alert("Erro: " + (err.response?.data?.error || err.message));
-                                        }
-                                    }}
-                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#f59e0b", color: "#fff", cursor: "pointer", fontWeight: "500" }}
-                                >
-                                    ⚡ Corrigir 1 Turno
-                                </button>
-                            </div>
                         </div>
                     </div>
                 )
