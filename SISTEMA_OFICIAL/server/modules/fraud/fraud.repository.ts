@@ -1,6 +1,6 @@
 import { db } from "../../core/db/connection.js";
 import { fraudEvents } from "../../../shared/schema.js";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { FraudShiftAnalysis } from "./fraud.types.js";
 
 export const FraudRepository = {
@@ -55,5 +55,40 @@ export const FraudRepository = {
             where: (f, { eq }) => eq(f.status, 'pendente')
         });
         return events.length;
+    },
+
+    async getEventById(eventId: string) {
+        return await db.query.fraudEvents.findFirst({
+            where: (f, { eq }) => eq(f.id, eventId),
+        });
+    },
+
+    async updateEventStatus(eventId: string, status: string, comment?: string) {
+        // Buscar evento atual para preservar metadata
+        const current = await db.query.fraudEvents.findFirst({
+            where: (f, { eq }) => eq(f.id, eventId)
+        });
+
+        if (!current) {
+            throw new Error("Evento não encontrado");
+        }
+
+        // Atualizar metadata com comentário, preservando dados existentes
+        const updatedMetadata = {
+            ...(current.metadata as object || {}),
+            comment: comment || null,
+            lastDecisionAt: new Date().toISOString()
+        };
+
+        const [updated] = await db
+            .update(fraudEvents)
+            .set({
+                status: status as any,
+                metadata: updatedMetadata
+            })
+            .where(eq(fraudEvents.id, eventId))
+            .returning();
+
+        return updated;
     }
 };

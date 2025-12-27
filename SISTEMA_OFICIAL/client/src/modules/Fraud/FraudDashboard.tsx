@@ -5,6 +5,7 @@ import { FraudHeatmap } from './FraudHeatmap';
 import { RefreshCw, ShieldAlert, ShieldCheck, Activity } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardStats {
     riskScore: number;
@@ -28,6 +29,8 @@ interface FraudEvent {
 export const FraudDashboard = () => {
     const queryClient = useQueryClient();
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const navigate = useNavigate();
 
     // Fetch Stats
     const { data: stats, isLoading: isLoadingStats } = useQuery({
@@ -66,6 +69,33 @@ export const FraudDashboard = () => {
         activeAlerts: 0,
         processedShifts: 0,
         highRiskDrivers: 0
+    };
+
+    const filteredAlerts = recentAlerts?.filter(alert => {
+        if (statusFilter === 'all') return true;
+        return alert.status === statusFilter;
+    });
+
+    const getStatusBadge = (status: string) => {
+        const styles: Record<string, string> = {
+            pendente: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            em_analise: 'bg-blue-100 text-blue-800 border-blue-200',
+            confirmado: 'bg-red-100 text-red-800 border-red-200',
+            descartado: 'bg-green-100 text-green-800 border-green-200',
+            bloqueado: 'bg-gray-100 text-gray-800 border-gray-200'
+        };
+        const labels: Record<string, string> = {
+            pendente: 'Pendente',
+            em_analise: 'Em Análise',
+            confirmado: 'Confirmado',
+            descartado: 'Descartado',
+            bloqueado: 'Bloqueado'
+        };
+        return (
+            <span className={`px-2 py-0.5 rounded text-xs font-medium border ${styles[status] || styles.pendente}`}>
+                {labels[status] || status}
+            </span>
+        );
     };
 
     return (
@@ -140,34 +170,56 @@ export const FraudDashboard = () => {
 
             {/* Recent Alerts List */}
             <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">🚨 Alertas Recentes</h3>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">🚨 Alertas Recentes</h3>
+                    <div className="flex gap-2">
+                        {['all', 'pendente', 'em_analise', 'confirmado'].map(status => (
+                            <button
+                                key={status}
+                                onClick={() => setStatusFilter(status)}
+                                className={`px-3 py-1 text-sm rounded-full transition-colors ${statusFilter === status
+                                        ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                                    }`}
+                            >
+                                {status === 'all' ? 'Todos' : status.replace('_', ' ')}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <div className="space-y-4">
-                    {recentAlerts && recentAlerts.length > 0 ? (
-                        recentAlerts.map((alert, i) => (
+                    {filteredAlerts && filteredAlerts.length > 0 ? (
+                        filteredAlerts.map((alert, i) => (
                             <div key={alert.id || i} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800/50">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-2 h-2 rounded-full ${alert.riskLevel === 'critical' ? 'bg-red-600' :
-                                            alert.riskLevel === 'high' ? 'bg-orange-500' :
-                                                alert.riskLevel === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                                        alert.riskLevel === 'high' ? 'bg-orange-500' :
+                                            alert.riskLevel === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
                                         }`}></div>
                                     <div>
-                                        <p className="font-medium">
-                                            {alert.rules && alert.rules.length > 0 ? alert.rules[0].label : 'Anomalia Detectada'}
-                                            <span className="text-sm font-normal text-muted-foreground ml-2">
-                                                (Score: {alert.riskScore})
-                                            </span>
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-medium">
+                                                {alert.rules && alert.rules.length > 0 ? alert.rules[0].label : 'Anomalia Detectada'}
+                                            </p>
+                                            {getStatusBadge(alert.status)}
+                                        </div>
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            Score: {alert.riskScore} • {new Date(alert.detectedAt).toLocaleString()}
                                         </p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {new Date(alert.detectedAt).toLocaleString()} • Turno ID: {alert.shiftId?.slice(0, 8)}...
+                                        <p className="text-xs text-muted-foreground font-mono mt-1">
+                                            Turno: {alert.shiftId?.slice(0, 8)}... | Motorista: {alert.driverId}
                                         </p>
                                     </div>
                                 </div>
-                                <Button variant="outline" size="sm">Ver Detalhes</Button>
+                                <Button variant="outline" size="sm" onClick={() => navigate(`/fraude/evento/${alert.id}`)}>
+                                    Ver Detalhes
+                                </Button>
                             </div>
                         ))
                     ) : (
                         <div className="text-center py-8 text-muted-foreground">
-                            Nenhum alerta recente encontrado.
+                            Nenhum alerta recente encontrado com status "{statusFilter}".
                         </div>
                     )}
                 </div>

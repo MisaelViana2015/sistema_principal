@@ -13,5 +13,8 @@ router.get("/alerts", FraudController.getRecentAlerts);
 router.post("/analyze/:shiftId", FraudController.manualAnalyze);
 router.post("/analyze-all", FraudController.analyzeAllShifts);
 router.get("/preview/:shiftId", FraudController.previewAnalysis);
+router.get("/event/:id", FraudController.getEventDetail);
+router.post("/event/:id/status", FraudController.updateEventStatus);
+router.get("/event/:id/pdf", FraudController.getEventPdf);
 
 export const fraudRoutes = router;

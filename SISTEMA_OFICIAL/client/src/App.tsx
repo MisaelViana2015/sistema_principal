@@ -22,6 +22,7 @@ const GaragePage = lazy(() => import("./modules/garage/pages/GaragePage"));
 
 import AdminDashboard from "./pages/AdminDashboard";
 import { FraudDashboard } from "./modules/Fraud/FraudDashboard";
+const FraudEventDetail = lazy(() => import("./modules/Fraud/pages/FraudEventDetail"));
 
 import MainLayout from "./components/MainLayout"; // Not currently used in layout but imported
 
@@ -96,6 +97,11 @@ function App() {
                                     <Route path="/fraude" element={
                                         <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
                                             <FraudDashboard />
+                                        </Suspense>
+                                    } />
+                                    <Route path="/fraude/evento/:id" element={
+                                        <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                            <FraudEventDetail />
                                         </Suspense>
                                     } />
                                 </Route>

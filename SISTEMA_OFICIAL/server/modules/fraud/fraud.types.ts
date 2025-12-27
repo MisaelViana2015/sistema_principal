@@ -1,5 +1,12 @@
 export type FraudSeverity = "low" | "medium" | "high" | "critical";
 
+export type FraudEventStatus =
+    | "pendente"
+    | "em_analise"
+    | "confirmado"
+    | "descartado"
+    | "bloqueado";
+
 export interface FraudRuleHit {
     code: string;
     label: string;

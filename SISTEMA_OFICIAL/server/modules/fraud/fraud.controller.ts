@@ -32,7 +32,7 @@ export const FraudController = {
                 limit: 1000
             });
 
-            const activeAlerts = allEvents.filter(e => e.status === 'pendente').length;
+            const activeAlerts = allEvents.filter(e => e.status === 'pendente' || e.status === 'em_analise').length;
 
             const scoreSum = allEvents.reduce((acc, curr) => acc + (curr.riskScore || 0), 0);
             const avgScore = allEvents.length > 0 ? scoreSum / allEvents.length : 0;
@@ -59,25 +59,33 @@ export const FraudController = {
     // GET /api/fraud/heatmap
     async getHeatmapData(req: Request, res: Response) {
         try {
-            // Agrupar eventos por dia
-            const events = await db.execute(sql`
-        SELECT 
-          DATE(detected_at) as date,
-          COUNT(*) as count
-        FROM fraud_events
-        WHERE detected_at > NOW() - INTERVAL '1 year'
-        GROUP BY DATE(detected_at)
-        ORDER BY date ASC
-      `);
+            const { db } = await import("../../core/db/connection.js");
+            const { sql } = await import("drizzle-orm");
 
-            const data = events.rows.map((row: any) => ({
-                date: row.date,
+            // Query otimizada para agrupar por dia
+            // Retorna: date, count, avgScore, maxScore
+            const result = await db.execute(sql`
+                SELECT 
+                    DATE(detected_at) as date,
+                    COUNT(*) as count,
+                    AVG(risk_score) as avg_score,
+                    MAX(risk_score) as max_score
+                FROM fraud_events
+                WHERE detected_at >= NOW() - INTERVAL '1 year'
+                GROUP BY DATE(detected_at)
+                ORDER BY date
+            `);
+
+            const data = result.rows.map((row: any) => ({
+                date: new Date(row.date).toISOString().split('T')[0], // YYYY-MM-DD
                 count: Number(row.count),
-                details: []
+                avgScore: Number(row.avg_score || 0),
+                maxScore: Number(row.max_score || 0)
             }));
 
             res.json(data);
         } catch (error: any) {
+            console.error("[FRAUD] Error getting heatmap data:", error);
             res.status(500).json({ error: error.message });
         }
     },
@@ -203,6 +211,125 @@ export const FraudController = {
                 }))
             });
         } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // GET /api/fraud/event/:id
+    async getEventDetail(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const event = await FraudRepository.getEventById(id);
+
+            if (!event) {
+                return res.status(404).json({ error: "Evento de fraude não encontrado" });
+            }
+
+            if (!event.shiftId) {
+                return res.status(404).json({ error: "Evento sem turno associado" });
+            }
+
+            // Buscar turno associado
+            const { db } = await import("../../core/db/connection.js");
+            const shift = await db.query.shifts.findFirst({
+                where: (s, { eq }) => eq(s.id, event.shiftId as string)
+            });
+
+            if (!shift) {
+                return res.status(404).json({ error: "Turno associado não encontrado" });
+            }
+
+            res.json({
+                event,
+                shift: {
+                    id: shift.id,
+                    driverId: shift.driverId,
+                    vehicleId: shift.vehicleId,
+                    inicio: shift.inicio,
+                    fim: shift.fim,
+                    kmInicial: Number(shift.kmInicial || 0),
+                    kmFinal: Number(shift.kmFinal || 0),
+                    totalBruto: Number(shift.totalBruto || 0),
+                    totalCorridas: Number(shift.totalCorridas || 0),
+                    duracaoMin: Number(shift.duracaoMin || 0)
+                }
+            });
+        } catch (error: any) {
+            console.error("[FRAUD] Error getting event detail:", error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // POST /api/fraud/event/:id/status
+    async updateEventStatus(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const { status, comment } = req.body;
+
+            if (!status || status === 'pendente') {
+                return res.status(400).json({ error: "Status inválido ou não fornecido." });
+            }
+
+            const validStatuses = ['em_analise', 'confirmado', 'descartado', 'bloqueado'];
+            if (!validStatuses.includes(status)) {
+                return res.status(400).json({ error: "Status desconhecido." });
+            }
+
+            const currentEvent = await FraudRepository.getEventById(id);
+            if (!currentEvent) {
+                return res.status(404).json({ error: "Evento não encontrado." });
+            }
+
+            const updated = await FraudRepository.updateEventStatus(id, status, comment);
+            res.json(updated);
+        } catch (error: any) {
+            console.error("[FRAUD] Error updating event status:", error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // GET /api/fraud/event/:id/pdf
+    async getEventPdf(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const event = await FraudRepository.getEventById(id);
+
+            if (!event) {
+                return res.status(404).json({ error: "Evento não encontrado" });
+            }
+
+            if (!event.shiftId) {
+                return res.status(404).json({ error: "Evento sem turno associado" });
+            }
+
+            const { db } = await import("../../core/db/connection.js");
+            const shift = await db.query.shifts.findFirst({
+                where: (s, { eq }) => eq(s.id, event.shiftId as string)
+            });
+
+            if (!shift) {
+                return res.status(404).json({ error: "Turno associado não encontrado" });
+            }
+
+            const { generateEventPdf } = await import("./fraud.pdf.js");
+            const pdfBuffer = await generateEventPdf(event, {
+                id: shift.id,
+                driverId: shift.driverId,
+                vehicleId: shift.vehicleId,
+                inicio: shift.inicio,
+                fim: shift.fim,
+                kmInicial: Number(shift.kmInicial || 0),
+                kmFinal: Number(shift.kmFinal || 0),
+                totalBruto: Number(shift.totalBruto || 0),
+                totalCorridas: Number(shift.totalCorridas || 0),
+                duracaoMin: Number(shift.duracaoMin || 0)
+            });
+
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Content-Disposition", `attachment; filename=fraud-event-${event.id}.pdf`);
+            res.send(pdfBuffer);
+        } catch (error: any) {
+            console.error("[FRAUD] Error generating PDF:", error);
             res.status(500).json({ error: error.message });
         }
     }
