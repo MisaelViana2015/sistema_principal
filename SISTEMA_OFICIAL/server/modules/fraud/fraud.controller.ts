@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { FraudService } from "./fraud.service.js";
 import { FraudRepository } from "./fraud.repository.js";
-import { db } from "../../../core/db/connection.js";
+import { db } from "../../core/db/connection.js";
 import { fraudEvents } from "../../../shared/schema.js";
 import { desc, eq, sql } from "drizzle-orm";
 

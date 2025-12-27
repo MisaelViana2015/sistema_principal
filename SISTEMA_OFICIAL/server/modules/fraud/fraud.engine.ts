@@ -5,7 +5,7 @@
  * Focado em identificar anomalias financeiras e operacionais.
  */
 
-import { FraudRuleHit, FraudScore, FraudSeverity, ShiftContext } from "./fraud.types";
+import { FraudRuleHit, FraudScore, FraudSeverity, ShiftContext } from "./fraud.types.js";
 
 const THRESHOLDS = {
     MIN_REVENUE_PER_KM: 3,

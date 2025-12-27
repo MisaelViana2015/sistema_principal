@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { FraudController } from "./fraud.controller";
+import { FraudController } from "./fraud.controller.js";
 
 const router = Router();
 
