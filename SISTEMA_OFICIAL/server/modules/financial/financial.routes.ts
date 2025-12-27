@@ -396,16 +396,25 @@ router.post("/fix-ride-counts", requireAdmin, async (req, res) => {
             const totalCorridasParticular = ridesData.filter(r => !['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase())).length;
             const totalCorridas = ridesData.length;
 
-            // Verificar se precisa corrigir
+            // Valores atuais no banco
             const currentTotal = Number(shift.total_corridas || 0);
+            const currentApp = Number(shift.total_corridas_app || 0);
+            const currentParticular = Number(shift.total_corridas_particular || 0);
 
-            if (totalCorridas === currentTotal && totalCorridas > 0) {
+            // Verificar se precisa corrigir (qualquer diferença)
+            const needsCorrection =
+                totalCorridas !== currentTotal ||
+                totalCorridasApp !== currentApp ||
+                totalCorridasParticular !== currentParticular;
+
+            // Se turno não tem corridas E banco também está zerado, pula
+            if (totalCorridas === 0 && currentTotal === 0) {
                 skipped++;
                 continue;
             }
 
-            // Se tem corridas mas o campo está zerado, precisa corrigir
-            if (totalCorridas === 0) {
+            // Se já está correto, pula
+            if (!needsCorrection) {
                 skipped++;
                 continue;
             }
