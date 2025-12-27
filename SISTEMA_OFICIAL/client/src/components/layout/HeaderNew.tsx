@@ -80,7 +80,7 @@ const HeaderNew = ({
                 {showDesktopNav && (
                     <nav className="hidden md:flex items-center gap-1 ml-8">
                         {navItems
-                            .filter(item => (item.path !== "/desempenho" && item.path !== "/fraude") || isUserAdmin) // Hide Admin modules if not admin
+                            .filter(item => (item.path !== "/fraude" || isUserAdmin)) // Hide Fraud if not admin, show Performance to all
                             .map((item) => {
                                 const isActive = location.pathname.startsWith(item.path);
                                 const Icon = item.icon;

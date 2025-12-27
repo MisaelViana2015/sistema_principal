@@ -103,9 +103,14 @@ export const FraudDashboard = () => {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" size="icon" onClick={() => navigate('/admin')}>
-                        <ArrowLeft className="w-5 h-5" />
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="icon" onClick={() => navigate('/admin')}>
+                            <ArrowLeft className="w-5 h-5" />
+                        </Button>
+                        <Button variant="outline" size="icon" onClick={() => navigate('/admin')}>
+                            <ShieldCheck className="w-5 h-5" />
+                        </Button>
+                    </div>
                     <div>
                         <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Painel de Detecção de Fraude</h2>
                         <p className="text-muted-foreground mt-1">Monitoramento em tempo real de anomalias financeiras e operacionais.</p>
@@ -126,22 +131,6 @@ export const FraudDashboard = () => {
                     </Button>
                     <Button variant="ghost" onClick={() => navigate('/fraude/logs')} className="gap-2">
                         📜 Logs
-                    </Button>
-                    <Button
-                        onClick={async () => {
-                            if (!confirm("Tem certeza que deseja gerar dados de teste? Isso criará eventos fictícios.")) return;
-                            try {
-                                const res = await api.post("/api/fraud/seed");
-                                alert(res.data.message);
-                                handleRefresh();
-                            } catch (e) {
-                                alert("Erro ao gerar dados");
-                            }
-                        }}
-                        variant="outline"
-                        className="gap-2 border-dashed"
-                    >
-                        🧪 Gerar Dados (Seed)
                     </Button>
                     <Button onClick={handleRefresh} disabled={isRefreshing || isLoading} className="gap-2">
                         <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
