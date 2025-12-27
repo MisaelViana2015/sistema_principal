@@ -335,7 +335,7 @@ export default function DriverShiftPage() {
                 isSplitCost: isSplitCost
             });
 
-            setCostCooldown(300); // NÃO interfere no rideCooldown
+            // Custo NÃO tem cooldown - liberado imediatamente
             setCostValue("");
             setObs("");
             setIsSplitCost(false);

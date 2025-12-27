@@ -12,7 +12,28 @@ import { vehiclesRepository } from "./vehicles.repository.js";
 
 export const vehiclesService = {
     async getAllVehicles() {
-        return await vehiclesRepository.findAll();
+        const vehicles = await vehiclesRepository.findAll();
+
+        // Buscar turnos ativos para marcar veículos em uso
+        const { db } = await import("../../core/db/connection.js");
+        const { shifts } = await import("../../../shared/schema.js");
+        const { eq } = await import("drizzle-orm");
+
+        const activeShifts = await db.query.shifts.findMany({
+            where: (s, { eq }) => eq(s.status, 'em_andamento')
+        });
+
+        // Criar mapa de vehicleId -> shiftId
+        const vehicleShiftMap = new Map<string, string>();
+        for (const shift of activeShifts) {
+            vehicleShiftMap.set(shift.vehicleId, shift.id);
+        }
+
+        // Adicionar currentShiftId aos veículos
+        return vehicles.map(v => ({
+            ...v,
+            currentShiftId: vehicleShiftMap.get(v.id) || null
+        }));
     },
 
     async createVehicle(data: NewVehicle) {
