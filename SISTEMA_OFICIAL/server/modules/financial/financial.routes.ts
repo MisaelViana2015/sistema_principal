@@ -141,7 +141,7 @@ router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
         const { sql } = await import("drizzle-orm");
 
         const dryRun = req.query.dryRun === "true";
-        const cutoffDate = req.query.cutoffDate || "2024-12-15";
+        const cutoffDate = (req.query.cutoffDate as string) || "2024-12-15";
 
         // Buscar TODOS os turnos encerrados (ignora data - verifica pelo cálculo incorreto)
         const legacyShifts = await db.execute(sql`
@@ -156,6 +156,15 @@ router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
 
         for (const shift of legacyShifts.rows as any[]) {
             const shiftId = shift.id;
+            const shiftDate = new Date(shift.inicio);
+            const cutoffObj = new Date(cutoffDate);
+
+            // SEGURANÇA: Pular turnos após a data de corte (15/12/2024)
+            // Turnos a partir dessa data já seguem a regra 50/50 e NÃO devem ser tocados.
+            if (shiftDate >= cutoffObj) {
+                skipped++;
+                continue;
+            }
 
             // Buscar corridas
             const ridesResult = await db.execute(sql`

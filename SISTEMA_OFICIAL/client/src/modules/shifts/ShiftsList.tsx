@@ -118,51 +118,7 @@ export default function ShiftsList() {
         <div style={s.container}>
             <div style={s.header}>
                 <h1 style={s.title}>Gestão de Turnos (Paginação)</h1>
-                <button
-                    onClick={async () => {
-                        if (!confirm('Deseja recalcular os totais de TODOS os turnos finalizados?')) return;
 
-                        const btn = event?.target as HTMLButtonElement;
-                        if (btn) {
-                            btn.disabled = true;
-                            btn.textContent = 'Recalculando...';
-                        }
-
-                        try {
-                            const response = await fetch('/api/admin-tools/recalculate-shifts', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' }
-                            });
-                            const data = await response.json();
-
-                            if (data.success) {
-                                alert(`✅ Recálculo concluído!\n\nTotal: ${data.total}\nAtualizados: ${data.updated}\nErros: ${data.errors}`);
-                                loadShifts(); // Recarregar lista
-                            } else {
-                                alert('❌ Erro: ' + data.message);
-                            }
-                        } catch (error: any) {
-                            alert('❌ Erro ao recalcular: ' + error.message);
-                        } finally {
-                            if (btn) {
-                                btn.disabled = false;
-                                btn.textContent = '🔄 Recalcular Totais';
-                            }
-                        }
-                    }}
-                    style={{
-                        padding: '0.5rem 1rem',
-                        borderRadius: '0.375rem',
-                        border: '1px solid #10b981',
-                        cursor: 'pointer',
-                        backgroundColor: '#10b981',
-                        color: '#fff',
-                        fontWeight: 'bold',
-                        fontSize: '0.875rem'
-                    }}
-                >
-                    🔄 Recalcular Totais
-                </button>
             </div>
 
             {/* Filters */}
