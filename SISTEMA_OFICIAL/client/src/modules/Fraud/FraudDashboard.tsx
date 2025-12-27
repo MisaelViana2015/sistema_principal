@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FraudHeatmap } from './FraudHeatmap';
-import { RefreshCw, ShieldAlert, ShieldCheck, Activity } from 'lucide-react';
+import { RefreshCw, ShieldAlert, ShieldCheck, Activity, ArrowLeft } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
@@ -102,9 +102,14 @@ export const FraudDashboard = () => {
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Header */}
             <div className="flex justify-between items-center">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Painel de Detecção de Fraude</h2>
-                    <p className="text-muted-foreground mt-1">Monitoramento em tempo real de anomalias financeiras e operacionais.</p>
+                <div className="flex items-center gap-4">
+                    <Button variant="outline" size="icon" onClick={() => navigate('/admin')}>
+                        <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                    <div>
+                        <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Painel de Detecção de Fraude</h2>
+                        <p className="text-muted-foreground mt-1">Monitoramento em tempo real de anomalias financeiras e operacionais.</p>
+                    </div>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="ghost" onClick={() => navigate('/fraude/relatorios')} className="gap-2">
