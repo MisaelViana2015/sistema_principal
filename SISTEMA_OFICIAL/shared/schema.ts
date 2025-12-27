@@ -233,12 +233,20 @@ export const logs = pgTable("logs", {
 });
 
 export const fraudEvents = pgTable("fraud_events", {
-    id: varchar("id").primaryKey(),
-    shiftId: varchar("shift_id"),
-    reason: text("reason"),
-    details: text("details"),
-    severity: text("severity"),
-    createdAt: timestamp("created_at"),
+    id: varchar("id", { length: 36 }).$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    shiftId: varchar("shift_id").references(() => shifts.id),
+    driverId: varchar("driver_id").references(() => drivers.id),
+    rideId: varchar("ride_id"), // Optional: fraud can be in a specific ride
+    riskScore: real("risk_score").default(0),
+    riskLevel: varchar("risk_level", { length: 20 }).default('low'), // low, medium, high, critical
+    rules: jsonb("rules"), // Array of fired rules
+    metadata: jsonb("metadata"), // Snapshot of data at time of analysis
+    status: varchar("status", { length: 20 }).default('pendente'), // pendente, revisado, ignorado, confirmado
+    reviewedBy: varchar("reviewed_by"),
+    reviewedAt: timestamp("reviewed_at"),
+    reviewNotes: text("review_notes"),
+    createdAt: timestamp("created_at").defaultNow(),
+    detectedAt: timestamp("detected_at").defaultNow(),
 });
 
 export const preventiveMaintenances = pgTable("preventive_maintenances", {

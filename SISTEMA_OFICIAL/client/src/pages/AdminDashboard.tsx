@@ -8,6 +8,7 @@ import ShiftsList from "../modules/shifts/ShiftsList";
 import { RidesList } from "../modules/rides/RidesList";
 import ImportTab from "./admin/tabs/ImportTab";
 import PerformanceContent from "../modules/performance/components/PerformanceContent";
+import { FraudDashboard } from "../modules/Fraud/FraudDashboard";
 import { useTheme } from "../contexts/ThemeContext";
 
 /**
@@ -202,7 +203,7 @@ export default function Admin() {
                                 {activeTab === "turnos" && <ShiftsList />}
                                 {activeTab === "corridas" && <RidesList />}
                                 {activeTab === "analise" && <PerformanceContent />}
-                                {activeTab === "fraude" && <div className="p-4 text-center text-gray-500">Módulo Fraude em migração</div>}
+                                {activeTab === "fraude" && <FraudDashboard />}
                                 {activeTab === "importar" && <ImportTab />}
                             </div>
                         </div>
@@ -212,5 +213,3 @@ export default function Admin() {
         </div>
     );
 }
-
-

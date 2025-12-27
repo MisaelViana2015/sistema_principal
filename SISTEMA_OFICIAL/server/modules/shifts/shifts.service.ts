@@ -1,5 +1,6 @@
 
 import * as shiftsRepository from "./shifts.repository.js";
+import { FraudService } from "../fraud/fraud.service.js";
 
 export async function getAllShifts(page: number, limit: number, filters: any) {
     return await shiftsRepository.findAllShifts(page, limit, filters);
@@ -121,6 +122,12 @@ export async function finishShift(shiftId: string, kmFinal: number) {
         console.log(`✅ Transação completa: Turno finalizado, Veículo atualizado para ${kmFinal} km, Totais calculados.`);
 
         return updated;
+    });
+
+    // Fire-and-forget Fraud Analysis
+    // Não aguardamos o resultado para não bloquear a resposta ao motorista
+    FraudService.analyzeShift(shiftId).catch(err => {
+        console.error(`[FRAUD] Erro ao analisar turno finalizado ${shiftId}:`, err);
     });
 
     return updatedShift;
