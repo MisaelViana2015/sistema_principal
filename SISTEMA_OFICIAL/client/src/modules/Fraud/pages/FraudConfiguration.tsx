@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Settings, AlertTriangle, Shield, Activity, Clock, TrendingUp, Gauge, Target, ArrowLeft, ShieldCheck } from 'lucide-react';
+import FraudNavigation from '../components/FraudNavigation';
 
 // These thresholds are read-only and match the backend fraud.engine.ts
 const THRESHOLDS = {
@@ -57,21 +58,17 @@ const FraudConfiguration = () => {
     const navigate = useNavigate();
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-4 max-w-7xl mx-auto">
+            {/* Header */}
             <div className="flex items-center gap-3">
-                <div className="flex gap-2">
-                    <Button variant="outline" size="icon" onClick={() => navigate('/fraude')}>
-                        <ArrowLeft className="w-5 h-5" />
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => navigate('/admin')}>
-                        <ShieldCheck className="w-5 h-5" />
-                    </Button>
-                </div>
-                <Settings className="w-8 h-8 text-muted-foreground" />
+                <Settings className="w-8 h-8 text-primary" />
                 <div>
-                    <h1 className="text-2xl font-bold">Configuração do Engine de Fraude</h1>
-                    <p className="text-muted-foreground">Parâmetros e regras de detecção (somente leitura)</p>
+                    <h1 className="text-2xl font-bold">Configuração de Regras</h1>
+                    <p className="text-muted-foreground">Parâmetros e limites do motor de detecção de fraudes.</p>
                 </div>
             </div>
+
+            {/* Navigation Tabs */}
+            <FraudNavigation />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Thresholds Card */}

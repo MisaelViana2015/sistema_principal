@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { Clock, AlertTriangle, ArrowRight, ShieldAlert, ArrowLeft, ShieldCheck } from 'lucide-react';
+import FraudNavigation from '../components/FraudNavigation';
 
 interface FraudEvent {
     id: string;
@@ -57,25 +58,16 @@ const FraudAnalysisQueue = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-4 max-w-7xl mx-auto">
+            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="icon" onClick={() => navigate('/fraude')}>
-                            <ArrowLeft className="w-5 h-5" />
-                        </Button>
-                        <Button variant="outline" size="icon" onClick={() => navigate('/admin')}>
-                            <ShieldCheck className="w-5 h-5" />
-                        </Button>
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold">Fila de Análise</h1>
-                        <p className="text-muted-foreground">Casos pendentes aguardando revisão humana priorizada.</p>
-                    </div>
+                <div>
+                    <h1 className="text-2xl font-bold">Fila de Análise</h1>
+                    <p className="text-muted-foreground">Casos pendentes aguardando revisão humana priorizada.</p>
                 </div>
-                <Button variant="outline" onClick={() => navigate('/fraude/eventos')}>
-                    Ver Histórico Completo
-                </Button>
             </div>
+
+            {/* Navigation Tabs */}
+            <FraudNavigation />
 
             {isLoading ? (
                 <div className="text-center p-12 text-muted-foreground">Carregando fila...</div>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { Download, Filter, ArrowLeft, ShieldCheck } from 'lucide-react';
+import FraudNavigation from '../components/FraudNavigation';
 
 interface TopDriver {
     driverId: string;
@@ -40,26 +41,16 @@ const FraudReports = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-4 max-w-7xl mx-auto">
+            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="flex items-center gap-4">
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="icon" onClick={() => navigate('/fraude')}>
-                            <ArrowLeft className="w-5 h-5" />
-                        </Button>
-                        <Button variant="outline" size="icon" onClick={() => navigate('/admin')}>
-                            <ShieldCheck className="w-5 h-5" />
-                        </Button>
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold">Relatórios de Fraude e Risco</h1>
-                        <p className="text-muted-foreground">Métricas consolidadas e análise de tendências.</p>
-                    </div>
-                </div>
-                <div className="flex gap-2">
-                    <Button variant="outline"><Filter className="w-4 h-4 mr-2" /> Filtros</Button>
-                    <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Exportar PDF</Button>
+                <div>
+                    <h1 className="text-2xl font-bold">Relatórios de Fraude e Risco</h1>
+                    <p className="text-muted-foreground">Métricas consolidadas e análise de tendências.</p>
                 </div>
             </div>
+
+            {/* Navigation Tabs */}
+            <FraudNavigation />
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>

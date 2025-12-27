@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ScrollText, CheckCircle, XCircle, Clock, AlertTriangle, Eye, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { ScrollText, CheckCircle, XCircle, Clock, AlertTriangle, Eye } from 'lucide-react';
+import FraudNavigation from '../components/FraudNavigation';
 
 interface FraudEvent {
     id: string;
@@ -61,10 +62,10 @@ const FraudLogs = () => {
         }
     });
 
-    const events: FraudEvent[] = eventsData?.data || [];
+    const logs: FraudEvent[] = eventsData?.data || [];
 
     // Build log entries from events with decisions
-    const logEntries = events
+    const logEntries = logs
         .filter(e => e.status !== 'pendente' || e.metadata?.lastDecisionAt)
         .map(e => ({
             id: e.id,
@@ -81,20 +82,14 @@ const FraudLogs = () => {
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-4 max-w-7xl mx-auto">
             <div className="flex items-center gap-3">
-                <div className="flex gap-2">
-                    <Button variant="outline" size="icon" onClick={() => navigate('/fraude')}>
-                        <ArrowLeft className="w-5 h-5" />
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => navigate('/admin')}>
-                        <ShieldCheck className="w-5 h-5" />
-                    </Button>
-                </div>
-                <ScrollText className="w-8 h-8 text-muted-foreground" />
+                <ScrollText className="w-8 h-8 text-primary" />
                 <div>
                     <h1 className="text-2xl font-bold">Logs de Auditoria</h1>
                     <p className="text-muted-foreground">Histórico de ações e decisões sobre alertas de fraude</p>
                 </div>
             </div>
+
+            <FraudNavigation />
 
             <Card>
                 <CardHeader>
@@ -144,7 +139,7 @@ const FraudLogs = () => {
                     )}
                 </CardContent>
             </Card>
-        </div>
+        </div >
     );
 };
 
