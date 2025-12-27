@@ -10,6 +10,7 @@ router.get("/alerts", FraudController.getRecentAlerts);
 
 // Actions
 // Actions
+router.post("/seed", FraudController.seedData);
 router.post("/analyze/:shiftId", FraudController.manualAnalyze);
 router.post("/analyze-all", FraudController.analyzeAllShifts);
 router.get("/preview/:shiftId", FraudController.previewAnalysis);

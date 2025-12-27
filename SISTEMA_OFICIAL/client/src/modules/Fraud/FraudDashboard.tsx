@@ -106,10 +106,28 @@ export const FraudDashboard = () => {
                     <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Painel de Detecção de Fraude</h2>
                     <p className="text-muted-foreground mt-1">Monitoramento em tempo real de anomalias financeiras e operacionais.</p>
                 </div>
-                <Button onClick={handleRefresh} disabled={isRefreshing || isLoading} className="gap-2">
-                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    {isRefreshing ? 'Atualizando...' : 'Atualizar Análise'}
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        onClick={async () => {
+                            if (!confirm("Tem certeza que deseja gerar dados de teste? Isso criará eventos fictícios.")) return;
+                            try {
+                                const res = await api.post("/api/fraud/seed");
+                                alert(res.data.message);
+                                handleRefresh();
+                            } catch (e) {
+                                alert("Erro ao gerar dados");
+                            }
+                        }}
+                        variant="outline"
+                        className="gap-2 border-dashed"
+                    >
+                        🧪 Gerar Dados (Seed)
+                    </Button>
+                    <Button onClick={handleRefresh} disabled={isRefreshing || isLoading} className="gap-2">
+                        <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                        {isRefreshing ? 'Atualizando...' : 'Atualizar Análise'}
+                    </Button>
+                </div>
             </div>
 
             {/* KPI Cards */}
@@ -178,8 +196,8 @@ export const FraudDashboard = () => {
                                 key={status}
                                 onClick={() => setStatusFilter(status)}
                                 className={`px-3 py-1 text-sm rounded-full transition-colors ${statusFilter === status
-                                        ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                                    ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
                                     }`}
                             >
                                 {status === 'all' ? 'Todos' : status.replace('_', ' ')}

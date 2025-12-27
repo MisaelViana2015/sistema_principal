@@ -288,6 +288,90 @@ export const FraudController = {
         }
     },
 
+    // POST /api/fraud/seed
+    async seedData(req: Request, res: Response) {
+        try {
+            const { db } = await import("../../core/db/connection.js");
+            const { fraudEvents } = await import("../../../shared/schema.js");
+            const { randomUUID } = await import("node:crypto");
+
+            // Buscar turnos recentes
+            const recentShifts = await db.query.shifts.findMany({
+                orderBy: (s, { desc }) => desc(s.inicio),
+                limit: 50
+            });
+
+            if (recentShifts.length === 0) {
+                return res.status(400).json({ error: "Nenhum turno encontrado para gerar dados." });
+            }
+
+            const eventsToCreate: any[] = [];
+            const getRandomShift = () => recentShifts[Math.floor(Math.random() * recentShifts.length)];
+
+            // Distribuir nos últimos 30 dias
+            const today = new Date();
+            const levels = ['low', 'medium', 'high', 'critical'];
+            const counts = { low: 5, medium: 4, high: 3, critical: 2 };
+
+            for (let d = 0; d < 30; d++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - d);
+
+                // Chance de ter evento no dia (70%)
+                if (Math.random() > 0.3) {
+                    const level = levels[Math.floor(Math.random() * levels.length)];
+                    const shift = getRandomShift();
+
+                    let score = 0;
+                    const reasons = [];
+
+                    switch (level) {
+                        case 'low':
+                            score = Math.floor(Math.random() * 30);
+                            reasons.push({ code: 'RULE_01', label: 'Horário Atípico', description: 'Início fora do padrão', severity: 'low', score: 10 });
+                            break;
+                        case 'medium':
+                            score = 30 + Math.floor(Math.random() * 30);
+                            reasons.push({ code: 'RULE_02', label: 'Eficiência Baixa', description: 'Receita por KM abaixo do esperado', severity: 'medium', score: 40 });
+                            break;
+                        case 'high':
+                            score = 60 + Math.floor(Math.random() * 20);
+                            reasons.push({ code: 'RULE_03', label: 'Desvio de Rota', description: 'KM muito acima do padrão', severity: 'high', score: 70 });
+                            break;
+                        case 'critical':
+                            score = 80 + Math.floor(Math.random() * 20);
+                            reasons.push({ code: 'RULE_04', label: 'Inconsistência Grave', description: 'Valores não batem com hodômetro', severity: 'critical', score: 90 });
+                            break;
+                    }
+
+                    eventsToCreate.push({
+                        id: randomUUID(),
+                        shiftId: shift.id,
+                        driverId: shift.driverId,
+                        vehicleId: shift.vehicleId,
+                        riskScore: score,
+                        riskLevel: level,
+                        rules: reasons,
+                        details: { reasons },
+                        metadata: { seed: true, generatedAt: new Date() },
+                        status: 'pendente', // Sempre começa como pendente
+                        detectedAt: date, // Data retroativa para heatmap
+                        updatedAt: new Date()
+                    });
+                }
+            }
+
+            if (eventsToCreate.length > 0) {
+                await db.insert(fraudEvents).values(eventsToCreate as any);
+            }
+
+            res.json({ success: true, count: eventsToCreate.length, message: "Dados de teste gerados com sucesso!" });
+        } catch (error: any) {
+            console.error("[FRAUD] Error seeding data:", error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
     // GET /api/fraud/event/:id/pdf
     async getEventPdf(req: Request, res: Response) {
         try {
