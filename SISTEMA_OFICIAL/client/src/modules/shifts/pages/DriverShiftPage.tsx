@@ -55,6 +55,7 @@ export default function DriverShiftPage() {
     const [obs, setObs] = useState("");
     const [costTypesList, setCostTypesList] = useState<any[]>([]);
     const [isSplitCost, setIsSplitCost] = useState(false);
+    const [costCooldown, setCostCooldown] = useState(0); // Cooldown separado para custos
 
     // Finish Shift State
     const [finishPassword, setFinishPassword] = useState("");
@@ -78,7 +79,7 @@ export default function DriverShiftPage() {
         refetchInterval: 30000 // Check every 30s
     });
 
-    // Cooldown Timer (30 seconds)
+    // Cooldown Timer for Rides (5 min)
     useEffect(() => {
         if (rideCooldown > 0) {
             const timer = setTimeout(() => {
@@ -87,6 +88,16 @@ export default function DriverShiftPage() {
             return () => clearTimeout(timer);
         }
     }, [rideCooldown]);
+
+    // Cooldown Timer for Costs (separate, 5 min)
+    useEffect(() => {
+        if (costCooldown > 0) {
+            const timer = setTimeout(() => {
+                setCostCooldown(prev => prev - 1);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [costCooldown]);
 
     // Refresh data when cooldown ends
     const prevCooldownRef = React.useRef(rideCooldown);
@@ -324,7 +335,7 @@ export default function DriverShiftPage() {
                 isSplitCost: isSplitCost
             });
 
-            setRideCooldown(300);
+            setCostCooldown(300); // NÃO interfere no rideCooldown
             setCostValue("");
             setObs("");
             setIsSplitCost(false);

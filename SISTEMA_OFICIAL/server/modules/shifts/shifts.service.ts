@@ -26,6 +26,15 @@ export async function startShift(driverId: string, vehicleId: string, kmInicial:
         throw new Error(`KM inválido! O veículo está com ${vehicle.kmInicial} Km. Você informou ${kmInicial} Km.`);
     }
 
+    // REGRA: Veículo não pode estar em uso por outro motorista
+    const vehicleInUse = await db.query.shifts.findFirst({
+        where: (s, { and, eq }) => and(eq(s.vehicleId, vehicleId), eq(s.status, 'em_andamento'))
+    });
+
+    if (vehicleInUse) {
+        throw new Error(`Este veículo já está em uso em outro turno. Finalize o turno anterior antes de iniciar um novo.`);
+    }
+
     const newShift = await shiftsRepository.createShift({
         driverId,
         vehicleId,
