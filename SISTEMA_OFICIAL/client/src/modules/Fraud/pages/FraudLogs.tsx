@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ScrollText, CheckCircle, XCircle, Clock, AlertTriangle, Eye } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { ScrollText, CheckCircle, XCircle, Clock, AlertTriangle, Eye, ArrowLeft, ShieldCheck } from 'lucide-react';
 
 interface FraudEvent {
     id: string;
@@ -49,6 +51,8 @@ const getActionDescription = (status: string) => {
 };
 
 const FraudLogs = () => {
+    const navigate = useNavigate();
+
     const { data: eventsData, isLoading } = useQuery({
         queryKey: ['fraud-logs'],
         queryFn: async () => {
@@ -77,6 +81,14 @@ const FraudLogs = () => {
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-4 max-w-7xl mx-auto">
             <div className="flex items-center gap-3">
+                <div className="flex gap-2">
+                    <Button variant="outline" size="icon" onClick={() => navigate('/fraude')}>
+                        <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => navigate('/admin')}>
+                        <ShieldCheck className="w-5 h-5" />
+                    </Button>
+                </div>
                 <ScrollText className="w-8 h-8 text-muted-foreground" />
                 <div>
                     <h1 className="text-2xl font-bold">Logs de Auditoria</h1>

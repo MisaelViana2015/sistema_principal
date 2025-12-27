@@ -1,7 +1,9 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings, AlertTriangle, Shield, Activity, Clock, TrendingUp, Gauge, Target } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import { Settings, AlertTriangle, Shield, Activity, Clock, TrendingUp, Gauge, Target, ArrowLeft, ShieldCheck } from 'lucide-react';
 
 // These thresholds are read-only and match the backend fraud.engine.ts
 const THRESHOLDS = {
@@ -52,9 +54,18 @@ const getSeverityBadge = (severity: string) => {
 };
 
 const FraudConfiguration = () => {
+    const navigate = useNavigate();
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-4 max-w-7xl mx-auto">
             <div className="flex items-center gap-3">
+                <div className="flex gap-2">
+                    <Button variant="outline" size="icon" onClick={() => navigate('/fraude')}>
+                        <ArrowLeft className="w-5 h-5" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => navigate('/admin')}>
+                        <ShieldCheck className="w-5 h-5" />
+                    </Button>
+                </div>
                 <Settings className="w-8 h-8 text-muted-foreground" />
                 <div>
                     <h1 className="text-2xl font-bold">Configuração do Engine de Fraude</h1>

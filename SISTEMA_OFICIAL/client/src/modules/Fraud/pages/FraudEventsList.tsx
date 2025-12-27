@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Filter, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Filter, Search, ArrowLeft, ShieldCheck } from 'lucide-react';
 
 interface FraudEvent {
     id: string;
@@ -57,9 +57,19 @@ const FraudEventsList = () => {
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-4 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold">Histórico de Eventos</h1>
-                    <p className="text-muted-foreground">Todos os alertas de fraude registrados no sistema.</p>
+                <div className="flex items-center gap-4">
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="icon" onClick={() => navigate('/fraude')}>
+                            <ArrowLeft className="w-5 h-5" />
+                        </Button>
+                        <Button variant="outline" size="icon" onClick={() => navigate('/admin')}>
+                            <ShieldCheck className="w-5 h-5" />
+                        </Button>
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold">Histórico de Eventos</h1>
+                        <p className="text-muted-foreground">Todos os alertas de fraude registrados no sistema.</p>
+                    </div>
                 </div>
             </div>
 
