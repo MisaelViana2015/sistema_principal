@@ -370,7 +370,7 @@ export const FraudController = {
                         id: randomUUID(),
                         shiftId: shift.id,
                         driverId: shift.driverId,
-                        vehicleId: shift.vehicleId,
+                        // vehicleId removed: column does not exist in fraud_events table
                         riskScore: score,
                         riskLevel: level,
                         rules: reasons,

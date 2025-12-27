@@ -154,7 +154,7 @@ export const FraudDashboard = () => {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">Score Geral de Risco</p>
-                            <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{displayStats.riskScore?.toFixed(1) || '0.0'}/10</h3>
+                            <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{displayStats.riskScore?.toFixed(1) || '0.0'}</h3>
                         </div>
                     </div>
                 </Card>

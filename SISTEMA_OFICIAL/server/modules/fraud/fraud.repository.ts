@@ -1,6 +1,6 @@
 import { db } from "../../core/db/connection.js";
 import { fraudEvents } from "../../../shared/schema.js";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, inArray } from "drizzle-orm";
 import { FraudShiftAnalysis, FraudEventStatus } from "./fraud.types.js";
 
 export const FraudRepository = {
@@ -74,23 +74,22 @@ export const FraudRepository = {
 
     async getEventsCount(options: { status?: string, driverId?: string } = {}) {
         const { status, driverId } = options;
-        const result = await db.query.fraudEvents.findMany({
-            where: (f, { eq, inArray, and }) => {
-                const conditions = [];
-                if (status && status !== 'all') {
-                    if (status.includes(',')) {
-                        const statuses = status.split(',').map(s => s.trim());
-                        conditions.push(inArray(f.status, statuses));
-                    } else {
-                        conditions.push(eq(f.status, status as FraudEventStatus));
-                    }
-                }
-                if (driverId) conditions.push(eq(f.driverId, driverId));
-                return conditions.length > 0 ? and(...conditions) : undefined;
-            },
-            columns: { id: true }
-        });
-        return result.length;
+
+        const conditions = [];
+        if (status && status !== 'all') {
+            if (status.includes(',')) {
+                const statuses = status.split(',').map(s => s.trim());
+                conditions.push(inArray(fraudEvents.status, statuses));
+            } else {
+                conditions.push(eq(fraudEvents.status, status as FraudEventStatus));
+            }
+        }
+        if (driverId) conditions.push(eq(fraudEvents.driverId, driverId));
+
+        const whereClause = conditions.length > 0 ? sql`WHERE ${sql.join(conditions, sql` AND `)}` : sql``;
+
+        const result = await db.execute(sql`SELECT COUNT(*) as count FROM fraud_events ${whereClause}`);
+        return Number(result.rows[0].count);
     },
 
     async getPendingEventsCount() {
