@@ -187,6 +187,11 @@ router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
             const totalBruto = totalApp + totalParticular;
             const liquido = totalBruto;
 
+            // Contar corridas
+            const totalCorridasApp = ridesData.filter(r => ['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase())).length;
+            const totalCorridasParticular = ridesData.filter(r => !['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase())).length;
+            const totalCorridas = ridesData.length;
+
             // REGRA: SEMPRE 60% Empresa / 40% Motorista
             let repasseEmpresaFinal = liquido * 0.60;
             let repasseMotoristaFinal = liquido * 0.40;
@@ -238,7 +243,10 @@ router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
                         total_custos = ${totalCustos},
                         liquido = ${liquido},
                         repasse_empresa = ${repasseEmpresaFinal},
-                        repasse_motorista = ${repasseMotoristaFinal}
+                        repasse_motorista = ${repasseMotoristaFinal},
+                        total_corridas = ${totalCorridas},
+                        total_corridas_app = ${totalCorridasApp},
+                        total_corridas_particular = ${totalCorridasParticular}
                     WHERE id = ${shiftId}
                 `);
             }
@@ -299,6 +307,11 @@ router.post("/fix-single-shift/:shiftId", requireAdmin, async (req, res) => {
         const totalBruto = totalApp + totalParticular;
         const liquido = totalBruto;
 
+        // Contar corridas
+        const totalCorridasApp = ridesData.filter(r => ['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase())).length;
+        const totalCorridasParticular = ridesData.filter(r => !['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase())).length;
+        const totalCorridas = ridesData.length;
+
         // REGRA: SEMPRE 60% Empresa / 40% Motorista
         const novoEmpresa = parseFloat((liquido * 0.60).toFixed(2));
         const novoMotorista = parseFloat((liquido * 0.40).toFixed(2));
@@ -311,6 +324,7 @@ router.post("/fix-single-shift/:shiftId", requireAdmin, async (req, res) => {
             data: new Date(shift.inicio).toLocaleDateString('pt-BR'),
             bruto: totalBruto.toFixed(2),
             liquido: liquido.toFixed(2),
+            corridas: totalCorridas,
             atual: {
                 empresa: atualEmpresa.toFixed(2),
                 motorista: atualMotorista.toFixed(2)
@@ -329,7 +343,10 @@ router.post("/fix-single-shift/:shiftId", requireAdmin, async (req, res) => {
                     total_bruto = ${totalBruto},
                     liquido = ${liquido},
                     repasse_empresa = ${novoEmpresa},
-                    repasse_motorista = ${novoMotorista}
+                    repasse_motorista = ${novoMotorista},
+                    total_corridas = ${totalCorridas},
+                    total_corridas_app = ${totalCorridasApp},
+                    total_corridas_particular = ${totalCorridasParticular}
                 WHERE id = ${shift.id}
             `);
         }
