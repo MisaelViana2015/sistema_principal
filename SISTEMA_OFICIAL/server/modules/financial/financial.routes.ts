@@ -134,18 +134,17 @@ router.get("/debug-shifts", requireAdmin, async (req, res) => {
     }
 });
 
-// Rota para corrigir cálculos 60/40 de turnos antigos (antes de 15/12/2024)
+// Rota para corrigir cálculos 60/40 de TODOS os turnos
 router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
     try {
         const { db } = await import("../../core/db/connection.js");
         const { sql } = await import("drizzle-orm");
 
         const dryRun = req.query.dryRun === "true";
-        const cutoffDate = (req.query.cutoffDate as string) || "2024-12-15";
 
-        // Buscar TODOS os turnos encerrados (ignora data - verifica pelo cálculo incorreto)
-        const legacyShifts = await db.execute(sql`
-            SELECT id, status, total_bruto, repasse_empresa, repasse_motorista, inicio
+        // Buscar TODOS os turnos encerrados
+        const allShifts = await db.execute(sql`
+            SELECT id, status, total_bruto, total_custos, repasse_empresa, repasse_motorista, inicio
             FROM shifts 
             WHERE status != 'em_andamento'
         `);
@@ -154,17 +153,8 @@ router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
         let corrected = 0;
         let skipped = 0;
 
-        for (const shift of legacyShifts.rows as any[]) {
+        for (const shift of allShifts.rows as any[]) {
             const shiftId = shift.id;
-            const shiftDate = new Date(shift.inicio);
-            const cutoffObj = new Date(cutoffDate);
-
-            // SEGURANÇA: Pular turnos após a data de corte (15/12/2024)
-            // Turnos a partir dessa data já seguem a regra 50/50 e NÃO devem ser tocados.
-            if (shiftDate >= cutoffObj) {
-                skipped++;
-                continue;
-            }
 
             // Buscar corridas
             const ridesResult = await db.execute(sql`
@@ -197,16 +187,18 @@ router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
             const totalBruto = totalApp + totalParticular;
             const liquido = totalBruto;
 
-            // CÁLCULO CORRETO 60/40
+            // REGRA: SEMPRE 60% Empresa / 40% Motorista
             let repasseEmpresaFinal = liquido * 0.60;
             let repasseMotoristaFinal = liquido * 0.40;
-            repasseEmpresaFinal -= totalCustosNormais;
-            const discountCompany = totalCustosDivididos * 0.50;
-            const discountDriver = totalCustosDivididos * 0.50;
-            repasseEmpresaFinal -= discountCompany;
-            repasseMotoristaFinal -= discountDriver;
 
-            // Verificar se precisa corrigir
+            // Custos normais: descontados 100% da empresa
+            repasseEmpresaFinal -= totalCustosNormais;
+
+            // Custos divididos: 50% de cada
+            repasseEmpresaFinal -= totalCustosDivididos * 0.50;
+            repasseMotoristaFinal -= totalCustosDivididos * 0.50;
+
+            // Verificar se precisa corrigir (diferença > R$ 0.01)
             const currentEmpresa = Number(shift.repasse_empresa || 0);
             const currentMotorista = Number(shift.repasse_motorista || 0);
 
@@ -245,10 +237,10 @@ router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
         res.json({
             success: true,
             dryRun,
-            total: legacyShifts.rows.length,
+            total: allShifts.rows.length,
             corrected,
             skipped,
-            details: results.slice(0, 10) // Limitar para não sobrecarregar resposta
+            details: results.slice(0, 10)
         });
     } catch (error: any) {
         console.error("Erro ao corrigir turnos:", error);
