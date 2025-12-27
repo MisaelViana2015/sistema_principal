@@ -63,7 +63,10 @@ export const FraudRepository = {
 
                 return conditions.length > 0 ? and(...conditions) : undefined;
             },
-            orderBy: (f, { desc }) => desc(f.detectedAt),
+            with: {
+                driver: true
+            },
+            orderBy: (f, { desc }) => [desc(f.detectedAt)],
             limit,
             offset
         });

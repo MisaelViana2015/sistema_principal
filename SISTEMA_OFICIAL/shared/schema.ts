@@ -1,7 +1,7 @@
 
 import { pgTable, unique, varchar, text, boolean, timestamp, foreignKey, numeric, integer, jsonb, real, index, json, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
-import { sql } from "drizzle-orm";
+import { sql, relations } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export const drivers = pgTable("drivers", {
@@ -247,6 +247,10 @@ export const fraudEvents = pgTable("fraud_events", {
     reviewNotes: text("review_notes"),
     createdAt: timestamp("created_at").defaultNow(),
     detectedAt: timestamp("detected_at").defaultNow(),
+}, (table) => {
+    return {
+        detectedAtIndex: index("idx_fraud_events_detected_at").on(table.detectedAt),
+    }
 });
 
 export const preventiveMaintenances = pgTable("preventive_maintenances", {
@@ -266,3 +270,19 @@ export const sessionTable = pgTable("session", { // Singular 'session' found in 
     sess: json("sess"),
     expire: timestamp("expire"),
 });
+
+// RELATIONS
+export const fraudEventsRelations = relations(fraudEvents, ({ one }) => ({
+    driver: one(drivers, {
+        fields: [fraudEvents.driverId],
+        references: [drivers.id],
+    }),
+    shift: one(shifts, {
+        fields: [fraudEvents.shiftId],
+        references: [shifts.id],
+    }),
+}));
+
+export const driversRelations = relations(drivers, ({ many }) => ({
+    fraudEvents: many(fraudEvents),
+}));
