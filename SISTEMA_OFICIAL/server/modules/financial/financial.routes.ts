@@ -212,9 +212,21 @@ router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
             }
 
             results.push({
-                id: shiftId,
-                before: { empresa: currentEmpresa, motorista: currentMotorista },
-                after: { empresa: repasseEmpresaFinal, motorista: repasseMotoristaFinal }
+                id: shiftId.substring(0, 8),
+                data: new Date(shift.inicio).toLocaleDateString('pt-BR'),
+                bruto: totalBruto.toFixed(2),
+                custos: totalCustos.toFixed(2),
+                liquido: liquido.toFixed(2),
+                atual: {
+                    empresa: currentEmpresa.toFixed(2),
+                    motorista: currentMotorista.toFixed(2),
+                    percentual: liquido > 0 ? `${((currentEmpresa / liquido) * 100).toFixed(0)}/${((currentMotorista / liquido) * 100).toFixed(0)}` : 'N/A'
+                },
+                corrigido: {
+                    empresa: repasseEmpresaFinal.toFixed(2),
+                    motorista: repasseMotoristaFinal.toFixed(2),
+                    percentual: '60/40'
+                }
             });
 
             if (!dryRun) {
@@ -240,7 +252,7 @@ router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
             total: allShifts.rows.length,
             corrected,
             skipped,
-            details: results.slice(0, 10)
+            details: results.slice(0, 100)
         });
     } catch (error: any) {
         console.error("Erro ao corrigir turnos:", error);
