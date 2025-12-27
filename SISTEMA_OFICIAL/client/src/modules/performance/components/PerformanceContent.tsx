@@ -1021,6 +1021,75 @@ export default function PerformanceContent() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Teste de turno único */}
+                        <div style={{ ...styles.filtersCard, padding: "1.5rem", marginBottom: "1rem", marginTop: "1rem" }}>
+                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>🧪 Testar Correção em 1 Turno</h4>
+                            <p style={{ color: isDark ? "#94a3b8" : "#64748b", marginBottom: "1rem", fontSize: "0.875rem" }}>
+                                Digite o início do ID do turno (ex: 9616de76) para testar a correção antes de aplicar em todos.
+                            </p>
+                            <div id="single-shift-result" style={{ display: "none", marginBottom: "1rem" }}></div>
+                            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+                                <input
+                                    type="text"
+                                    id="single-shift-id"
+                                    placeholder="ID do turno (ex: 9616de76)"
+                                    style={{ padding: "0.75rem", borderRadius: "0.5rem", border: `1px solid ${isDark ? "#475569" : "#cbd5e1"}`, background: isDark ? "#0f172a" : "#fff", color: isDark ? "#fff" : "#000", minWidth: "200px" }}
+                                />
+                                <button
+                                    onClick={async () => {
+                                        const shiftId = (document.getElementById("single-shift-id") as HTMLInputElement)?.value;
+                                        if (!shiftId) { alert("Digite o ID do turno"); return; }
+                                        try {
+                                            const res = await api.post(`/financial/fix-single-shift/${shiftId}?dryRun=true`);
+                                            const container = document.getElementById("single-shift-result");
+                                            if (container) {
+                                                container.style.display = "block";
+                                                container.innerHTML = `
+                                                    <div style="padding: 1rem; background: ${isDark ? '#1e293b' : '#f8fafc'}; border-radius: 8px; border: 1px solid ${isDark ? '#334155' : '#e2e8f0'};">
+                                                        <h5 style="margin-bottom: 0.5rem; color: ${isDark ? '#fff' : '#000'};">📋 Turno: ${res.data.id?.substring(0, 8)} | Data: ${res.data.data}</h5>
+                                                        <p style="margin: 0.5rem 0; color: ${isDark ? '#94a3b8' : '#64748b'};">Bruto: R$ ${res.data.bruto} | Líquido: R$ ${res.data.liquido}</p>
+                                                        <div style="display: flex; gap: 2rem; margin-top: 1rem;">
+                                                            <div style="padding: 1rem; background: #fef2f2; border-radius: 8px;">
+                                                                <strong style="color: #dc2626;">ATUAL (50/50)</strong><br/>
+                                                                Empresa: R$ ${res.data.atual.empresa}<br/>
+                                                                Motorista: R$ ${res.data.atual.motorista}
+                                                            </div>
+                                                            <div style="padding: 1rem; background: #f0fdf4; border-radius: 8px;">
+                                                                <strong style="color: #16a34a;">NOVO (60/40)</strong><br/>
+                                                                Empresa: R$ ${res.data.novo.empresa}<br/>
+                                                                Motorista: R$ ${res.data.novo.motorista}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                `;
+                                            }
+                                        } catch (err: any) {
+                                            alert("Erro: " + (err.response?.data?.error || err.message));
+                                        }
+                                    }}
+                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#8b5cf6", color: "#fff", cursor: "pointer", fontWeight: "500" }}
+                                >
+                                    🔍 Simular 1 Turno
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        const shiftId = (document.getElementById("single-shift-id") as HTMLInputElement)?.value;
+                                        if (!shiftId) { alert("Digite o ID do turno"); return; }
+                                        if (!window.confirm("⚠️ Isso irá ALTERAR este turno. Continuar?")) return;
+                                        try {
+                                            const res = await api.post(`/financial/fix-single-shift/${shiftId}`);
+                                            alert(`✅ Turno corrigido!\n\nID: ${res.data.id?.substring(0, 8)}\nData: ${res.data.data}\n\nANTES:\nEmpresa: R$ ${res.data.atual.empresa}\nMotorista: R$ ${res.data.atual.motorista}\n\nDEPOIS:\nEmpresa: R$ ${res.data.novo.empresa}\nMotorista: R$ ${res.data.novo.motorista}`);
+                                        } catch (err: any) {
+                                            alert("Erro: " + (err.response?.data?.error || err.message));
+                                        }
+                                    }}
+                                    style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#f59e0b", color: "#fff", cursor: "pointer", fontWeight: "500" }}
+                                >
+                                    ⚡ Corrigir 1 Turno
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 )
             }

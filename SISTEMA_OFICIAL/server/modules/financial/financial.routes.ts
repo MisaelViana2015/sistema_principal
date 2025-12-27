@@ -252,10 +252,96 @@ router.post("/fix-legacy-shifts", requireAdmin, async (req, res) => {
             total: allShifts.rows.length,
             corrected,
             skipped,
-            details: results.slice(0, 100)
+            details: results.slice(0, 200)
         });
     } catch (error: any) {
         console.error("Erro ao corrigir turnos:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Rota para corrigir UM ÚNICO turno (para teste)
+router.post("/fix-single-shift/:shiftId", requireAdmin, async (req, res) => {
+    try {
+        const { db } = await import("../../core/db/connection.js");
+        const { sql } = await import("drizzle-orm");
+
+        const shiftId = req.params.shiftId;
+        const dryRun = req.query.dryRun === "true";
+
+        // Buscar o turno pelo ID parcial
+        const shiftResult = await db.execute(sql`
+            SELECT id, status, total_bruto, total_custos, repasse_empresa, repasse_motorista, inicio
+            FROM shifts 
+            WHERE id LIKE ${shiftId + '%'}
+            LIMIT 1
+        `);
+
+        if (shiftResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: "Turno não encontrado" });
+        }
+
+        const shift = shiftResult.rows[0] as any;
+
+        // Buscar corridas
+        const ridesResult = await db.execute(sql`SELECT tipo, valor FROM rides WHERE shift_id = ${shift.id}`);
+        const ridesData = ridesResult.rows as any[];
+
+        // Calcular totais
+        const totalApp = ridesData
+            .filter(r => ['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase()))
+            .reduce((sum, r) => sum + Number(r.valor || 0), 0);
+
+        const totalParticular = ridesData
+            .filter(r => !['APP', 'APLICATIVO'].includes(String(r.tipo || '').toUpperCase()))
+            .reduce((sum, r) => sum + Number(r.valor || 0), 0);
+
+        const totalBruto = totalApp + totalParticular;
+        const liquido = totalBruto;
+
+        // REGRA: SEMPRE 60% Empresa / 40% Motorista
+        const novoEmpresa = parseFloat((liquido * 0.60).toFixed(2));
+        const novoMotorista = parseFloat((liquido * 0.40).toFixed(2));
+
+        const atualEmpresa = Number(shift.repasse_empresa || 0);
+        const atualMotorista = Number(shift.repasse_motorista || 0);
+
+        const result = {
+            id: shift.id,
+            data: new Date(shift.inicio).toLocaleDateString('pt-BR'),
+            bruto: totalBruto.toFixed(2),
+            liquido: liquido.toFixed(2),
+            atual: {
+                empresa: atualEmpresa.toFixed(2),
+                motorista: atualMotorista.toFixed(2)
+            },
+            novo: {
+                empresa: novoEmpresa.toFixed(2),
+                motorista: novoMotorista.toFixed(2)
+            }
+        };
+
+        if (!dryRun) {
+            await db.execute(sql`
+                UPDATE shifts SET
+                    total_app = ${totalApp},
+                    total_particular = ${totalParticular},
+                    total_bruto = ${totalBruto},
+                    liquido = ${liquido},
+                    repasse_empresa = ${novoEmpresa},
+                    repasse_motorista = ${novoMotorista}
+                WHERE id = ${shift.id}
+            `);
+        }
+
+        res.json({
+            success: true,
+            dryRun,
+            message: dryRun ? "Simulação - nenhuma alteração feita" : "Turno corrigido com sucesso!",
+            ...result
+        });
+    } catch (error: any) {
+        console.error("Erro ao corrigir turno:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
