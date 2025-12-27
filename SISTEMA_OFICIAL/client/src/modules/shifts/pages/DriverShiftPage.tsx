@@ -2,8 +2,9 @@
 import { getVehicleImage } from "../../../lib/vehicleAssets";
 import React, { useState, useEffect } from "react";
 import MainLayout from "../../../components/MainLayout";
+import { useQuery } from "@tanstack/react-query";
 import {
-    Car, Clock, Play, RotateCcw, CheckCircle2,
+    Car, Clock, Play, RotateCcw, CheckCircle2, AlertTriangle,
     Plus, DollarSign, TrendingUp, Building, User, Wallet, History, X,
     Zap, Tag, Home, ShoppingCart, Package, Wifi, Phone, Users, Fuel, Utensils, Smartphone, Wrench,
     ArrowLeft, LogOut, Edit
@@ -64,6 +65,18 @@ export default function DriverShiftPage() {
         loadData();
         loadCostTypes();
     }, [user]);
+
+    // Fraud Prevention - Real-time Check
+    const { data: fraudPreview } = useQuery({
+        queryKey: ['fraud-preview', activeShift?.id],
+        queryFn: async () => {
+            if (!activeShift?.id) return null;
+            const res = await api.get(`/fraud/preview/${activeShift.id}`);
+            return res.data;
+        },
+        enabled: !!activeShift?.id && viewMode === 'dashboard',
+        refetchInterval: 30000 // Check every 30s
+    });
 
     // Cooldown Timer (30 seconds)
     useEffect(() => {
@@ -407,6 +420,24 @@ export default function DriverShiftPage() {
         return (
             <MainLayout>
                 <div className="max-w-4xl mx-auto px-4 py-6 pb-32">
+
+
+                    {/* Fraud Alert */}
+                    {fraudPreview && fraudPreview.score > 20 && (
+                        <div className="bg-yellow-500/10 border border-yellow-500/50 rounded-xl p-4 mb-6">
+                            <div className="flex items-center gap-2 text-yellow-500 font-bold mb-2">
+                                <AlertTriangle className="w-5 h-5 animate-pulse" />
+                                <span>Detecção de Anomalia ({fraudPreview.score} pts)</span>
+                            </div>
+                            <div className="space-y-1">
+                                {fraudPreview.alerts.map((a: any, i: number) => (
+                                    <div key={i} className="text-xs text-yellow-200/80 bg-yellow-500/5 p-2 rounded border border-yellow-500/20">
+                                        <span className="font-bold text-yellow-400">{a.label}</span>: {a.description}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Header Card */}
                     <motion.div

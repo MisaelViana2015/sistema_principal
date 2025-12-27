@@ -938,6 +938,68 @@ export default function PerformanceContent() {
                     <div style={{ padding: "1.5rem" }}>
                         <h3 style={{ ...styles.title, marginBottom: "1.5rem" }}>🛠️ Ferramentas de Manutenção</h3>
 
+
+                        {/* Análise de Fraude em Massa */}
+                        <div style={{ ...styles.filtersCard, padding: "1.5rem", marginBottom: "1rem" }}>
+                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>
+                                🔍 Análise de Fraude em Massa
+                            </h4>
+                            <p style={{ color: isDark ? "#94a3b8" : "#64748b", marginBottom: "1rem", fontSize: "0.875rem" }}>
+                                Executa o engine de detecção de fraude em todos os turnos finalizados.
+                            </p>
+                            <div id="fraud-analysis-results" style={{ display: "none", marginBottom: "1rem", maxHeight: "400px", overflowY: "auto" }}></div>
+                            <button
+                                onClick={async () => {
+                                    if (!window.confirm("Isso irá analisar todos os turnos. Continuar?")) return;
+                                    try {
+                                        const res = await api.post("/fraud/analyze-all");
+                                        const container = document.getElementById("fraud-analysis-results");
+                                        if (container) {
+                                            container.style.display = "block";
+                                            container.innerHTML = `
+                                <div style="background: ${isDark ? '#0f172a' : '#f8fafc'}; border-radius: 8px; padding: 1rem;">
+                                    <h5 style="margin-bottom: 1rem; color: ${isDark ? '#fff' : '#000'};">
+                                        📊 Total: ${res.data.total} | Analisados: ${res.data.analyzed} | 
+                                        Alertas: ${res.data.alertsFound}
+                                    </h5>
+                                    ${res.data.details.length > 0 ? `
+                                        <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+                                            <thead>
+                                                <tr style="background: ${isDark ? '#1e293b' : '#e2e8f0'};">
+                                                    <th style="padding: 8px; text-align: left;">ID Turno</th>
+                                                    <th style="padding: 8px; text-align: center;">Score</th>
+                                                    <th style="padding: 8px; text-align: center;">Nível</th>
+                                                    <th style="padding: 8px; text-align: left;">Alertas</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${res.data.details.map((d: any) => `
+                                                    <tr style="border-bottom: 1px solid ${isDark ? '#334155' : '#e2e8f0'};">
+                                                        <td style="padding: 6px;">${d.shiftId}</td>
+                                                        <td style="padding: 6px; text-align: center; font-weight: bold; color: ${d.level === 'critical' ? '#dc2626' :
+                                                    d.level === 'high' ? '#f59e0b' :
+                                                        d.level === 'medium' ? '#eab308' : '#3b82f6'
+                                                };">${d.score}</td>
+                                                        <td style="padding: 6px; text-align: center;">${d.level}</td>
+                                                        <td style="padding: 6px; font-size: 0.75rem;">${d.reasons.join(', ')}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    ` : '<p style="color: #22c55e;">✅ Nenhuma anomalia detectada!</p>'}
+                                </div>
+                            `;
+                                        }
+                                    } catch (err: any) {
+                                        alert("Erro: " + (err.response?.data?.error || err.message));
+                                    }
+                                }}
+                                style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#8b5cf6", color: "#fff", cursor: "pointer", fontWeight: "500" }}
+                            >
+                                🔍 Executar Análise de Fraude
+                            </button>
+                        </div>
+
                         <div style={{ ...styles.filtersCard, padding: "2rem", textAlign: "center" as const }}>
                             <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>✅</div>
                             <h4 style={{ fontWeight: "600", marginBottom: "0.5rem", color: isDark ? "#fff" : "#0f172a" }}>Sistema OK</h4>

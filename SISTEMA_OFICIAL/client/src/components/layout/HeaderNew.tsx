@@ -1,4 +1,4 @@
-import { Sun, Moon, LogOut, Car, DollarSign, Package, TrendingUp, Home, Shield } from "lucide-react";
+import { Sun, Moon, LogOut, Car, DollarSign, Package, TrendingUp, Home, Shield, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import logoRotaVerde from "@/assets/logo-rota-verde.png";
@@ -16,6 +16,7 @@ const navItems = [
     { path: "/corridas", label: "Corridas", icon: DollarSign },
     { path: "/caixa", label: "Caixa", icon: Package },
     { path: "/desempenho", label: "Desempenho", icon: TrendingUp },
+    { path: "/fraude", label: "Fraude", icon: ShieldAlert },
 ];
 
 const HeaderNew = ({
@@ -79,7 +80,7 @@ const HeaderNew = ({
                 {showDesktopNav && (
                     <nav className="hidden md:flex items-center gap-1 ml-8">
                         {navItems
-                            .filter(item => item.path !== "/desempenho" || isUserAdmin) // Hide Desempenho if not admin
+                            .filter(item => (item.path !== "/desempenho" && item.path !== "/fraude") || isUserAdmin) // Hide Admin modules if not admin
                             .map((item) => {
                                 const isActive = location.pathname.startsWith(item.path);
                                 const Icon = item.icon;
