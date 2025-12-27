@@ -1,0 +1,95 @@
+import { db } from "../../core/db/connection.js";
+import { shifts, rides } from "../../../shared/schema.js";
+import { eq, lt, desc } from "drizzle-orm";
+import { buildDriverBaseline } from "./fraud.baseline.js";
+import { analyzeShiftRules } from "./fraud.engine.js";
+import { FraudRepository } from "./fraud.repository.js";
+import { FraudShiftAnalysis, ShiftContext } from "./fraud.types.js";
+
+export const FraudService = {
+    /**
+     * Analisa um turno específico em busca de fraudes.
+     * Orquestra a coleta de dados, cálculo de baseline e execução do engine.
+     */
+    async analyzeShift(shiftId: string): Promise<FraudShiftAnalysis | null> {
+        // 1. Buscar dados do turno
+        const shift = await db.query.shifts.findFirst({
+            where: (s, { eq }) => eq(s.id, shiftId),
+        });
+
+        if (!shift) return null;
+
+        // Buscar corridas (para calcular totais se necessário ou validar)
+        const shiftRides = await db.query.rides.findMany({
+            where: (r, { eq }) => eq(r.shiftId, shiftId),
+        });
+
+        // 2. Preparar Dados
+        const inicio = new Date(shift.inicio);
+        const fim = shift.fim ? new Date(shift.fim) : new Date();
+
+        // Garantir duração mínima para evitar divisão por zero
+        const durationHours = Math.max(
+            0.01,
+            (fim.getTime() - inicio.getTime()) / (1000 * 60 * 60)
+        );
+
+        const kmStart = Number(shift.kmInicial || 0);
+        const kmEnd = Number(shift.kmFinal || 0);
+
+        // Tratamento de segurança para dados numéricos
+        let totalBruto = Number(shift.totalBruto || 0);
+        let totalCorridas = Number(shift.totalCorridas || 0);
+
+        // Fallback se totais estiverem zerados (mas há corridas)
+        if ((totalBruto <= 0 || totalCorridas <= 0) && shiftRides.length > 0) {
+            totalBruto = shiftRides.reduce((acc, ride) => acc + Number(ride.valor), 0);
+            totalCorridas = shiftRides.length;
+        }
+
+        // 3. Carregar Contexto (Shift Anterior + Baseline)
+        const prevShift = await db.query.shifts.findFirst({
+            where: (s, { and, eq, lt }) =>
+                and(eq(s.vehicleId, shift.vehicleId), lt(s.inicio, shift.inicio)),
+            orderBy: (s, { desc }) => desc(s.inicio),
+        });
+
+        const baseline = await buildDriverBaseline(shift.driverId, inicio.toISOString());
+
+        const ctx: ShiftContext = {
+            baseline,
+            prevShiftKmEnd: prevShift ? Number(prevShift.kmFinal || 0) : null,
+        };
+
+        // 4. Executar Engine de Regras
+        const score = analyzeShiftRules(
+            kmStart,
+            kmEnd,
+            totalBruto,
+            totalCorridas,
+            durationHours,
+            ctx
+        );
+
+        // 5. Montar Objeto de Análise
+        const kmTotal = Math.max(0, kmEnd - kmStart);
+
+        const analysis: FraudShiftAnalysis = {
+            shiftId: shift.id,
+            driverId: shift.driverId,
+            vehicleId: shift.vehicleId,
+            date: inicio.toISOString().split("T")[0],
+            kmTotal,
+            revenueTotal: totalBruto,
+            revenuePerKm: kmTotal > 0 ? totalBruto / kmTotal : 0,
+            revenuePerHour: totalBruto / durationHours,
+            ridesPerHour: totalCorridas / durationHours,
+            score,
+        };
+
+        // 6. Persistir Resultado
+        await FraudRepository.saveFraudEvent(analysis);
+
+        return analysis;
+    }
+};
