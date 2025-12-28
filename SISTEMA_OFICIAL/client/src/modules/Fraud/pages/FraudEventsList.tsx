@@ -64,9 +64,6 @@ const FraudEventsList = () => {
                 </div>
             </div>
 
-            {/* Navigation Tabs */}
-            <FraudNavigation />
-
             <Card>
                 <CardHeader className="pb-3">
                     <div className="flex flex-col md:flex-row gap-4 justify-between">

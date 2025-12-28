@@ -66,8 +66,6 @@ const FraudConfiguration = () => {
                 </div>
             </div>
 
-            {/* Navigation Tabs */}
-            <FraudNavigation />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Thresholds Card */}
