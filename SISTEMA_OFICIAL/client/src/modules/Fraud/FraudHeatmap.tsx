@@ -25,7 +25,7 @@ export const FraudHeatmap = () => {
     const { data: apiData } = useQuery({
         queryKey: ['fraud-heatmap'],
         queryFn: async () => {
-            const res = await api.get('/api/fraud/heatmap');
+            const res = await api.get('/fraud/heatmap');
             return res.data as HeatmapPoint[];
         }
     });
