@@ -35,10 +35,14 @@ interface FraudEvent {
     rules: { ruleId: string; label: string; score: number }[];
 }
 
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import FraudEventDetail from './pages/FraudEventDetail';
+
 const FraudDashboard = () => {
     const navigate = useNavigate();
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [currentTab, setCurrentTab] = useState('painel');
+    const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
 
     const { data: stats } = useQuery({
         queryKey: ['fraud-stats'],
@@ -205,7 +209,7 @@ const FraudDashboard = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        <Button variant="outline" size="sm" onClick={() => navigate(`/fraude/evento/${alert.id}`)}>
+                                        <Button variant="outline" size="sm" onClick={() => setSelectedAlertId(alert.id)}>
                                             Ver Detalhes
                                         </Button>
                                     </div>
@@ -226,6 +230,18 @@ const FraudDashboard = () => {
             {currentTab === 'eventos' && <FraudEventsList />}
             {currentTab === 'configuracao' && <FraudConfiguration />}
             {currentTab === 'logs' && <FraudLogs />}
+
+            {/* MODAL DETALHES EVENTO */}
+            <Dialog open={!!selectedAlertId} onOpenChange={(open) => !open && setSelectedAlertId(null)}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto w-full">
+                    {selectedAlertId && (
+                        <FraudEventDetail
+                            eventId={selectedAlertId}
+                            onClose={() => setSelectedAlertId(null)}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
 
         </div>
     );

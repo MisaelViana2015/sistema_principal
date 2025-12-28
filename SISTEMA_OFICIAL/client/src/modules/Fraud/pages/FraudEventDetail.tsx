@@ -37,16 +37,25 @@ interface EventDetailResponse {
     shift: ShiftData;
 }
 
-const FraudEventDetail = () => {
-    const { id } = useParams();
+interface FraudEventDetailProps {
+    eventId?: string;
+    onClose?: () => void;
+}
+
+const FraudEventDetail = ({ eventId: propEventId, onClose }: FraudEventDetailProps = {}) => {
+    const params = useParams();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [actionComment, setActionComment] = useState('');
 
+    // Prioritize prop ID (modal mode) over route param
+    const id = propEventId || params.id;
+    const isModal = !!propEventId;
+
     const { data, isLoading, error } = useQuery({
         queryKey: ['fraud-event', id],
         queryFn: async () => {
-            const res = await api.get(`/api/fraud/event/${id}`);
+            const res = await api.get(`/fraud/event/${id}`);
             return res.data as EventDetailResponse;
         },
         enabled: !!id
@@ -54,13 +63,14 @@ const FraudEventDetail = () => {
 
     const updateStatusMutation = useMutation({
         mutationFn: async ({ status, comment }: { status: string, comment?: string }) => {
-            const res = await api.post(`/api/fraud/event/${id}/status`, { status, comment });
+            const res = await api.post(`/fraud/event/${id}/status`, { status, comment });
             return res.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['fraud-event', id] });
             queryClient.invalidateQueries({ queryKey: ['fraud-alerts'] });
             queryClient.invalidateQueries({ queryKey: ['fraud-stats'] });
+            if (isModal && onClose) onClose();
         }
     });
 
@@ -71,7 +81,7 @@ const FraudEventDetail = () => {
 
     const handleDownloadPdf = async () => {
         try {
-            const response = await api.get(`/api/fraud/event/${id}/pdf`, { responseType: 'blob' });
+            const response = await api.get(`/fraud/event/${id}/pdf`, { responseType: 'blob' });
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
@@ -110,19 +120,21 @@ const FraudEventDetail = () => {
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500 p-4 max-w-7xl mx-auto">
-            {/* Header / Actions */}
+        <div className={`space-y-6 animate-in fade-in duration-500 ${isModal ? '' : 'p-4 max-w-7xl mx-auto'}`}>
+            {/* Header / Actions - Hide back button in modal */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" onClick={() => navigate('/fraude')}>
-                        <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
-                    </Button>
+                    {!isModal && (
+                        <Button variant="outline" onClick={() => navigate('/fraude')}>
+                            <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
+                        </Button>
+                    )}
                     <div>
-                        <h1 className="text-2xl font-bold">Detalhe do Evento de Fraude</h1>
+                        <h1 className="text-2xl font-bold">Detalhe do Evento</h1>
                         <p className="text-muted-foreground flex items-center gap-2 text-sm">
                             ID: <span className="font-mono">{event.id}</span>
                             <span className="text-gray-300">|</span>
-                            Detectado em: {new Date(event.detectedAt).toLocaleString()}
+                            {new Date(event.detectedAt).toLocaleString()}
                         </p>
                     </div>
                 </div>
