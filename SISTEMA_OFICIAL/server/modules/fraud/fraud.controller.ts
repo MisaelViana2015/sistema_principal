@@ -87,13 +87,27 @@ export const FraudController = {
     async getRecentAlerts(req: Request, res: Response) {
         try {
             const alerts = await FraudRepository.getFraudEvents({ limit: 10 });
-            // DEBUG: Check if driver is populated
+
+            // MANUAL JOIN: Fetch drivers to ensure names are displayed
             if (alerts.length > 0) {
-                console.log("[DEBUG] First Alert Driver Check:", {
-                    id: alerts[0].id,
-                    driverId: alerts[0].driverId,
-                    driver: alerts[0].driver
-                });
+                const driverIds = [...new Set(alerts.map(a => a.driverId).filter(Boolean))];
+                if (driverIds.length > 0) {
+                    const driversFound = await db.query.drivers.findMany({
+                        where: (d, { inArray }) => inArray(d.id, driverIds),
+                        columns: { id: true, nome: true }
+                    });
+
+                    const driverMap = new Map(driversFound.map(d => [d.id, d]));
+
+                    // Attach driver info manually
+                    alerts.forEach((alert: any) => {
+                        if (alert.driverId && driverMap.has(alert.driverId)) {
+                            alert.driver = {
+                                name: driverMap.get(alert.driverId)?.nome
+                            };
+                        }
+                    });
+                }
             }
             res.json(alerts);
         } catch (error: any) {
@@ -112,6 +126,27 @@ export const FraudController = {
             const offset = (page - 1) * limit;
 
             const events = await FraudRepository.getFraudEvents({ limit, offset, status, driverId });
+
+            // MANUAL JOIN
+            if (events.length > 0) {
+                const dIds = [...new Set(events.map(e => e.driverId).filter(Boolean))];
+                if (dIds.length > 0) {
+                    const driversList = await db.query.drivers.findMany({
+                        where: (d, { inArray }) => inArray(d.id, dIds),
+                        columns: { id: true, nome: true }
+                    });
+                    const dMap = new Map(driversList.map(d => [d.id, d]));
+
+                    events.forEach((event: any) => {
+                        if (event.driverId && dMap.has(event.driverId)) {
+                            event.driver = {
+                                name: dMap.get(event.driverId)?.nome
+                            };
+                        }
+                    });
+                }
+            }
+
             const total = await FraudRepository.getEventsCount({ status, driverId });
 
             res.json({
