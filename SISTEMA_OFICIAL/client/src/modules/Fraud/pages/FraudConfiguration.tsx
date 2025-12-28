@@ -122,23 +122,23 @@ const FraudConfiguration = () => {
                         <div className="space-y-2">
                             <h4 className="font-semibold text-sm">Pontos por Severidade</h4>
                             <div className="grid grid-cols-4 gap-2">
-                                <div className="text-center p-2 bg-blue-50 rounded"><p className="text-xs text-muted-foreground">Low</p><p className="font-bold">{THRESHOLDS.SCORE.LOW}</p></div>
-                                <div className="text-center p-2 bg-yellow-50 rounded"><p className="text-xs text-muted-foreground">Medium</p><p className="font-bold">{THRESHOLDS.SCORE.MEDIUM}</p></div>
-                                <div className="text-center p-2 bg-orange-50 rounded"><p className="text-xs text-muted-foreground">High</p><p className="font-bold">{THRESHOLDS.SCORE.HIGH}</p></div>
-                                <div className="text-center p-2 bg-red-50 rounded"><p className="text-xs text-muted-foreground">Critical</p><p className="font-bold">{THRESHOLDS.SCORE.CRITICAL}</p></div>
+                                <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700"><p className="text-xs text-muted-foreground mb-1">Low</p><p className="text-2xl font-bold text-blue-800 dark:text-blue-200">{THRESHOLDS.SCORE.LOW}</p></div>
+                                <div className="text-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700"><p className="text-xs text-muted-foreground mb-1">Medium</p><p className="text-2xl font-bold text-yellow-800 dark:text-yellow-200">{THRESHOLDS.SCORE.MEDIUM}</p></div>
+                                <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-700"><p className="text-xs text-muted-foreground mb-1">High</p><p className="text-2xl font-bold text-orange-800 dark:text-orange-200">{THRESHOLDS.SCORE.HIGH}</p></div>
+                                <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700"><p className="text-xs text-muted-foreground mb-1">Critical</p><p className="text-2xl font-bold text-red-800 dark:text-red-200">{THRESHOLDS.SCORE.CRITICAL}</p></div>
                             </div>
                         </div>
                         <div className="space-y-2">
                             <h4 className="font-semibold text-sm">Níveis de Alerta</h4>
                             <div className="space-y-2 text-sm">
-                                <div className="flex justify-between items-center p-2 bg-green-50 rounded">
-                                    <span>Normal</span><span className="font-mono">0 - {THRESHOLDS.LEVELS.SUSPECT_MIN - 1}</span>
+                                <div className="flex justify-between items-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
+                                    <span className="font-medium">Normal</span><span className="font-mono text-lg font-bold text-green-800 dark:text-green-200">0 - {THRESHOLDS.LEVELS.SUSPECT_MIN - 1}</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2 bg-yellow-50 rounded">
-                                    <span>Suspeito</span><span className="font-mono">{THRESHOLDS.LEVELS.SUSPECT_MIN} - {THRESHOLDS.LEVELS.CRITICAL_MIN - 1}</span>
+                                <div className="flex justify-between items-center p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                                    <span className="font-medium">Suspeito</span><span className="font-mono text-lg font-bold text-yellow-800 dark:text-yellow-200">{THRESHOLDS.LEVELS.SUSPECT_MIN} - {THRESHOLDS.LEVELS.CRITICAL_MIN - 1}</span>
                                 </div>
-                                <div className="flex justify-between items-center p-2 bg-red-50 rounded">
-                                    <span>Crítico</span><span className="font-mono">{THRESHOLDS.LEVELS.CRITICAL_MIN}+</span>
+                                <div className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700">
+                                    <span className="font-medium">Crítico</span><span className="font-mono text-lg font-bold text-red-800 dark:text-red-200">{THRESHOLDS.LEVELS.CRITICAL_MIN}+</span>
                                 </div>
                             </div>
                         </div>
