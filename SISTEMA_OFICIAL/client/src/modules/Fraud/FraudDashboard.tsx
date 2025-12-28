@@ -33,6 +33,7 @@ interface FraudEvent {
     shiftId: string;
     details: any;
     rules: { ruleId: string; label: string; score: number }[];
+    driver?: { id: string; name: string; };
 }
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -204,8 +205,8 @@ const FraudDashboard = () => {
                                                 <p className="text-sm text-muted-foreground mt-1">
                                                     Score: {alert.riskScore} • {new Date(alert.detectedAt).toLocaleString()}
                                                 </p>
-                                                <p className="text-xs text-muted-foreground font-mono mt-1">
-                                                    Turno: {alert.shiftId?.slice(0, 8)}... | Motorista: {alert.driverId}
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    Turno: {alert.shiftId?.slice(0, 8)}... | Motorista: <strong>{alert.driver?.name || alert.driverId}</strong>
                                                 </p>
                                             </div>
                                         </div>

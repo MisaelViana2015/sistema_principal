@@ -18,6 +18,7 @@ interface FraudEvent {
     shiftId: string;
     driverId: string;
     rules: { label: string }[];
+    driver?: { id: string; name: string; };
 }
 
 export interface FraudEventsListProps {
@@ -158,12 +159,12 @@ const FraudEventsList: React.FC<FraudEventsListProps> = ({ onSelectEvent }) => {
                                                     {event.status.toUpperCase().replace('_', ' ')}
                                                 </span>
                                             </td>
-                                            <td className="p-3 font-mono text-xs">
+                                            <td className="p-3">
                                                 <button
                                                     onClick={() => navigate(`/fraude/motorista/${event.driverId}`)}
-                                                    className="hover:underline text-primary hover:text-primary/80 transition-colors"
+                                                    className="hover:underline text-primary hover:text-primary/80 transition-colors font-medium"
                                                 >
-                                                    {event.driverId}
+                                                    {event.driver?.name || event.driverId}
                                                 </button>
                                             </td>
                                             <td className="p-3 truncate max-w-[200px]">
