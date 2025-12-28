@@ -104,7 +104,7 @@ export const FraudService = {
         console.log("🚀 Iniciando análise de fraude em massa...");
         try {
             const completedShifts = await db.query.shifts.findMany({
-                where: (s, { eq }) => eq(s.status, 'concluido')
+                where: (s, { eq }) => eq(s.status, 'finalizado')
             });
 
             console.log(`📊 Encontrados ${completedShifts.length} turnos concluídos para análise.`);
