@@ -125,6 +125,8 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
         const durationHours = shift.duracaoMin > 0 ? shift.duracaoMin / 60 : 0;
         const recPerKm = kmTotal > 0 ? shift.totalBruto / kmTotal : 0;
         const recPerHour = durationHours > 0 ? shift.totalBruto / durationHours : 0;
+        const ticketMedio = shift.totalCorridas > 0 ? shift.totalBruto / shift.totalCorridas : 0;
+        const runsPerHour = durationHours > 0 ? shift.totalCorridas / durationHours : 0;
 
         const col1X = 50; const col2X = 300;
         let y = doc.y;
@@ -140,6 +142,9 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
             doc.fillColor('red').text(`Duração: Não calculável (inconsistente)`, col2X, y).fillColor('black');
         }
         y += 15;
+
+        doc.text(`Receita Total: ${fmtBRL(shift.totalBruto)}`, col1X, y);
+        doc.text(`Corridas: ${shift.totalCorridas}`, col2X, y); y += 15;
 
         // Standard 10 & 11
         doc.text(`Ticket Médio: ${fmtBRL(ticketMedio)}`, col1X, y);
