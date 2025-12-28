@@ -58,16 +58,16 @@ export const FraudController = {
         try {
             // Optimization: Aggregate by date in SQL
             const result = await db.execute(sql`
-                SELECT 
-                    DATE(detected_at) as date,
-                    COUNT(*) as count,
-                    AVG(risk_score) as avg_score,
-                    MAX(risk_score) as max_score
-                FROM fraud_events
-                WHERE detected_at >= NOW() - INTERVAL '1 year'
-                GROUP BY DATE(detected_at)
-                ORDER BY date
-            `);
+                    SELECT 
+                        COALESCE(metadata->>'date', DATE(detected_at)::text) as date,
+                        COUNT(*) as count,
+                        AVG(risk_score) as avg_score,
+                        MAX(risk_score) as max_score
+                    FROM fraud_events
+                    WHERE detected_at >= NOW() - INTERVAL '1 year'
+                    GROUP BY 1
+                    ORDER BY date
+                `);
 
             const data = result.rows.map((row: any) => ({
                 date: new Date(row.date).toISOString().split('T')[0], // YYYY-MM-DD
@@ -87,6 +87,14 @@ export const FraudController = {
     async getRecentAlerts(req: Request, res: Response) {
         try {
             const alerts = await FraudRepository.getFraudEvents({ limit: 10 });
+            // DEBUG: Check if driver is populated
+            if (alerts.length > 0) {
+                console.log("[DEBUG] First Alert Driver Check:", {
+                    id: alerts[0].id,
+                    driverId: alerts[0].driverId,
+                    driver: alerts[0].driver
+                });
+            }
             res.json(alerts);
         } catch (error: any) {
             res.status(500).json({ error: error.message });
