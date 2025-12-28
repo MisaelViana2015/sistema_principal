@@ -21,7 +21,7 @@ const GaragePage = lazy(() => import("./modules/garage/pages/GaragePage"));
 
 
 import AdminDashboard from "./pages/AdminDashboard";
-import { FraudDashboard } from "./modules/Fraud/FraudDashboard";
+import FraudDashboard from "./modules/Fraud/FraudDashboard";
 const FraudEventDetail = lazy(() => import("./modules/Fraud/pages/FraudEventDetail"));
 const FraudEventsList = lazy(() => import("./modules/Fraud/pages/FraudEventsList"));
 const FraudAnalysisQueue = lazy(() => import("./modules/Fraud/pages/FraudAnalysisQueue"));
