@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit";
 import { fraudEvents } from "../../../shared/schema.js";
+import { AuditMetrics } from "./fraud.audit.service.js";
 
 interface ShiftData {
     id: string;
@@ -23,6 +24,8 @@ interface ShiftData {
     driverName?: string;
     vehiclePlate?: string;
     vehicleModel?: string;
+    // New Audit Metrics
+    auditMetrics?: AuditMetrics | null;
 }
 
 // 12. ANEXO EXPLICATIVO (Hardcoded to avoid engine modification)
@@ -443,6 +446,89 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
 
         } else {
             doc.font('Helvetica-Oblique').fontSize(10).text("Não há histórico suficiente para cálculo de baseline individual neste caso.");
+            doc.moveDown();
+        }
+
+        // --- 10. ANÁLISE AVANÇADA DE AUDITORIA (PHASE 2) ---
+        if (shift.auditMetrics) {
+            const am = shift.auditMetrics;
+            doc.addPage();
+            doc.font('Helvetica-Bold').fontSize(16).text("10. Análise Avançada de Auditoria", { align: "center" });
+            doc.fontSize(10).font('Helvetica').text(
+                "Esta seção apresenta métricas detalhadas de inteligência operacional, calculadas em tempo de auditoria. Estes dados enriquecem a análise de risco mas não alteram o score original do evento.",
+                { align: "center" }
+            );
+            doc.moveDown();
+
+            // 10.1 Faixas Horárias
+            doc.font('Helvetica-Bold').fontSize(14).text("10.1 Performance por Faixa Horária");
+            doc.moveDown(0.5);
+
+            const slotTableY = doc.y;
+            // Header
+            doc.font('Helvetica-Bold').fontSize(10);
+            doc.text("Faixa", 50, slotTableY);
+            doc.text("Corridas", 150, slotTableY);
+            doc.text("Receita", 250, slotTableY);
+            doc.text("Produtividade", 350, slotTableY);
+
+            let currentSlotY = slotTableY + 15;
+            am.timeSlots.forEach(slot => {
+                doc.font('Helvetica').fontSize(10);
+                doc.text(slot.name, 50, currentSlotY);
+                doc.text(`${slot.corridas}`, 150, currentSlotY);
+                doc.text(fmtBRL(slot.receita), 250, currentSlotY);
+                doc.text(`${slot.corridasPorHora.toFixed(1)}/h`, 350, currentSlotY);
+                currentSlotY += 15;
+            });
+            doc.y = currentSlotY + 10;
+
+            // 10.2 Gaps
+            doc.font('Helvetica-Bold').fontSize(14).text("10.2 Análise de Intervalos (Gaps)");
+            doc.moveDown(0.5);
+
+            const gap = am.gapAnalysis;
+            const gapColor = gap.status === 'ANÔMALO' ? '#b91c1c' : '#047857'; // Red or Green
+
+            doc.rect(50, doc.y, 500, 60).fill(gap.status === 'ANÔMALO' ? '#fef2f2' : '#f0fdf4').stroke(gapColor);
+            doc.fillColor('black');
+            let gapY = doc.y + 10;
+
+            doc.font('Helvetica-Bold').text(`Maior Intervalo Detectado: ${gap.maxGapMinutos.toFixed(0)} minutos`, 60, gapY);
+            gapY += 15;
+            doc.font('Helvetica').text(`Ocorreu em Horário de Pico? ${gap.gapEmHorarioDePico ? "SIM" : "NÃO"}`, 60, gapY);
+            gapY += 15;
+            doc.font('Helvetica-Bold').fillColor(gapColor).text(`Status: ${gap.status}`, 60, gapY);
+            doc.fillColor('black');
+
+            doc.y += 30; // Exit box
+            doc.moveDown();
+
+            // 10.3 Score Contextual
+            doc.font('Helvetica-Bold').fontSize(14).text("10.3 Score Contextualizado");
+            doc.moveDown(0.5);
+
+            doc.font('Helvetica').text(`Score Oficial do Sistema: ${event.riskScore}`);
+            doc.font('Helvetica-Bold').text(`Score Ajustado (Contextual): ${am.scoreContextual}`);
+
+            if (am.scoreContextual < (event.riskScore || 0)) {
+                doc.moveDown(0.5);
+                doc.font('Helvetica-Oblique').fontSize(9).text(
+                    "O score ajustado considera a mitigação de risco devido à presença de corridas particulares devidamente identificadas.",
+                    { indent: 10 }
+                );
+            }
+            doc.moveDown();
+
+            // 10.4 Classificação do Turno
+            doc.font('Helvetica-Bold').fontSize(14).text("10.4 Diagnóstico do Turno");
+            doc.moveDown(0.5);
+
+            const verdictColor = am.classificacaoTurno === 'BOM' ? '#047857' : '#b91c1c';
+            doc.font('Helvetica-Bold').fontSize(12).fillColor(verdictColor).text(`Classificação: TURNO OPERACIONALMENTE ${am.classificacaoTurno}`);
+            doc.fillColor('black');
+            doc.font('Helvetica').fontSize(10).text(`Ritmo: ${am.classificacaoRitmo} (Score: ${am.ritmoScore})`);
+
             doc.moveDown();
         }
 

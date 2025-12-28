@@ -7,6 +7,28 @@ interface FraudAuditReportProps {
     shift: any;
 }
 
+// --- Types from Backend (Mirrored) ---
+interface TimeSlot {
+    name: string;
+    corridas: number;
+    receita: number;
+    corridasPorHora: number;
+}
+interface GapAnalysis {
+    maxGapMinutos: number;
+    gapEmHorarioDePico: boolean;
+    status: 'NORMAL' | 'ANÔMALO';
+}
+interface AuditMetrics {
+    timeSlots: TimeSlot[];
+    gapAnalysis: GapAnalysis;
+    baselineComparison: any[];
+    ritmoScore: number;
+    classificacaoRitmo: string;
+    scoreContextual: number;
+    classificacaoTurno: 'BOM' | 'RUIM';
+}
+
 // Hardcoded Official Rules List (Mirroring Backend)
 const OFFICIAL_RULES_LIST = [
     { code: "KM_ZERO_COM_RECEITA", name: "REGRA 01 — KM ZERO COM RECEITA", desc: "Existe receita registrada com km total menor ou igual a zero. Não é possível gerar receita sem deslocamento." },
@@ -41,6 +63,7 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
     const recPerKm = kmTotal > 0 ? shift.totalBruto / kmTotal : 0;
     const recPerHour = durationHours > 0 ? shift.totalBruto / durationHours : 0;
     const isDurationInvalid = durationHours <= 0.01;
+    const am = shift.auditMetrics as AuditMetrics | undefined;
 
     const reasons = (event.rules as any[]) || (event.metadata as any)?.reasons || [];
     const sortedRules = [...reasons].sort((a, b) => {
@@ -272,7 +295,79 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                     )}
                 </div>
 
-                {/* Final Classification */}
+                {/* 10. ANÁLISE AVANÇADA DE AUDITORIA (PHASE 2) */}
+                {am && (
+                    <div className="mb-8 break-inside-avoid border-t pt-6 bg-slate-50 p-4 -mx-4">
+                        <h2 className="text-lg font-bold border-gray-800 mb-4 pb-1 uppercase text-slate-800">10. Análise Avançada de Auditoria</h2>
+
+                        {/* 10.1 Faixas Horárias */}
+                        <h3 className="text-md font-bold mb-3 text-slate-700">10.1 Performance por Faixa Horária</h3>
+                        <div className="grid grid-cols-4 gap-2 mb-6">
+                            {am.timeSlots.map(slot => (
+                                <div key={slot.name} className="bg-white border p-2 rounded text-center shadow-sm">
+                                    <span className="text-xs text-gray-400 block uppercase font-bold">{slot.name}</span>
+                                    <span className="font-bold block text-lg">{slot.corridas} <span className="text-xs font-normal text-gray-500">corridas</span></span>
+                                    <div className="text-xs mt-1 border-t pt-1">
+                                        <span className="block">{fmtBRL(slot.receita)}</span>
+                                        <span className="block text-gray-400">{slot.corridasPorHora.toFixed(1)}/h</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* 10.2 Gaps */}
+                        <h3 className="text-md font-bold mb-3 text-slate-700">10.2 Análise de Intervalos (Gaps)</h3>
+                        <div className={`p-4 rounded border-l-4 mb-6 flex justify-between items-center ${am.gapAnalysis.status === 'ANÔMALO' ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'}`}>
+                            <div>
+                                <p className="font-bold text-lg">Maior Intervalo: {am.gapAnalysis.maxGapMinutos.toFixed(0)} min</p>
+                                <p className="text-sm text-gray-600">Ocorreu em horário de pico? {am.gapAnalysis.gapEmHorarioDePico ? <strong>SIM</strong> : "NÃO"}</p>
+                            </div>
+                            <div className={`px-4 py-1 rounded font-bold uppercase text-sm ${am.gapAnalysis.status === 'ANÔMALO' ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'}`}>
+                                {am.gapAnalysis.status}
+                            </div>
+                        </div>
+
+                        {/* 10.3 Score Contextual */}
+                        <div className="grid grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <h3 className="text-md font-bold mb-3 text-slate-700">10.3 Score Contextualizado</h3>
+                                <div className="bg-white p-4 rounded border shadow-sm">
+                                    <div className="flex justify-between mb-2">
+                                        <span className="text-gray-500">Score Oficial:</span>
+                                        <span className="font-bold">{event.riskScore}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-900 font-bold">Score Ajustado:</span>
+                                        <span className="font-bold text-xl bg-slate-100 px-2 rounded">{am.scoreContextual}</span>
+                                    </div>
+                                    {am.scoreContextual < event.riskScore && (
+                                        <p className="text-xs text-gray-500 italic mt-2 text-justify">
+                                            * Ajuste aplicado devido à presença de corridas particulares que justificam parcialmente a ineficiência.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* 10.4 Diagnóstico */}
+                            <div>
+                                <h3 className="text-md font-bold mb-3 text-slate-700">10.4 Diagnóstico do Turno</h3>
+                                <div className={`p-4 rounded border text-center ${am.classificacaoTurno === 'BOM' ? 'bg-green-600 text-white' : 'bg-red-700 text-white'}`}>
+                                    <p className="text-xs uppercase opacity-80 mb-1">Classificação Operacional</p>
+                                    <p className="text-2xl font-bold tracking-wider">TURNO {am.classificacaoTurno}</p>
+                                    <div className="mt-2 text-xs bg-black/20 p-1 rounded inline-block">
+                                        Ritmo: {am.classificacaoRitmo} (Score {am.ritmoScore})
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="text-center text-xs text-slate-400 uppercase tracking-widest mt-4">
+                            Inteligência Operacional Auditável — V2
+                        </div>
+                    </div>
+                )}
+
+                {/* Classification (Legacy Display - moved to end of section if no audit metrics, but kept here for structure consistency) */}
                 <div className="text-center p-4 border rounded bg-gray-100 mb-8 break-inside-avoid">
                     <h3 className="text-md font-bold text-black uppercase">
                         Classificação Operacional do Turno

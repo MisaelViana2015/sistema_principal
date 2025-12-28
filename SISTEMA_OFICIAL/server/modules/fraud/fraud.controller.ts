@@ -2,8 +2,9 @@ import { Request, Response } from "express";
 import { FraudService } from "./fraud.service.js";
 import { FraudRepository } from "./fraud.repository.js";
 import { db } from "../../core/db/connection.js";
-import { fraudEvents } from "../../../shared/schema.js";
 import { desc, eq, sql } from "drizzle-orm";
+import { fraudEvents, shifts } from "../../../shared/schema.js";
+import { calculateAuditMetrics } from "./fraud.audit.service.js";
 // Static imports for better performance
 import { analyzeShiftRules } from "./fraud.engine.js";
 import { generateEventPdf } from "./fraud.pdf.js";
@@ -337,6 +338,36 @@ export const FraudController = {
                 }
             });
 
+            // --- AUDIT ENRICHMENT (PHASE 2) ---
+            // Calculate strict operational metrics (Time Slots, Gaps, Baseline)
+            // This does NOT affect the fraud engine or risk score.
+            let auditMetrics = null;
+            try {
+                // Calculate share particular for contextual score
+                const shareParticular = Number(shift.totalBruto || 0) > 0
+                    ? (revenueParticular / Number(shift.totalBruto)) * 100
+                    : 0;
+
+                auditMetrics = await calculateAuditMetrics(
+                    shift.id,
+                    shift.driverId,
+                    {
+                        inicio: shift.inicio,
+                        fim: shift.fim,
+                        totalBruto: Number(shift.totalBruto || 0),
+                        totalCorridas: Number(shift.totalCorridas || 0),
+                        kmInicial: Number(shift.kmInicial || 0),
+                        kmFinal: Number(shift.kmFinal || 0),
+                        duracaoMin: Number(shift.duracaoMin || 0)
+                    },
+                    event.riskScore || 0,
+                    shareParticular
+                );
+            } catch (auditError) {
+                console.error("[FRAUD] Error calculating audit metrics:", auditError);
+                // Non-blocking error - return null metrics
+            }
+
             res.json({
                 event,
                 shift: {
@@ -351,12 +382,18 @@ export const FraudController = {
                     totalCorridas: Number(shift.totalCorridas || 0),
                     duracaoMin: Number(shift.duracaoMin || 0),
                     // New Explicit Aggregations
+                    ridesAppCount,
+                    ridesParticularCount,
+                    ridesUnknownCount,
+                    revenueApp,
+                    revenueParticular,
                     revenueUnknown,
                     // Identity Details
                     driverName: driver?.nome || "Desconhecido",
                     vehiclePlate: vehicle?.plate || "Desconhecido",
                     vehicleModel: vehicle?.modelo || ""
-                }
+                },
+                auditMetrics // Injecting Audit Metrics for Phase 2
             });
         } catch (error: any) {
             console.error("[FRAUD] Error getting event detail:", error);
@@ -507,6 +544,62 @@ export const FraudController = {
                 return res.status(404).json({ error: "Turno associado não encontrado" });
             }
 
+            // Calculate audit metrics for PDF (same logic as getEventDetail)
+            let auditMetrics = null;
+
+            // Aggregation Variables
+            let ridesAppCount = 0;
+            let ridesParticularCount = 0;
+            let ridesUnknownCount = 0;
+            let revenueApp = 0;
+            let revenueParticular = 0;
+            let revenueUnknown = 0;
+
+            try {
+                const shiftRides = await db.query.rides.findMany({
+                    where: (r, { eq }) => eq(r.shiftId, shift.id)
+                });
+
+                // Full Aggregation Logic (Mirrors getEventDetail)
+                shiftRides.forEach(ride => {
+                    const rawType = (ride.tipo || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const val = Number(ride.valor || 0);
+
+                    if (rawType === 'app') {
+                        ridesAppCount++;
+                        revenueApp += val;
+                    } else if (rawType === 'particular') {
+                        ridesParticularCount++;
+                        revenueParticular += val;
+                    } else {
+                        ridesUnknownCount++;
+                        revenueUnknown += val;
+                    }
+                });
+
+                const shareParticular = Number(shift.totalBruto || 0) > 0
+                    ? (revenueParticular / Number(shift.totalBruto)) * 100
+                    : 0;
+
+                auditMetrics = await calculateAuditMetrics(
+                    shift.id,
+                    shift.driverId,
+                    {
+                        inicio: shift.inicio,
+                        fim: shift.fim,
+                        totalBruto: Number(shift.totalBruto || 0),
+                        totalCorridas: Number(shift.totalCorridas || 0),
+                        kmInicial: Number(shift.kmInicial || 0),
+                        kmFinal: Number(shift.kmFinal || 0),
+                        duracaoMin: Number(shift.duracaoMin || 0)
+                    },
+                    event.riskScore || 0,
+                    shareParticular
+                );
+            } catch (auditError) {
+                console.error("[FRAUD] PDF: Error calculating audit metrics:", auditError);
+            }
+
             const pdfBuffer = await generateEventPdf(event, {
                 id: shift.id,
                 driverId: shift.driverId,
@@ -517,7 +610,16 @@ export const FraudController = {
                 kmFinal: Number(shift.kmFinal || 0),
                 totalBruto: Number(shift.totalBruto || 0),
                 totalCorridas: Number(shift.totalCorridas || 0),
-                duracaoMin: Number(shift.duracaoMin || 0)
+                duracaoMin: Number(shift.duracaoMin || 0),
+                // Breakdown Data
+                ridesAppCount,
+                ridesParticularCount,
+                revenueApp,
+                revenueParticular,
+                ridesUnknownCount,
+                revenueUnknown,
+                // Audit Metrics
+                auditMetrics
             });
 
             res.setHeader("Content-Type", "application/pdf");

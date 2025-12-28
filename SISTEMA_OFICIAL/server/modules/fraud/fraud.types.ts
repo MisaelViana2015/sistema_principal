@@ -57,3 +57,46 @@ export interface ShiftContext {
     baseline?: DriverBaseline | null;
     globalBaseline?: GlobalBaseline | null;
 }
+
+// --- NEW AUDIT METRICS TYPES ---
+import { AuditMetrics } from "./fraud.audit.service.js"; // Import local types if needed, or redefine here to avoid circular dep if service imports types
+// To avoid circular dependency, we redefine interfaces or move them to a shared types file.
+// For now, I will modify fraud.audit.service.ts to export these types and reuse them here, 
+// OR simpler: Copy definitions here if they are small.
+
+export interface TimeSlot {
+    name: string;
+    startHour: number;
+    endHour: number;
+    horasReais: number;
+    corridas: number;
+    receita: number;
+    corridasPorHora: number;
+    receitaPorHora: number;
+}
+
+export interface GapAnalysis {
+    maxGapMinutos: number;
+    inicioMaxGap: Date | null;
+    fimMaxGap: Date | null;
+    gapEmHorarioDePico: boolean;
+    status: 'NORMAL' | 'ANÔMALO';
+}
+
+export interface BaselineComparison {
+    metrica: string;
+    valorAtual: number;
+    mediaHistorica: number;
+    percentil: number;
+    classificacao: string;
+}
+
+export interface AuditMetricsData {
+    timeSlots: TimeSlot[];
+    gapAnalysis: GapAnalysis;
+    baselineComparison: BaselineComparison[];
+    ritmoScore: number;
+    classificacaoRitmo: string;
+    scoreContextual: number;
+    classificacaoTurno: 'BOM' | 'RUIM';
+}
