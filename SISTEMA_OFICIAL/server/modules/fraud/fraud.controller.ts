@@ -296,6 +296,17 @@ export const FraudController = {
                 return res.status(404).json({ error: "Turno associado não encontrado" });
             }
 
+            // Fetch Driver and Vehicle Details
+            const driver = await db.query.drivers.findFirst({
+                where: (d, { eq }) => eq(d.id, shift.driverId),
+                columns: { nome: true }
+            });
+
+            const vehicle = await db.query.vehicles.findFirst({
+                where: (v, { eq }) => eq(v.id, shift.vehicleId),
+                columns: { placa: true, modelo: true }
+            });
+
             // EXPLICIT CALCULATION FROM RIDES (MANDATORY REQUIREMENT)
             const ridesRaw = await db.execute(sql`SELECT tipo, valor FROM rides WHERE shift_id = ${shift.id}`);
             const ridesList = ridesRaw.rows as any[];
@@ -343,9 +354,15 @@ export const FraudController = {
                     ridesAppCount,
                     ridesParticularCount,
                     ridesUnknownCount,
+                    ridesParticularCount,
+                    ridesUnknownCount,
                     revenueApp,
                     revenueParticular,
-                    revenueUnknown
+                    revenueUnknown,
+                    // Identity Details
+                    driverName: driver?.nome || "Desconhecido",
+                    vehiclePlate: vehicle?.placa || "Desconhecido",
+                    vehicleModel: vehicle?.modelo || ""
                 }
             });
         } catch (error: any) {

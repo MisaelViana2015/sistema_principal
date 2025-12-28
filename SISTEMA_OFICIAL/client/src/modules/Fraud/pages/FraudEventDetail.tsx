@@ -38,6 +38,10 @@ interface ShiftData {
     revenueParticular?: number;
     ridesUnknownCount?: number;
     revenueUnknown?: number;
+    // Identity Details
+    driverName?: string;
+    vehiclePlate?: string;
+    vehicleModel?: string;
 }
 
 interface EventDetailResponse {

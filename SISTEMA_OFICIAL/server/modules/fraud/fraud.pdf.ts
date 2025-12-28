@@ -19,6 +19,10 @@ interface ShiftData {
     revenueParticular?: number;
     ridesUnknownCount?: number;
     revenueUnknown?: number;
+    // Identity Details
+    driverName?: string;
+    vehiclePlate?: string;
+    vehicleModel?: string;
 }
 
 // 12. ANEXO EXPLICATIVO (Hardcoded to avoid engine modification)
