@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, FileText, Clock, FileStack, Settings, ScrollText } from 'lucide-react';
+import { LayoutDashboard, FileText, Clock, FileStack, Settings, ScrollText, ArrowLeft, Home } from 'lucide-react';
 
 const FraudNavigation = () => {
     const navigate = useNavigate();
@@ -24,7 +24,19 @@ const FraudNavigation = () => {
     };
 
     return (
-        <div className="flex flex-wrap gap-2 mb-6 border-b pb-4">
+        <div className="flex flex-wrap items-center gap-2 mb-6 border-b pb-4">
+            {/* Botão para voltar ao menu principal */}
+            <Button
+                variant="outline"
+                onClick={() => navigate('/admin')}
+                className="gap-2 mr-4 border-dashed"
+            >
+                <ArrowLeft className="w-4 h-4" />
+                Menu Principal
+            </Button>
+
+            <div className="w-px h-6 bg-border mx-2" />
+
             {tabs.map((tab) => {
                 const active = isActive(tab.path, tab.exact);
                 return (
