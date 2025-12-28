@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Filter, Search, ArrowLeft, ShieldCheck } from 'lucide-react';
-import FraudNavigation from '../components/FraudNavigation';
 
 interface FraudEvent {
     id: string;

@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Settings, AlertTriangle, Shield, Activity, Clock, TrendingUp, Gauge, Target, ArrowLeft, ShieldCheck } from 'lucide-react';
-import FraudNavigation from '../components/FraudNavigation';
 
 // These thresholds are read-only and match the backend fraud.engine.ts
 const THRESHOLDS = {

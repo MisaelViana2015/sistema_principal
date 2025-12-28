@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { Download, Filter, ArrowLeft, ShieldCheck } from 'lucide-react';
-import FraudNavigation from '../components/FraudNavigation';
 
 interface TopDriver {
     driverId: string;
