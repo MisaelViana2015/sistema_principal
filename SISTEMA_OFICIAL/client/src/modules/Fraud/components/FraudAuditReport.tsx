@@ -274,22 +274,30 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                             <>
                                 <div className="grid grid-cols-3 gap-2 text-xs mb-2">
                                     <div className="bg-white p-1 rounded border">
-                                        <span className="text-gray-500 block">Receita/KM (Só App)*</span>
+                                        <span className="text-gray-500 block">Receita/KM (App)*</span>
                                         <span className="font-bold">{fmtBRL(kmTotal > 0 ? (shift.revenueApp || 0) / kmTotal : 0)}/km</span>
                                     </div>
                                     <div className="bg-white p-1 rounded border">
-                                        <span className="text-gray-500 block">Receita/Hora (Só App)</span>
+                                        <span className="text-gray-500 block">Receita/KM (Part)*</span>
+                                        <span className="font-bold">{fmtBRL(kmTotal > 0 ? (shift.revenueParticular || 0) / kmTotal : 0)}/km</span>
+                                    </div>
+                                    <div className="bg-white p-1 rounded border row-span-2 flex flex-col justify-center">
+                                        <span className="text-gray-500 block">Share Particular</span>
+                                        <span className="font-bold text-lg">{share.toFixed(1)}%</span>
+                                        <span className="block text-[10px] text-gray-400 font-normal uppercase mt-0.5 leading-tight">{shareClass}</span>
+                                    </div>
+                                    <div className="bg-white p-1 rounded border">
+                                        <span className="text-gray-500 block">Receita/Hora (App)</span>
                                         <span className="font-bold">{fmtBRL(durationHours > 0 ? (shift.revenueApp || 0) / durationHours : 0)}/h</span>
                                     </div>
                                     <div className="bg-white p-1 rounded border">
-                                        <span className="text-gray-500 block">Share Particular</span>
-                                        <span className="font-bold">{share.toFixed(1)}%</span>
-                                        <span className="block text-[10px] text-gray-400 font-normal uppercase mt-0.5">{shareClass}</span>
+                                        <span className="text-gray-500 block">Receita/Hora (Part)</span>
+                                        <span className="font-bold">{fmtBRL(durationHours > 0 ? (shift.revenueParticular || 0) / durationHours : 0)}/h</span>
                                     </div>
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-xs italic text-gray-500">
-                                        * Receita/KM (Só App) utiliza KM total do turno por ausência de segregação física de deslocamento.
+                                        * Métricas segregadas utilizam KM e Tempo total do turno por ausência de segregação física de deslocamento.
                                     </p>
                                     <p className="text-xs italic text-gray-600 border-l-2 border-gray-300 pl-2">
                                         “Quando uma parcela relevante da receita do turno é proveniente de corridas particulares, métricas globais como receita por quilômetro e por hora podem apresentar valores inferiores ao padrão de aplicativo, sem caracterizar fraude.”
