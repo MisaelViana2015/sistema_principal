@@ -32,17 +32,16 @@ interface AuditMetrics {
 // Hardcoded Official Rules List (Mirroring Backend)
 const OFFICIAL_RULES_LIST = [
     { code: "KM_ZERO_COM_RECEITA", name: "REGRA 01 — KM ZERO COM RECEITA", desc: "Existe receita registrada com km total menor ou igual a zero. Não é possível gerar receita sem deslocamento." },
-    { code: "KM_RETROCEDEU", name: "REGRA 02 — KM RETROCEDEU", desc: "O km inicial do turno atual é menor que o km final do turno anterior. Odômetro não pode andar para trás." },
-    { code: "KM_SALTO_ABSURDO", name: "REGRA 03 — SALTO DE KM ABSURDO ENTRE TURNOS", desc: "Diferença excessiva de km entre turnos consecutivos (> 250 km). Indica uso fora do sistema ou erro grave." },
-    { code: "RECEITA_KM_MUITO_BAIXA", name: "REGRA 04 — RECEITA/KM MUITO BAIXA", desc: "Receita por km abaixo do mínimo aceitável (R$ 3,00/km). Indica corridas subdeclaradas." },
-    { code: "RECEITA_KM_MUITO_ALTA", name: "REGRA 05 — RECEITA/KM MUITO ALTA", desc: "Receita por km acima do máximo aceitável (R$ 20,00/km). Pode indicar manipulação de valores." },
-    { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 06 — DESVIO CRÍTICO DA MÉDIA DO MOTORISTA", desc: "Receita por km muito acima da média histórica do motorista (≥ 4x). Comportamento fora do padrão individual." },
-    { code: "TURNO_CURTO_DEMAIS", name: "REGRA 07 — TURNO CURTO DEMAIS", desc: "Turno com duração extremamente curta (< 10 min) mas com corridas. Corridas exigem tempo mínimo." },
-    { code: "TURNO_LONGO_DEMAIS", name: "REGRA 08 — TURNO LONGO DEMAIS", desc: "Turno com duração excessiva (> 14h). Possível esquecimento ou uso indevido." },
-    { code: "RECEITA_HORA_MUITO_ALTA", name: "REGRA 09 — RECEITA POR HORA MUITO ALTA", desc: "Receita por hora acima do limite aceitável (R$ 150,00/h). Manipulação ou concentração artificial." },
-    { code: "POUCAS_CORRIDAS_HORA", name: "REGRA 10 — POUCAS CORRIDAS POR HORA", desc: "Baixa produtividade (< 0,3 corridas/h) em turno com corridas. Uso improdutivo." },
-    { code: "SEQUENCIA_VALORES_IGUAIS", name: "REGRA 11 — VALORES DE CORRIDAS REPETIDOS", desc: "Múltiplas corridas com exatamente o mesmo valor. Foge do comportamento natural." },
-    { code: "SEQUENCIA_CONSECUTIVA", name: "REGRA 12 — SEQUÊNCIA CONSECUTIVA DE VALORES", desc: "Corridas consecutivas com valores idênticos. Indica possível automação ou fraude manual." }
+    { code: "RECEITA_KM_MUITO_BAIXA", name: "REGRA 02 — BAIXA RECEITA POR KM", desc: "Receita por km abaixo do piso operacional (R$ 2,00/km). Indica ineficiência ou subdeclaração." },
+    { code: "RECEITA_KM_MUITO_ALTA", name: "REGRA 03 — ALTA RECEITA POR KM", desc: "Receita por km acima do pico real (R$ 3,10/km). Indica possível inconsistência de km." },
+    { code: "RECEITA_HORA_MUITO_BAIXA", name: "REGRA 04 — BAIXA RECEITA POR HORA", desc: "Receita por hora abaixo de R$ 20,00/h. Turno com produtividade suspeita." },
+    { code: "RECEITA_HORA_MUITO_ALTA", name: "REGRA 05 — ALTA RECEITA POR HORA", desc: "Receita por hora acima de R$ 70,00/h. Pode indicar erro de duração." },
+    { code: "TURNO_CURTO_DEMAIS", name: "REGRA 06 — TURNO MUITO CURTO", desc: "Duração inferior a 10 minutos. Turno técnico irrelevante para análise padrão." },
+    { code: "TURNO_LONGO_DEMAIS", name: "REGRA 07 — TURNO MUITO LONGO", desc: "Duração superior a 14 horas. Comportamento fora do padrão típico." },
+    { code: "RECEITA_KM_DESVIO_ALTO", name: "REGRA 08 — DESVIO DE BASELINE ALTO", desc: "Receita/KM variou +/- 50% em relação à média pessoal." },
+    { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 09 — DESVIO DE BASELINE CRÍTICO", desc: "Receita/KM variou +/- 100% (2x) em relação à média pessoal." },
+    { code: "KM_SALTO_ABSURDO", name: "REGRA 10 — GAP DE KM ANÔMALO", desc: "Diferença entre turnos maior que 250 km. Indica uso não registrado." },
+    { code: "KM_RETROCEDEU", name: "REGRA ERROR — KM RETROCEDEU", desc: "O km inicial do turno atual é menor que o km final do turno anterior." },
 ];
 
 const getSeverityWeight = (s?: string) => {
@@ -91,24 +90,44 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
         const d = primary.data || {};
         switch (primary.code) {
             case "RECEITA_KM_MUITO_BAIXA":
-                expected = "Receita por KM ≥ R$ 3,00/km";
+                expected = "Receita por KM ≥ R$ 2,00/km";
                 observed = `R$ ${recPerKm.toFixed(2)}/km`;
-                diff = `${(100 - (recPerKm / 3.00) * 100).toFixed(0)}% abaixo`;
+                diff = `${(100 - (recPerKm / 2.00) * 100).toFixed(0)}% abaixo`;
                 break;
             case "RECEITA_KM_MUITO_ALTA":
-                expected = "Receita por KM ≤ R$ 20,00/km";
+                expected = "Receita por KM ≤ R$ 3,10/km";
                 observed = `R$ ${recPerKm.toFixed(2)}/km`;
-                diff = `${((recPerKm / 20.00 - 1) * 100).toFixed(0)}% acima`;
+                diff = `${((recPerKm / 3.10 - 1) * 100).toFixed(0)}% acima`;
+                break;
+            case "RECEITA_HORA_MUITO_BAIXA":
+                expected = "Receita por Hora ≥ R$ 20,00/h";
+                observed = `R$ ${recPerHour.toFixed(2)}/h`;
+                diff = "Abaixo do piso";
+                break;
+            case "RECEITA_HORA_MUITO_ALTA":
+                expected = "Receita por Hora ≤ R$ 70,00/h";
+                observed = `R$ ${recPerHour.toFixed(2)}/h`;
+                diff = `${((recPerHour / 70.00 - 1) * 100).toFixed(0)}% acima`;
                 break;
             case "TURNO_LONGO_DEMAIS":
                 expected = "Duração ≤ 14h";
                 observed = `${durationHours.toFixed(1)}h`;
                 diff = `${(durationHours - 14).toFixed(1)}h acima`;
                 break;
-            case "RECEITA_HORA_MUITO_ALTA":
-                expected = "Receita por Hora ≤ R$ 150,00/h";
-                observed = `R$ ${recPerHour.toFixed(2)}/h`;
-                diff = `${((recPerHour / 150.00 - 1) * 100).toFixed(0)}% acima`;
+            case "RECEITA_KM_DESVIO_CRITICO":
+                expected = `Próximo de R$ ${d.baseline?.toFixed(2)}`;
+                observed = `R$ ${recPerKm.toFixed(2)}`;
+                diff = `${d.actualMultiplier?.toFixed(1) || d.ratio?.toFixed(1) || "?"}x a média`;
+                break;
+            case "RECEITA_KM_DESVIO_ALTO":
+                expected = `Próximo de R$ ${d.baseline?.toFixed(2)}`;
+                observed = `R$ ${recPerKm.toFixed(2)}`;
+                diff = `${d.actualMultiplier?.toFixed(1) || d.ratio?.toFixed(1) || "?"}x a média`;
+                break;
+            case "KM_SALTO_ABSURDO":
+                expected = "Gap < 250 km";
+                observed = `${d.gap} km`;
+                diff = "Gap Excessivo";
                 break;
             case "KM_ZERO_COM_RECEITA":
                 expected = "KM Total > 0 quando há receita";

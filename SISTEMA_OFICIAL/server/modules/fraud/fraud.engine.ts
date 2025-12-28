@@ -8,17 +8,17 @@
 import { FraudRuleHit, FraudScore, FraudSeverity, ShiftContext } from "./fraud.types.js";
 
 const THRESHOLDS = {
-    MIN_REVENUE_PER_KM: 3,
-    MAX_REVENUE_PER_KM: 20,
-    MIN_REVENUE_PER_HOUR: 20,
-    MAX_REVENUE_PER_HOUR: 150,
+    MIN_REVENUE_PER_KM: 2.0,     // User Rule 2
+    MAX_REVENUE_PER_KM: 3.10,    // User Rule 3
+    MIN_REVENUE_PER_HOUR: 20,    // User Rule 4
+    MAX_REVENUE_PER_HOUR: 70,    // User Rule 5
     MIN_RIDES_PER_HOUR: 0.3,
     MAX_RIDES_PER_HOUR: 8,
-    MIN_SHIFT_HOURS: 1 / 6, // ~10 min
-    MAX_SHIFT_HOURS: 14,
-    MAX_KM_GAP_NORMAL: 250,
-    DEVIATION_MULTIPLIER_HIGH: 2.5,
-    DEVIATION_MULTIPLIER_CRITICAL: 4,
+    MIN_SHIFT_HOURS: 1 / 6,      // 10 min (User Rule 6)
+    MAX_SHIFT_HOURS: 14,         // User Rule 7
+    MAX_KM_GAP_NORMAL: 250,      // User Rule 10
+    DEVIATION_MULTIPLIER_HIGH: 1.5,      // User Rule 8
+    DEVIATION_MULTIPLIER_CRITICAL: 2.0,  // User Rule 9
     SCORE: {
         LOW: 5,
         MEDIUM: 10,
@@ -57,43 +57,55 @@ function ruleShiftKmAndRevenue(
 
     const revPerKm = revenueTotal / kmTotal;
 
-    // 2. Receita/KM Baixa
+    // 2. Receita/KM Baixa (Rule 2)
     if (revPerKm < THRESHOLDS.MIN_REVENUE_PER_KM) {
         hits.push({
-            code: "RECEITA_KM_MUITO_BAIXA",
+            code: "RECEITA_KM_MUITO_BAIXA", // Keeping key for compatibility
             label: "Receita/km baixa",
-            description: `Receita por km muito baixa: R$ ${revPerKm.toFixed(2)}/km.`,
-            severity: "high",
-            score: THRESHOLDS.SCORE.HIGH,
+            description: `Receita por km abaixo do piso (R$ ${revPerKm.toFixed(2)}/km).`,
+            severity: "medium", // User Rule 2 Severity
+            score: THRESHOLDS.SCORE.MEDIUM,
             data: { revPerKm, minThreshold: THRESHOLDS.MIN_REVENUE_PER_KM },
         });
     }
 
-    // 3. Receita/KM Alta
+    // 3. Receita/KM Alta (Rule 3)
     if (revPerKm > THRESHOLDS.MAX_REVENUE_PER_KM) {
         hits.push({
             code: "RECEITA_KM_MUITO_ALTA",
             label: "Receita/km alta demais",
-            description: `Receita por km muito alta: R$ ${revPerKm.toFixed(2)}/km.`,
-            severity: "critical",
-            score: THRESHOLDS.SCORE.CRITICAL,
+            description: `Receita por km acima do pico real (R$ ${revPerKm.toFixed(2)}/km).`,
+            severity: "high", // User Rule 3 Severity
+            score: THRESHOLDS.SCORE.HIGH,
             data: { revPerKm, maxThreshold: THRESHOLDS.MAX_REVENUE_PER_KM },
         });
     }
 
-    // 4. Desvio de Baseline (Receita/KM)
+    // Baseline Deviation (Rules 8 & 9)
     const base = ctx.baseline;
     if (base && base.avgRevenuePerKm > 0) {
-        const diffFactor = revPerKm / base.avgRevenuePerKm;
+        const ratio = revPerKm / base.avgRevenuePerKm;
 
-        if (diffFactor >= THRESHOLDS.DEVIATION_MULTIPLIER_CRITICAL) {
+        // 9. Desvio Crítico (≥ 2x ou ≤ 0.5x)
+        if (ratio >= THRESHOLDS.DEVIATION_MULTIPLIER_CRITICAL || ratio <= (1 / THRESHOLDS.DEVIATION_MULTIPLIER_CRITICAL)) {
             hits.push({
                 code: "RECEITA_KM_DESVIO_CRITICO",
-                label: "Receita/km fora da curva",
-                description: `Receita/km ${diffFactor.toFixed(1)}x maior que a média do motorista.`,
-                severity: "critical",
+                label: "Desvio crítico de baseline",
+                description: `Receita/km fugiu drasticamente do padrão pessoal (${ratio.toFixed(2)}x).`,
+                severity: "critical", // User Rule 9 Severity
                 score: THRESHOLDS.SCORE.CRITICAL,
-                data: { revPerKm, baseline: base.avgRevenuePerKm, multiplier: THRESHOLDS.DEVIATION_MULTIPLIER_CRITICAL, actualMultiplier: diffFactor },
+                data: { revPerKm, baseline: base.avgRevenuePerKm, ratio },
+            });
+        }
+        // 8. Desvio Alto (≥ 1.5x ou ≤ 0.66x)
+        else if (ratio >= THRESHOLDS.DEVIATION_MULTIPLIER_HIGH || ratio <= (1 / THRESHOLDS.DEVIATION_MULTIPLIER_HIGH)) {
+            hits.push({
+                code: "RECEITA_KM_DESVIO_ALTO",
+                label: "Desvio alto de baseline",
+                description: `Receita/km fora do padrão pessoal (${ratio.toFixed(2)}x).`,
+                severity: "high", // User Rule 8 Severity
+                score: THRESHOLDS.SCORE.HIGH,
+                data: { revPerKm, baseline: base.avgRevenuePerKm, ratio },
             });
         }
     }
@@ -113,24 +125,36 @@ function ruleShiftRevenueAndRidesPerHour(
     const revPerHour = revenueTotal / durationHours;
     const ridesPerHour = ridesCount / durationHours;
 
-    // 5. Receita/Hora Alta
+    // 4. Receita/Hora Baixa (New Rule)
+    if (revPerHour < THRESHOLDS.MIN_REVENUE_PER_HOUR) {
+        hits.push({
+            code: "RECEITA_HORA_MUITO_BAIXA",
+            label: "Receita/hora baixa",
+            description: `Receita/hora abaixo do centro operacional (R$ ${revPerHour.toFixed(2)}/h).`,
+            severity: "medium", // User Rule 4 Severity
+            score: THRESHOLDS.SCORE.MEDIUM,
+            data: { revPerHour, minThreshold: THRESHOLDS.MIN_REVENUE_PER_HOUR },
+        });
+    }
+
+    // 5. Receita/Hora Alta (Rule 5)
     if (revPerHour > THRESHOLDS.MAX_REVENUE_PER_HOUR) {
         hits.push({
             code: "RECEITA_HORA_MUITO_ALTA",
-            label: "Receita/hora alta demais",
-            description: `Receita/hora muito alta: R$ ${revPerHour.toFixed(2)}/h.`,
-            severity: "critical",
-            score: THRESHOLDS.SCORE.CRITICAL,
+            label: "Receita/hora alta",
+            description: `Receita/hora acima do máximo real (R$ ${revPerHour.toFixed(2)}/h).`,
+            severity: "high", // User Rule 5 Severity
+            score: THRESHOLDS.SCORE.HIGH,
             data: { revPerHour, maxThreshold: THRESHOLDS.MAX_REVENUE_PER_HOUR },
         });
     }
 
-    // 6. Poucas Corridas/Hora
+    // 6. Poucas Corridas/Hora (Not explicitly in 1-10 but kept as extra check)
     if (ridesPerHour < THRESHOLDS.MIN_RIDES_PER_HOUR && ridesCount > 0) {
         hits.push({
             code: "POUCAS_CORRIDAS_HORA",
             label: "Poucas corridas/hora",
-            description: `Apenas ${ridesPerHour.toFixed(2)} corridas/hora.`,
+            description: `Ritmo muito lento (${ridesPerHour.toFixed(2)}/h).`,
             severity: "low",
             score: THRESHOLDS.SCORE.LOW,
             data: { ridesPerHour, ridesCount, minThreshold: THRESHOLDS.MIN_RIDES_PER_HOUR },
@@ -146,26 +170,26 @@ function ruleShiftDuration(
 ): FraudRuleHit[] {
     const hits: FraudRuleHit[] = [];
 
-    // 7. Turno Curto Demais
+    // 7. Turno Curto Demais (Rule 6)
     if (durationHours < THRESHOLDS.MIN_SHIFT_HOURS && ridesCount > 0) {
         hits.push({
             code: "TURNO_CURTO_DEMAIS",
-            label: "Turno curto demais",
-            description: `Turno com apenas ${(durationHours * 60).toFixed(0)} min e com corridas.`,
-            severity: "medium",
-            score: THRESHOLDS.SCORE.MEDIUM,
+            label: "Turno extremamente curto",
+            description: `Turno técnico de apenas ${(durationHours * 60).toFixed(0)} min.`,
+            severity: "low", // User Rule 6 Severity
+            score: THRESHOLDS.SCORE.LOW,
             data: { durationHours, ridesCount, minThresholdHours: THRESHOLDS.MIN_SHIFT_HOURS },
         });
     }
 
-    // 8. Turno Longo Demais (Opcional, extraído do legado)
+    // 8. Turno Longo Demais (Rule 7)
     if (durationHours > THRESHOLDS.MAX_SHIFT_HOURS) {
         hits.push({
             code: "TURNO_LONGO_DEMAIS",
             label: "Turno longo demais",
-            description: `Turno com ${durationHours.toFixed(1)} horas.`,
-            severity: "high",
-            score: THRESHOLDS.SCORE.HIGH,
+            description: `Duração suspeita: ${durationHours.toFixed(1)} horas.`,
+            severity: "medium", // User Rule 7 Severity
+            score: THRESHOLDS.SCORE.MEDIUM,
             data: { durationHours, maxThresholdHours: THRESHOLDS.MAX_SHIFT_HOURS },
         });
     }
