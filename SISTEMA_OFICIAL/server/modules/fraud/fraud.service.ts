@@ -94,5 +94,35 @@ export const FraudService = {
         await FraudRepository.saveFraudEvent(analysis);
 
         return analysis;
+    },
+
+    /**
+     * Analisa todos os turnos concluídos no banco de dados.
+     * Útil para população inicial ou reprocessamento.
+     */
+    async analyzeAllShifts() {
+        console.log("🚀 Iniciando análise de fraude em massa...");
+        try {
+            const completedShifts = await db.query.shifts.findMany({
+                where: (s, { eq }) => eq(s.status, 'concluido')
+            });
+
+            console.log(`📊 Encontrados ${completedShifts.length} turnos concluídos para análise.`);
+            let count = 0;
+
+            for (const shift of completedShifts) {
+                try {
+                    await new Promise(r => setTimeout(r, 50)); // Delay para não sobrecarregar
+                    await this.analyzeShift(shift.id);
+                    count++;
+                    if (count % 10 === 0) console.log(`Processed ${count}/${completedShifts.length} shifts...`);
+                } catch (err) {
+                    console.error(`❌ Erro ao analisar turno ${shift.id}:`, err);
+                }
+            }
+            console.log(`✅ Análise em massa concluída! ${count} turnos processados.`);
+        } catch (error) {
+            console.error("❌ Erro fatal na análise em massa:", error);
+        }
     }
 };
