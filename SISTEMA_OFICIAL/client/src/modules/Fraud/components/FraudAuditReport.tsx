@@ -59,7 +59,14 @@ const fmtDate = (d: string | null) => d ? new Date(d).toLocaleString('pt-BR') : 
 
 export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift }) => {
     const kmTotal = shift.kmFinal - shift.kmInicial;
-    const durationHours = shift.duracaoMin > 0 ? shift.duracaoMin / 60 : 0;
+
+    // Robust Duration Calculation
+    const start = new Date(shift.inicio);
+    const end = shift.fim ? new Date(shift.fim) : new Date();
+    const calcDurationMin = Math.max(0, (end.getTime() - start.getTime()) / (1000 * 60));
+    const effectiveDurationMin = (shift.duracaoMin && shift.duracaoMin > 0) ? shift.duracaoMin : calcDurationMin;
+
+    const durationHours = effectiveDurationMin > 0 ? effectiveDurationMin / 60 : 0;
     const recPerKm = kmTotal > 0 ? shift.totalBruto / kmTotal : 0;
     const recPerHour = durationHours > 0 ? shift.totalBruto / durationHours : 0;
     const isDurationInvalid = durationHours <= 0.01;
