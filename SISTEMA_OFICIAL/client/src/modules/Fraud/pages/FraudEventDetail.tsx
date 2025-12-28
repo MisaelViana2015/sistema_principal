@@ -115,7 +115,10 @@ const FraudEventDetail = ({ eventId: propEventId, onClose }: FraudEventDetailPro
                             <ShieldAlert className="h-6 w-6 text-red-600" />
                             Auditoria de Evento #{event.id.slice(0, 8)}
                         </h1>
-                        <p className="text-sm text-gray-500">Motorista: {shift.driverId} • Veículo: {shift.vehicleId}</p>
+                        <p className="text-sm text-gray-500">
+                            Motorista: <span className="font-medium text-gray-700">{shift.driverName || shift.driverId}</span> •
+                            Veículo: <span className="font-medium text-gray-700">{shift.vehiclePlate || shift.vehicleId} {shift.vehicleModel ? `(${shift.vehicleModel})` : ''}</span>
+                        </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
