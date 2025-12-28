@@ -59,15 +59,13 @@ export const FraudController = {
             // Optimization: Aggregate by date in SQL
             const result = await db.execute(sql`
                 SELECT 
-                    COALESCE(
-                        (metadata::jsonb->>'date')::date, 
-                        DATE(detected_at)
-                    )::text as date,
+                    DATE(s.inicio)::text as date,
                     COUNT(*) as count,
-                    AVG(risk_score) as avg_score,
-                    MAX(risk_score) as max_score
-                FROM fraud_events
-                WHERE detected_at >= NOW() - INTERVAL '1 year'
+                    AVG(fe.risk_score) as avg_score,
+                    MAX(fe.risk_score) as max_score
+                FROM fraud_events fe
+                JOIN shifts s ON fe.shift_id = s.id
+                WHERE fe.detected_at >= NOW() - INTERVAL '1 year'
                 GROUP BY 1
                 ORDER BY date
             `);
@@ -307,22 +305,24 @@ export const FraudController = {
             let revenueApp = 0;
             let revenueParticular = 0;
 
+            let ridesUnknownCount = 0;
+            let revenueUnknown = 0;
+
             ridesList.forEach(r => {
-                const type = r.tipo?.toLowerCase() || "unknown";
+                const rawType = r.tipo?.toLowerCase(); // Strict check, no 'includes' fallback to partial matches
                 const val = Number(r.valor || 0);
-                // "app", "aplicativo", etc -> map strictly if needed, but usually it's "app" or "particular"
-                if (type.includes("app")) {
+
+                // STRICT ENUM CHECK (MANDATORY ADJUSTMENT)
+                if (rawType === 'app') {
                     ridesAppCount++;
                     revenueApp += val;
-                } else if (type.includes("particular")) {
+                } else if (rawType === 'particular') {
                     ridesParticularCount++;
                     revenueParticular += val;
                 } else {
-                    // Fallback or explicit instruction: "Se não existir, manter como 'unknown'" 
-                    // But effectively grouping unknown into particular or just ignoring for this specific breakdown?
-                    // User said: "Agregar App vs Particular". We can treat unknown as separate or ignore. 
-                    // Let's assume standard system types. If unknown, we might list it or just count separate.
-                    // For now, let's stick to the main two.
+                    // Explicitly handle unknown/other types
+                    ridesUnknownCount++;
+                    revenueUnknown += val;
                 }
             });
 
@@ -342,8 +342,10 @@ export const FraudController = {
                     // New Explicit Aggregations
                     ridesAppCount,
                     ridesParticularCount,
+                    ridesUnknownCount,
                     revenueApp,
-                    revenueParticular
+                    revenueParticular,
+                    revenueUnknown
                 }
             });
         } catch (error: any) {

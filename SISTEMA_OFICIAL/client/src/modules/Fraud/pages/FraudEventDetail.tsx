@@ -36,6 +36,8 @@ interface ShiftData {
     ridesParticularCount?: number;
     revenueApp?: number;
     revenueParticular?: number;
+    ridesUnknownCount?: number;
+    revenueUnknown?: number;
 }
 
 interface EventDetailResponse {

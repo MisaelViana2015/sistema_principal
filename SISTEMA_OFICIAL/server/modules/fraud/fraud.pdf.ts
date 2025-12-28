@@ -17,6 +17,8 @@ interface ShiftData {
     ridesParticularCount?: number;
     revenueApp?: number;
     revenueParticular?: number;
+    ridesUnknownCount?: number;
+    revenueUnknown?: number;
 }
 
 // 12. ANEXO EXPLICATIVO (Hardcoded to avoid engine modification)
@@ -459,6 +461,16 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
         } else {
             doc.text("Nenhuma decisão registrada até o momento.");
         }
+
+        // Classification Verdict
+        let verdict = "Operacional Normal";
+        if (event.riskScore >= 70) verdict = "Anomalia Crítica";
+        else if (event.riskScore >= 40) verdict = "Anomalia Relevante";
+        else if (event.riskScore >= 20) verdict = "Ineficiência Operacional";
+
+        doc.moveDown(2);
+        doc.font('Helvetica-Bold').fontSize(12).text(`Classificação Operacional do Turno: ${verdict}`, { align: 'center' });
+        doc.fontSize(8).font('Helvetica').text("(Baseado exclusivamente no Risk Score calculado pelo sistema)", { align: 'center' });
 
         doc.end();
     });

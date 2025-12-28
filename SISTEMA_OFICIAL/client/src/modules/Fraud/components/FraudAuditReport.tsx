@@ -205,9 +205,9 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                 )}
 
                 {/* Breakdown App vs Particular */}
-                <div className="bg-gray-50 border p-4 rounded text-sm">
+                <div className="bg-gray-50 border p-4 rounded text-sm mb-6">
                     <h3 className="font-bold text-gray-800 mb-2 border-b pb-1">Distribuição por Tipo de Corrida</h3>
-                    <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div className="grid grid-cols-3 gap-4 mb-3">
                         <div>
                             <span className="text-gray-600 block">App</span>
                             <span className="font-medium">{shift.ridesAppCount || 0} corridas ({fmtBRL(shift.revenueApp || 0)})</span>
@@ -216,13 +216,19 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                             <span className="text-gray-600 block">Particular</span>
                             <span className="font-medium">{shift.ridesParticularCount || 0} corridas ({fmtBRL(shift.revenueParticular || 0)})</span>
                         </div>
+                        {(shift.ridesUnknownCount || 0) > 0 && (
+                            <div>
+                                <span className="text-gray-600 block">Unknown</span>
+                                <span className="font-medium text-amber-700">{shift.ridesUnknownCount} corridas ({fmtBRL(shift.revenueUnknown || 0)})</span>
+                            </div>
+                        )}
                     </div>
 
                     {(shift.revenueParticular || 0) > 0 ? (
                         <>
                             <div className="grid grid-cols-3 gap-2 text-xs mb-2">
                                 <div className="bg-white p-1 rounded border">
-                                    <span className="text-gray-500 block">Receita/KM (Só App)</span>
+                                    <span className="text-gray-500 block">Receita/KM (Só App)*</span>
                                     <span className="font-bold">{fmtBRL(kmTotal > 0 ? (shift.revenueApp || 0) / kmTotal : 0)}/km</span>
                                 </div>
                                 <div className="bg-white p-1 rounded border">
@@ -234,13 +240,32 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                                     <span className="font-bold">{((shift.revenueParticular || 0) / (shift.totalBruto || 1) * 100).toFixed(1)}%</span>
                                 </div>
                             </div>
-                            <p className="text-xs italic text-gray-600 border-l-2 border-gray-300 pl-2">
-                                “Quando uma parcela relevante da receita do turno é proveniente de corridas particulares, métricas globais como receita por quilômetro e por hora podem apresentar valores inferiores ao padrão de aplicativo, sem caracterizar fraude.”
-                            </p>
+                            <div className="space-y-1">
+                                <p className="text-xs italic text-gray-500">
+                                    * Receita/KM (Só App) utiliza KM total do turno por ausência de segregação física de deslocamento.
+                                </p>
+                                <p className="text-xs italic text-gray-600 border-l-2 border-gray-300 pl-2">
+                                    “Quando uma parcela relevante da receita do turno é proveniente de corridas particulares, métricas globais como receita por quilômetro e por hora podem apresentar valores inferiores ao padrão de aplicativo, sem caracterizar fraude.”
+                                </p>
+                            </div>
                         </>
                     ) : (
                         <p className="text-xs text-green-600 font-medium bg-green-50 p-1 rounded inline-block">✅ 100% Receita de Aplicativo</p>
                     )}
+                </div>
+
+                {/* Final Classification */}
+                <div className="text-center p-4 border rounded bg-gray-100 mb-8 break-inside-avoid">
+                    <h3 className="text-md font-bold text-black uppercase">
+                        Classificação Operacional do Turno
+                    </h3>
+                    <p className={`text-xl font-bold mt-1 ${event.riskScore >= 70 ? 'text-red-700' : event.riskScore >= 40 ? 'text-orange-600' : event.riskScore >= 20 ? 'text-amber-600' : 'text-green-600'}`}>
+                        {event.riskScore >= 70 ? 'Anomalia Crítica' :
+                            event.riskScore >= 40 ? 'Anomalia Relevante' :
+                                event.riskScore >= 20 ? 'Ineficiência Operacional' :
+                                    'Operacional Normal'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">(Baseado exclusivamente no Risk Score calculado pelo sistema)</p>
                 </div>
             </div>
 
