@@ -286,7 +286,10 @@ export const FraudDashboard = () => {
                                     </div>
                                 )}
                             </div>
-                        </Card>
-                    </div>
-                    );
+                        </CardContent>
+                    </Card>
+                </div>
+        </div>
+        </div >
+    );
 };
