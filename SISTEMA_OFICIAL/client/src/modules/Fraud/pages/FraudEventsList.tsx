@@ -20,11 +20,11 @@ interface FraudEvent {
     rules: { label: string }[];
 }
 
-interface FraudEventsListProps {
+export interface FraudEventsListProps {
     onSelectEvent?: (id: string) => void;
 }
 
-const FraudEventsList = ({ onSelectEvent }: FraudEventsListProps = {}) => {
+const FraudEventsList: React.FC<FraudEventsListProps> = ({ onSelectEvent } = {}) => {
     const navigate = useNavigate();
     const [page, setPage] = useState(1);
     const [statusFilter, setStatusFilter] = useState<string>('all');
