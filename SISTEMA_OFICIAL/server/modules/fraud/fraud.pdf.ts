@@ -14,165 +14,246 @@ interface ShiftData {
     duracaoMin: number;
 }
 
+// 12. ANEXO EXPLICATIVO (Hardcoded to avoid engine modification)
+const OFFICIAL_RULES_LIST = [
+    { code: "KM_ZERO_COM_RECEITA", name: "REGRA 01 — KM ZERO COM RECEITA", desc: "Existe receita registrada com km total menor ou igual a zero. Não é possível gerar receita sem deslocamento." },
+    { code: "KM_RETROCEDEU", name: "REGRA 02 — KM RETROCEDEU", desc: "O km inicial do turno atual é menor que o km final do turno anterior. Odômetro não pode andar para trás." },
+    { code: "KM_SALTO_ABSURDO", name: "REGRA 03 — SALTO DE KM ABSURDO ENTRE TURNOS", desc: "Diferença excessiva de km entre turnos consecutivos (> 250 km). Indica uso fora do sistema ou erro grave." },
+    { code: "RECEITA_KM_MUITO_BAIXA", name: "REGRA 04 — RECEITA/KM MUITO BAIXA", desc: "Receita por km abaixo do mínimo aceitável (R$ 3,00/km). Indica corridas subdeclaradas." },
+    { code: "RECEITA_KM_MUITO_ALTA", name: "REGRA 05 — RECEITA/KM MUITO ALTA", desc: "Receita por km acima do máximo aceitável (R$ 20,00/km). Pode indicar manipulação de valores." },
+    { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 06 — DESVIO CRÍTICO DA MÉDIA DO MOTORISTA", desc: "Receita por km muito acima da média histórica do motorista (≥ 4x). Comportamento fora do padrão individual." },
+    { code: "TURNO_CURTO_DEMAIS", name: "REGRA 07 — TURNO CURTO DEMAIS", desc: "Turno com duração extremamente curta (< 10 min) mas com corridas. Corridas exigem tempo mínimo." },
+    { code: "TURNO_LONGO_DEMAIS", name: "REGRA 08 — TURNO LONGO DEMAIS", desc: "Turno com duração excessiva (> 14h). Possível esquecimento ou uso indevido." },
+    { code: "RECEITA_HORA_MUITO_ALTA", name: "REGRA 09 — RECEITA POR HORA MUITO ALTA", desc: "Receita por hora acima do limite aceitável (R$ 150,00/h). Manipulação ou concentração artificial." },
+    { code: "POUCAS_CORRIDAS_HORA", name: "REGRA 10 — POUCAS CORRIDAS POR HORA", desc: "Baixa produtividade (< 0,3 corridas/h) em turno com corridas. Uso improdutivo." },
+    { code: "SEQUENCIA_VALORES_IGUAIS", name: "REGRA 11 — VALORES DE CORRIDAS REPETIDOS", desc: "Múltiplas corridas com exatamente o mesmo valor. Foge do comportamento natural." },
+    { code: "SEQUENCIA_CONSECUTIVA", name: "REGRA 12 — SEQUÊNCIA CONSECUTIVA DE VALORES", desc: "Corridas consecutivas com valores idênticos. Indica possível automação ou fraude manual." }
+];
+
+// Helper to determine severity level for primary rule sort
+const getSeverityWeight = (s?: string) => {
+    switch (s?.toLowerCase()) {
+        case 'critical': return 4;
+        case 'high': return 3;
+        case 'medium': return 2;
+        default: return 1;
+    }
+};
+
 export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, shift: ShiftData): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-        const doc = new PDFDocument();
+        const doc = new PDFDocument({ margin: 50 });
         const buffers: Buffer[] = [];
 
         doc.on("data", (chunk) => buffers.push(chunk));
         doc.on("end", () => resolve(Buffer.concat(buffers)));
         doc.on("error", (err) => reject(err));
 
-        // 1. Header
-        doc.fontSize(20).text("Relatório de Análise Antifraude", { align: "center" });
+        const fmtDate = (d: Date | string | null) => d ? new Date(d).toLocaleString('pt-BR') : "N/A";
+        const fmtBRL = (v: number) => `R$ ${v.toFixed(2)}`;
+
+        // --- 10.1 Cabeçalho / Identificação Geral ---
+        doc.font('Helvetica-Bold').fontSize(18).text("Relatório de Análise Antifraude", { align: "center" });
+        doc.fontSize(12).font('Helvetica').text("Rota Verde — Módulo Antifraude", { align: "center" });
         doc.moveDown();
-        doc.fontSize(10).text(`Event ID: ${event.id}`, { align: "right" });
+
+        doc.fontSize(10);
+        doc.text(`Event ID: ${event.id}`, { align: "right" });
         doc.text(`Shift ID: ${shift.id}`, { align: "right" });
-        doc.text(`Detectado em: ${new Date(event.detectedAt || "").toLocaleString()}`, { align: "right" });
+        doc.text(`Data da Detecção: ${fmtDate(event.detectedAt)}`, { align: "right" });
+        doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, { align: "right" });
         doc.moveDown();
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-        doc.moveDown();
-
-        // 2. Resumo de Risco
-        doc.fontSize(14).text("2. Resumo de Risco");
-        doc.fontSize(12);
-        doc.text(`Risk Score: ${event.riskScore}`);
-        doc.text(`Risk Level: ${(event.riskLevel || 'low').toUpperCase()}`);
-        doc.text(`Status Atual: ${(event.status || 'pendente').toUpperCase()}`);
+        doc.lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
         doc.moveDown();
 
-        // 3. Identificação
-        doc.fontSize(14).text("3. Identificação");
-        doc.fontSize(12);
-        doc.text(`Motorista: ${shift.driverId}`);
-        doc.text(`Veículo: ${shift.vehicleId}`);
+        // --- 10.2 Resumo Executivo de Risco ---
+        doc.font('Helvetica-Bold').fontSize(14).text("Resumo Executivo de Risco");
+        doc.moveDown(0.5);
+        doc.fontSize(12).font('Helvetica');
+
+        doc.text(`Risk Score: `, { continued: true }).font('Helvetica-Bold').text(`${event.riskScore}`);
+        doc.font('Helvetica').text(`Risk Level: `, { continued: true }).font('Helvetica-Bold').text(`${(event.riskLevel || 'low').toUpperCase()}`);
+        doc.font('Helvetica').text(`Status Atual: `, { continued: true }).font('Helvetica-Bold').text(`${(event.status || 'pendente').toUpperCase()}`);
         doc.moveDown();
 
-        // 4. Dados do Turno
-        doc.fontSize(14).text("4. Dados do Turno");
-        doc.fontSize(12);
+        doc.font('Helvetica-Oblique').fontSize(10).text(
+            "Este evento foi identificado automaticamente pelo sistema antifraude do Rota Verde devido à detecção de comportamentos operacionais anômalos, com base em regras determinísticas e critérios objetivos previamente definidos.",
+            { align: 'justify' }
+        );
+        doc.moveDown();
+
+        // --- 10.3 Identificação Operacional ---
+        doc.font('Helvetica-Bold').fontSize(14).text("Identificação Operacional");
+        doc.fontSize(12).font('Helvetica');
+        doc.text(`Identificador do Motorista: ${shift.driverId}`);
+        doc.text(`Identificador do Veículo: ${shift.vehicleId}`);
+        doc.moveDown();
+
+        // --- 10.4 Dados do Turno Analisado ---
+        doc.font('Helvetica-Bold').fontSize(14).text("Dados do Turno Analisado");
+        doc.fontSize(10).font('Helvetica');
 
         const kmTotal = shift.kmFinal - shift.kmInicial;
-        const recPerKm = kmTotal > 0 ? shift.totalBruto / kmTotal : 0;
         const durationHours = shift.duracaoMin > 0 ? shift.duracaoMin / 60 : 0;
+        const recPerKm = kmTotal > 0 ? shift.totalBruto / kmTotal : 0;
         const recPerHour = durationHours > 0 ? shift.totalBruto / durationHours : 0;
 
-        doc.text(`Início: ${new Date(shift.inicio).toLocaleString()}`);
-        doc.text(`Fim: ${shift.fim ? new Date(shift.fim).toLocaleString() : "Em andamento"}`);
-        doc.text(`KM Total: ${kmTotal} km (Inicial: ${shift.kmInicial} - Final: ${shift.kmFinal})`);
-        doc.text(`Receita Total: R$ ${shift.totalBruto.toFixed(2)}`);
-        doc.text(`Receita por KM: R$ ${recPerKm.toFixed(2)} / km`);
-        doc.text(`Receita por Hora: R$ ${recPerHour.toFixed(2)} / h`);
-        doc.text(`Total de Corridas: ${shift.totalCorridas}`);
-        doc.text(`Duração: ${durationHours.toFixed(1)} horas`);
+        const col1X = 50; const col2X = 300;
+        let y = doc.y;
+
+        doc.text(`Início: ${fmtDate(shift.inicio)}`, col1X, y);
+        doc.text(`Fim: ${shift.fim ? fmtDate(shift.fim) : "Em andamento"}`, col2X, y); y += 15;
+        doc.text(`KM Inicial: ${shift.kmInicial}`, col1X, y);
+        doc.text(`KM Final: ${shift.kmFinal}`, col2X, y); y += 15;
+        doc.text(`KM Total: ${kmTotal} km`, col1X, y);
+        doc.text(`Duração Total: ${durationHours.toFixed(2)}h`, col2X, y); y += 15;
+        doc.text(`Receita Total: ${fmtBRL(shift.totalBruto)}`, col1X, y);
+        doc.text(`Corridas: ${shift.totalCorridas}`, col2X, y); y += 15;
+        doc.text(`Receita por KM: ${fmtBRL(recPerKm)}/km`, col1X, y);
+        doc.text(`Receita por Hora: ${fmtBRL(recPerHour)}/h`, col2X, y); y += 25;
+
+        doc.y = y; // Sync Y
+
+        // --- 11. ANÁLISE DE DETECÇÃO ---
+        doc.font('Helvetica-Bold').fontSize(14).text("Análise de Detecção");
+        doc.moveDown(0.5);
+
+        // Sort rules to find Primary Rule
+        const reasons = (event.rules as any[]) || (event.metadata as any)?.reasons || [];
+        const sortedRules = [...reasons].sort((a, b) => {
+            const wA = getSeverityWeight(a.severity);
+            const wB = getSeverityWeight(b.severity);
+            if (wA !== wB) return wB - wA; // Higher severity first
+            return (b.score || 0) - (a.score || 0); // Higher score first
+        });
+
+        if (sortedRules.length > 0) {
+            // 11.1 Regra Principal
+            const primary = sortedRules[0];
+            const ruleDef = OFFICIAL_RULES_LIST.find(r => r.code === primary.code) || { name: primary.label || primary.code, desc: primary.description };
+
+            doc.rect(50, doc.y, 500, 80).fill('#f3f4f6'); // Light grey background box
+            doc.fillColor('black');
+            doc.y += 10;
+
+            doc.fontSize(12).font('Helvetica-Bold').text(`Regra Principal: ${ruleDef.name}`, { indent: 10 });
+            doc.fontSize(10).font('Helvetica').text(`Severidade: ${primary.severity?.toUpperCase()}`, { indent: 10 });
+            doc.moveDown(0.5);
+            doc.font('Helvetica-Oblique').text(
+                "A regra acima foi aplicada porque o valor observado neste turno ultrapassou os limites operacionais definidos pelo sistema, caracterizando um desvio relevante em relação ao comportamento esperado.",
+                { indent: 10, align: 'justify', width: 480 }
+            );
+
+            // Explanation with Observed vs Expected
+            doc.moveDown(0.5);
+            doc.font('Helvetica').text(`Detalhe Técnico: ${primary.description}`, { indent: 10 });
+            doc.y += 10; // Padding bottom box
+            doc.moveDown();
+
+            // 11.2 Regras Secundárias
+            if (sortedRules.length > 1) {
+                doc.font('Helvetica-Bold').fontSize(12).text("Regras Secundárias Disparadas");
+                doc.moveDown(0.5);
+                sortedRules.slice(1).forEach(rule => {
+                    const rDef = OFFICIAL_RULES_LIST.find(r => r.code === rule.code);
+                    doc.font('Helvetica-Bold').fontSize(10).text(`• ${rDef?.name || rule.label || rule.code} (${rule.severity?.toUpperCase()})`);
+                    doc.font('Helvetica').text(`  ${rule.description}`);
+                    doc.moveDown(0.5);
+                });
+            }
+        } else {
+            doc.text("Nenhuma regra específica registrada (Alerta Manual ou Externo).");
+        }
         doc.moveDown();
 
-        // 5. Baseline (Média do Motorista)
-        doc.fontSize(14).text("5. Baseline (Média do Motorista)");
-        doc.fontSize(12);
+        // 11.3 Baseline Histórico
+        doc.font('Helvetica-Bold').fontSize(14).text("Baseline (Histórico do Motorista)");
+        doc.moveDown(0.5);
 
         const bl = (event.metadata as any)?.baseline;
-        if (bl && bl.sampleSize > 0) {
-            const fmt = (v: number) => v !== undefined ? v.toFixed(2) : '-';
-            doc.text(`Amostra: ${bl.sampleSize} turnos analisados`);
-            doc.text(`Receita Média/KM: R$ ${fmt(bl.avgRevenuePerKm)}`);
-            doc.text(`Receita Média/Hora: R$ ${fmt(bl.avgRevenuePerHour)}`);
-            doc.text(`Corridas Média/Hora: ${fmt(bl.avgRidesPerHour)}`);
-            doc.text(`Ticket Médio: R$ ${fmt(bl.avgTicket)}`);
+        if (bl && bl.sampleSize > 5) {
+            doc.fontSize(10).font('Helvetica').text(
+                "O sistema utiliza como referência o histórico do próprio motorista, considerando apenas turnos válidos anteriores. O turno analisado apresentou desvios em relação à média histórica, reforçando o alerta gerado."
+            );
+            doc.moveDown();
+
+            doc.text(`Amostra: ${bl.sampleSize} turnos (últimos 30 dias)`);
+            doc.moveDown(0.5);
+
+            // Table
+            const tY = doc.y;
+            const rowH = 20;
+
+            // Header
+            doc.font('Helvetica-Bold');
+            doc.text("Indicador", 50, tY);
+            doc.text("Média Histórica", 200, tY);
+            doc.text("Turno Analisado", 350, tY);
+
+            // Rows
+            const drawRow = (label: string, hist: number, current: number, yPos: number, formatMoney = false) => {
+                const fmt = (v: number) => formatMoney ? fmtBRL(v) : v.toFixed(2);
+                doc.font('Helvetica');
+                doc.text(label, 50, yPos);
+                doc.text(fmt(hist), 200, yPos);
+                doc.text(fmt(current), 350, yPos);
+            };
+
+            drawRow("Receita por KM", bl.avgRevenuePerKm, recPerKm, tY + rowH, true);
+            drawRow("Receita por Hora", bl.avgRevenuePerHour, recPerHour, tY + rowH * 2, true);
+            drawRow("Corridas por Hora", bl.avgRidesPerHour, durationHours > 0 ? shift.totalCorridas / durationHours : 0, tY + rowH * 3);
+            drawRow("Ticket Médio", bl.avgTicket, shift.totalCorridas > 0 ? shift.totalBruto / shift.totalCorridas : 0, tY + rowH * 4, true);
+
+            doc.y = tY + rowH * 5 + 10;
+
         } else {
-            doc.text("Baseline insuficiente para este motorista.", { oblique: true });
+            doc.font('Helvetica-Oblique').fontSize(10).text("Não há histórico suficiente para cálculo de baseline individual neste caso.");
+            doc.moveDown();
         }
+
+        doc.addPage(); // Force new page for Rules Annex and Decision if needed, or just flow? 
+        // Doc structure says Annex then Decision? Let's follow section numbers.
+
+        // --- 12. REGRAS GERAIS DO SISTEMA (ANEXO) ---
+        doc.font('Helvetica-Bold').fontSize(14).text("12. Regras Gerais do Sistema (Anexo Explicativo)");
+        doc.moveDown(0.5);
+        doc.fontSize(10).font('Helvetica').text(
+            "O sistema antifraude do Rota Verde utiliza um conjunto fixo de regras determinísticas para identificar comportamentos atípicos. Abaixo estão descritas todas as regras ativas no sistema, independentemente de terem sido aplicadas neste evento específico.",
+            { align: 'justify' }
+        );
         doc.moveDown();
 
-        // 6. Regras Disparadas
-        doc.fontSize(14).text("6. Regras Disparadas");
-        doc.fontSize(10);
-
-        const reasons = (event.rules as any[]) || (event.metadata as any)?.reasons || [];
-        if (reasons.length === 0) {
-            doc.text("Nenhuma regra específica registrada.");
-        } else {
-            reasons.forEach((rule: any) => {
-                doc.font('Helvetica-Bold').text(`[${rule.severity?.toUpperCase() || "INFO"}] ${rule.label || rule.code}`);
-
-                // Construct detailed explanation based on rule code and data
-                let explanation = rule.description || '';
-                const d = rule.data || {};
-
-                // Helper to format currency
-                const fmtBRL = (v: number) => `R$ ${v.toFixed(2)}`;
-
-                switch (rule.code) {
-                    case "KM_ZERO_COM_RECEITA":
-                        explanation = `Esperado: KM > 0 quando há receita • Atual: KM: ${d.kmTotal || 0}, Receita: ${fmtBRL(d.revenueTotal || 0)}`;
-                        break;
-                    case "RECEITA_KM_MUITO_BAIXA":
-                        explanation = `Esperado: ≥ ${fmtBRL(d.minThreshold)}/km • Atual: ${fmtBRL(d.revPerKm)}/km (-${(100 - (d.revPerKm / d.minThreshold) * 100).toFixed(0)}% abaixo)`;
-                        break;
-                    case "RECEITA_KM_MUITO_ALTA":
-                        explanation = `Esperado: ≤ ${fmtBRL(d.maxThreshold)}/km • Atual: ${fmtBRL(d.revPerKm)}/km (${(d.revPerKm / d.maxThreshold).toFixed(1)}x acima)`;
-                        break;
-                    case "RECEITA_KM_DESVIO_CRITICO":
-                        explanation = `Esperado: Próximo da média (${fmtBRL(d.baseline || 0)}) • Atual: ${fmtBRL(d.revPerKm)} (${d.actualMultiplier?.toFixed(1)}x da média)`;
-                        break;
-                    case "RECEITA_HORA_MUITO_ALTA":
-                        explanation = `Esperado: ≤ ${fmtBRL(d.maxThreshold)}/h • Atual: ${fmtBRL(d.revPerHour)}/h`;
-                        break;
-                    case "POUCAS_CORRIDAS_HORA":
-                        explanation = `Esperado: ≥ ${d.minThreshold} corridas/h • Atual: ${(d.ridesPerHour || 0).toFixed(2)} corridas/h`;
-                        break;
-                    case "TURNO_CURTO_DEMAIS":
-                        explanation = `Esperado: ≥ ${(d.minThresholdHours * 60).toFixed(0)} min quando há corridas • Atual: ${(d.durationHours * 60).toFixed(0)} min`;
-                        break;
-                    case "TURNO_LONGO_DEMAIS":
-                        explanation = `Esperado: ≤ ${d.maxThresholdHours}h • Atual: ${(d.durationHours || 0).toFixed(1)}h`;
-                        break;
-                    case "KM_RETROCEDEU":
-                        explanation = `Esperado: KM inicial ≥ KM final anterior (${d.prevShiftKmEnd}) • Atual: ${d.currentShiftKmStart} (Diferença: ${d.gap})`;
-                        break;
-                    case "KM_SALTO_ABSURDO":
-                        explanation = `Esperado: Gap ≤ ${d.maxGap}km • Atual: ${d.gap}km`;
-                        break;
-                    case "SEQUENCIA_VALORES_IGUAIS":
-                    case "SEQUENCIA_VALORES_SUSPEITA":
-                        explanation = `Suspeita: ${d.count} corridas de mesmo valor (${fmtBRL(d.valor)}) no turno.`;
-                        break;
-                    case "SEQUENCIA_CONSECUTIVA":
-                        explanation = `Suspeita: ${d.streak} corridas seguidas com valor exato de ${fmtBRL(d.streakValue)}.`;
-                        break;
-                }
-
-                doc.font('Helvetica').text(`   ${explanation}`);
-
-                // Generic data dump for fallback or extra info
-                // Only show if not covered by specific explanation to avoid clutter?
-                // User said "well explained", so maybe keep it clean. 
-                // Let's hide the raw data dump if we have a specific explanation, OR keep it small and grey.
-                // Keeping it creates transparency, but might look redundant. 
-                // The images show CLEAN explanations. Let's comment out the raw dump for these known codes.
-                if (rule.data && !['KM_ZERO_COM_RECEITA', 'RECEITA_KM_MUITO_BAIXA', 'RECEITA_KM_MUITO_ALTA', 'RECEITA_KM_DESVIO_CRITICO', 'RECEITA_HORA_MUITO_ALTA', 'POUCAS_CORRIDAS_HORA', 'TURNO_CURTO_DEMAIS', 'TURNO_LONGO_DEMAIS', 'KM_RETROCEDEU', 'KM_SALTO_ABSURDO'].includes(rule.code)) {
-                    doc.fontSize(8).fillColor('#666666');
-                    Object.entries(rule.data).forEach(([key, value]) => {
-                        const formattedValue = typeof value === 'number' ? value.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : value;
-                        doc.text(`   • ${key}: ${formattedValue}`);
-                    });
-                    doc.fontSize(10).fillColor('black');
-                }
-
-                doc.moveDown(0.5);
-            });
-        }
+        OFFICIAL_RULES_LIST.forEach(rule => {
+            doc.font('Helvetica-Bold').fontSize(9).text(rule.name);
+            doc.font('Helvetica').text(rule.desc, { indent: 10 });
+            doc.moveDown(0.5);
+        });
         doc.moveDown();
 
-        // 7. Decisão Humana
-        doc.fontSize(14).text("7. Decisão Humana");
-        doc.fontSize(12);
+        // --- 13. DECISÃO HUMANA ---
+        doc.font('Helvetica-Bold').fontSize(14).text("13. Decisão Humana");
+        doc.moveDown(0.5);
 
-        if (event.metadata && (event.metadata as any).comment) {
-            doc.text(`Comentário: ${(event.metadata as any).comment}`);
-            doc.text(`Data da decisão: ${new Date((event.metadata as any).lastDecisionAt || event.reviewedAt || new Date()).toLocaleString()}`);
+        const decisionMeta = (event.metadata as any) || {};
+        const comment = decisionMeta.comment;
+        const decisionDate = decisionMeta.lastDecisionAt || event.reviewedAt;
+        const reviewer = decisionMeta.reviewerName || "N/A";
+
+        doc.fontSize(11).font('Helvetica');
+        doc.text(`Status Final: ${(event.status || 'PENDENTE').toUpperCase()}`);
+
+        if (event.status && event.status !== 'pendente') {
+            doc.moveDown(0.5);
+            doc.font('Helvetica-Oblique').text(
+                "A decisão final sobre este evento foi tomada por um analista humano, com base nas evidências apresentadas neste relatório e nos critérios objetivos definidos pelo sistema antifraude.",
+                { align: 'justify' }
+            );
+            doc.moveDown();
+            doc.font('Helvetica').text(`Comentário do Analista: ${comment || "(Sem comentário registrado)"}`);
+            doc.text(`Responsável: ${reviewer}`);
+            doc.text(`Data da Decisão: ${fmtDate(decisionDate)}`);
         } else {
-            doc.text("Nenhuma decisão ou comentário registrado.");
+            doc.text("Nenhuma decisão registrada até o momento.");
         }
 
         doc.end();
