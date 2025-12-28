@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, CheckCircle, XCircle, Ban, ArrowLeft, Download, Clock, ShieldAlert, Printer } from 'lucide-react';
+import { AlertTriangle, CheckCircle, XCircle, Ban, ArrowLeft, Printer, ShieldAlert, Clock } from 'lucide-react';
 import { FraudAuditReport } from '../components/FraudAuditReport';
 
 interface FraudEvent {
@@ -89,94 +89,118 @@ const FraudEventDetail = ({ eventId: propEventId, onClose }: FraudEventDetailPro
 
     const { event, shift } = data;
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'confirmado': return 'text-red-600 bg-red-100 border-red-200';
-            case 'descartado': return 'text-green-600 bg-green-100 border-green-200';
-            case 'bloqueado': return 'text-gray-600 bg-gray-100 border-gray-200';
-            case 'em_analise': return 'text-orange-600 bg-orange-100 border-orange-200';
-            default: return 'text-blue-600 bg-blue-100 border-blue-200';
-        }
-    };
-
-    const getRiskColor = (level: string) => {
-        switch (level) {
-            case 'critical': return 'text-red-700 font-bold';
-            case 'high': return 'text-orange-600 font-semibold';
-            case 'medium': return 'text-yellow-600';
-            default: return 'text-blue-600';
-        }
-    };
-
     return (
-        <div className={`space-y-6 animate-in fade-in duration-500 ${isModal ? '' : 'p-4 max-w-7xl mx-auto'}`}>
-            {/* Header / Actions - Hide back button in modal */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col h-full bg-gray-50 overflow-auto print:bg-white print:overflow-visible">
+            {/* Header / Toolbar - Hidden in Print */}
+            <div className="bg-white border-b px-6 py-4 flex items-center justify-between print:hidden sticky top-0 z-10 shadow-sm">
                 <div className="flex items-center gap-4">
                     {!isModal && (
-                        <Button variant="outline" onClick={() => navigate('/fraude')}>
-                            <ArrowLeft className="w-4 h-4 mr-2" /> Voltar
+                        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+                            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar
                         </Button>
                     )}
                     <div>
-                        <h1 className="text-2xl font-bold">Detalhe do Evento</h1>
-                        <p className="text-muted-foreground flex items-center gap-2 text-sm">
-                            ID: <span className="font-mono">{event.id}</span>
-                            <span className="text-gray-300">|</span>
-                            {new Date(event.detectedAt).toLocaleString()}
-                        </p>
+                        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                            <ShieldAlert className="h-6 w-6 text-red-600" />
+                            Auditoria de Evento #{event.id.slice(0, 8)}
+                        </h1>
+                        <p className="text-sm text-gray-500">Motorista: {shift.driverId} • Veículo: {shift.vehicleId}</p>
                     </div>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleDownloadPdf}>
-                        <Download className="w-4 h-4 mr-2" /> PDF
+                <div className="flex items-center gap-3">
+                    <Button variant="outline" onClick={handlePrint} className="gap-2">
+                        <Printer className="h-4 w-4" /> Imprimir Relatório
                     </Button>
+                    {/* Status Actions */}
+                    {event.status === 'pendente' && (
+                        <>
+                            <Button
+                                variant="destructive"
+                                onClick={() => handleStatusChange('confirmado')}
+                                disabled={updateStatusMutation.isPending}
+                            >
+                                <Ban className="h-4 w-4 mr-2" /> Confirmar Fraude
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="border-green-600 text-green-700 hover:bg-green-50"
+                                onClick={() => handleStatusChange('descartado')}
+                                disabled={updateStatusMutation.isPending}
+                            >
+                                <CheckCircle className="h-4 w-4 mr-2" /> Descartar (Falso Positivo)
+                            </Button>
+                        </>
+                    )}
+                    {isModal && onClose && (
+                        <Button variant="ghost" onClick={onClose}>Fechar</Button>
+                    )}
                 </div>
             </div>
 
-            {/* Summary Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="text-sm text-muted-foreground mb-1">Status Atual</div>
-                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(event.status)}`}>
-                            {event.status.toUpperCase().replace('_', ' ')}
+            {/* Main Content - The Audit Report */}
+            <div className="flex-1 p-6 print:p-0">
+                <div className="max-w-5xl mx-auto space-y-6 print:max-w-full print:space-y-0">
+
+                    {/* Additional Context Alert if Pending - On Screen Only */}
+                    {event.status === 'pendente' && (
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded print:hidden">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <AlertTriangle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                                </div>
+                                <div className="ml-3">
+                                    <p className="text-sm text-yellow-700">
+                                        Este evento está pendente de análise. Revise o relatório de auditoria abaixo antes de tomar uma decisão.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="text-sm text-muted-foreground mb-1">Risco Calculado</div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-bold">{event.riskScore}</span>
-                            <span className={`text-sm capitalize ${getRiskColor(event.riskLevel)}`}>({event.riskLevel})</span>
-                        </div>
-                    </CardContent>
-                </Card>
-                {/* Status Actions */}
-                {event.status === 'pendente' && (
-                    <>
-                        <Button
-                            variant="destructive"
-                            onClick={() => handleStatusChange('confirmado')}
-                            disabled={updateStatusMutation.isPending}
-                        >
-                            <Ban className="h-4 w-4 mr-2" /> Confirmar Fraude
-                        </Button>
-                        <Button
-                            variant="outline"
-                            className="border-green-600 text-green-700 hover:bg-green-50"
-                            onClick={() => handleStatusChange('descartado')}
-                            disabled={updateStatusMutation.isPending}
-                        >
-                            <CheckCircle className="h-4 w-4 mr-2" /> Descartar (Falso Positivo)
-                        </Button>
-                    </>
-                )}
-            </CardContent>
-        </Card>
-            </div >
-        </div >
+                    )}
+
+                    {/* THE REPORT COMPONENT */}
+                    <FraudAuditReport event={event} shift={shift} />
+
+                    {/* Action History / Comments - Screen Only */}
+                    <div className="mt-8 print:hidden">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-lg">Histórico de Ações</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    {event.updatedAt !== event.detectedAt ? (
+                                        <div className="flex gap-3 text-sm">
+                                            <Clock className="h-5 w-5 text-gray-400" />
+                                            <div>
+                                                <p className="font-medium">Status atualizado para <span className="uppercase">{event.status}</span></p>
+                                                <p className="text-gray-500">{new Date(event.updatedAt).toLocaleString()}</p>
+                                                {event.comment && <p className="mt-1 bg-gray-100 p-2 rounded">"{event.comment}"</p>}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-500 italic">Nenhuma ação registrada ainda.</p>
+                                    )}
+
+                                    {event.status === 'pendente' && (
+                                        <div className="mt-4 pt-4 border-t">
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Adicionar Observação (Opcional)</label>
+                                            <textarea
+                                                className="w-full border rounded p-2 text-sm"
+                                                rows={3}
+                                                placeholder="Justificativa para a decisão..."
+                                                value={actionComment}
+                                                onChange={(e) => setActionComment(e.target.value)}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     );
 };
 
