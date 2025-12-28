@@ -1,49 +1,32 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, FileText, Clock, FileStack, Settings, ScrollText, ArrowLeft, Home } from 'lucide-react';
+import { LayoutDashboard, FileText, Clock, FileStack, Settings, ScrollText } from 'lucide-react';
 
-const FraudNavigation = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
+interface FraudNavigationProps {
+    activeTab: string;
+    onTabChange: (tab: string) => void;
+}
+
+const FraudNavigation: React.FC<FraudNavigationProps> = ({ activeTab, onTabChange }) => {
 
     const tabs = [
-        { path: '/fraude', label: 'Painel', icon: LayoutDashboard, exact: true },
-        { path: '/fraude/relatorios', label: 'Relatórios', icon: FileText },
-        { path: '/fraude/fila', label: 'Fila', icon: Clock },
-        { path: '/fraude/eventos', label: 'Histórico', icon: FileStack },
-        { path: '/fraude/configuracao', label: 'Config', icon: Settings },
-        { path: '/fraude/logs', label: 'Logs', icon: ScrollText },
+        { id: 'painel', label: 'Painel', icon: LayoutDashboard },
+        { id: 'relatorios', label: 'Relatórios', icon: FileText },
+        { id: 'fila', label: 'Fila', icon: Clock },
+        { id: 'eventos', label: 'Histórico', icon: FileStack },
+        { id: 'configuracao', label: 'Config', icon: Settings },
+        { id: 'logs', label: 'Logs', icon: ScrollText },
     ];
-
-    const isActive = (path: string, exact: boolean = false) => {
-        if (exact) {
-            return location.pathname === path;
-        }
-        return location.pathname.startsWith(path);
-    };
 
     return (
         <div className="flex flex-wrap items-center gap-2 mb-6 border-b pb-4">
-            {/* Botão para voltar ao menu principal */}
-            <Button
-                variant="outline"
-                onClick={() => navigate('/admin')}
-                className="gap-2 mr-4 border-dashed"
-            >
-                <ArrowLeft className="w-4 h-4" />
-                Menu Principal
-            </Button>
-
-            <div className="w-px h-6 bg-border mx-2" />
-
             {tabs.map((tab) => {
-                const active = isActive(tab.path, tab.exact);
+                const active = activeTab === tab.id;
                 return (
                     <Button
-                        key={tab.path}
+                        key={tab.id}
                         variant={active ? "default" : "ghost"}
-                        onClick={() => navigate(tab.path)}
+                        onClick={() => onTabChange(tab.id)}
                         className={`gap-2 ${active ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         <tab.icon className="w-4 h-4" />
