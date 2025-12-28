@@ -89,8 +89,6 @@ const FraudLogs = () => {
                 </div>
             </div>
 
-            <FraudNavigation />
-
             <Card>
                 <CardHeader>
                     <CardTitle>Ações Recentes</CardTitle>

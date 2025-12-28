@@ -66,9 +66,6 @@ const FraudAnalysisQueue = () => {
                 </div>
             </div>
 
-            {/* Navigation Tabs */}
-            <FraudNavigation />
-
             {isLoading ? (
                 <div className="text-center p-12 text-muted-foreground">Carregando fila...</div>
             ) : events?.length === 0 ? (
