@@ -26,18 +26,18 @@ interface TabItem {
 }
 
 const tabs: TabItem[] = [
+    { value: "fraude", label: "Fraude" },
     { value: "motoristas", label: "Motoristas" },
     { value: "veiculos", label: "Veículos", badge: 3 },
     { value: "turnos", label: "Turnos" },
     { value: "corridas", label: "Corridas" },
     { value: "analise", label: "Análise" },
-    { value: "fraude", label: "Fraude" },
     { value: "importar", label: "Importar" }
 ];
 
 
 export default function Admin() {
-    const [activeTab, setActiveTab] = useState<TabValue>("motoristas");
+    const [activeTab, setActiveTab] = useState<TabValue>("fraude");
     const { theme } = useTheme();
     const isDark = theme === 'dark';
 
