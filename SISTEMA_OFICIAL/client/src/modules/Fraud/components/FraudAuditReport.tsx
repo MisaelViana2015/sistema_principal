@@ -170,8 +170,8 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
             <div className="mb-8">
                 <h2 className="text-lg font-bold border-b border-gray-800 mb-3 pb-1">Identificação Operacional</h2>
                 <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
-                    <p><span className="font-semibold">Motorista:</span> {shift.driverId}</p>
-                    <p><span className="font-semibold">Veículo:</span> {shift.vehicleId}</p>
+                    <p><span className="font-semibold">Motorista:</span> {shift.driverName || shift.driverId}</p>
+                    <p><span className="font-semibold">Veículo:</span> {shift.vehicleModel ? `${shift.vehicleModel} - ` : ''}{shift.vehiclePlate || shift.vehicleId}</p>
                 </div>
             </div>
 
