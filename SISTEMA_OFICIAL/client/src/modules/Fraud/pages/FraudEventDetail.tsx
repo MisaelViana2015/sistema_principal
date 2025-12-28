@@ -159,7 +159,20 @@ const FraudEventDetail = ({ eventId: propEventId, onClose }: FraudEventDetailPro
                         <Button
                             variant="destructive"
                             onClick={() => handleStatusChange('confirmado')}
-                        </div>
+                            disabled={updateStatusMutation.isPending}
+                        >
+                            <Ban className="h-4 w-4 mr-2" /> Confirmar Fraude
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="border-green-600 text-green-700 hover:bg-green-50"
+                            onClick={() => handleStatusChange('descartado')}
+                            disabled={updateStatusMutation.isPending}
+                        >
+                            <CheckCircle className="h-4 w-4 mr-2" /> Descartar (Falso Positivo)
+                        </Button>
+                    </>
+                )}
             </CardContent>
         </Card>
             </div >
