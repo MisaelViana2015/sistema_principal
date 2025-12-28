@@ -4,6 +4,7 @@ import app from "./app.js";
 import { testConnection, closeConnection, db } from "./core/db/connection.js";
 import { runMigrations } from "./core/db/migrator.js";
 import { sql } from "drizzle-orm";
+import { FraudService } from "./modules/fraud/fraud.service.js";
 
 /**
  * BOOT DO SERVIDOR (GERENTE GERAL)
@@ -119,7 +120,15 @@ async function startServer() {
                 await ensureSchemaIntegrity();
 
                 testConnection().then((connected) => {
-                    if (connected) console.log("✅ Banco de dados conectado e sincronizado!");
+                    if (connected) {
+                        console.log("✅ Banco de dados conectado e sincronizado!");
+                        // TRIGGER FRAUD ANALYSIS ON STARTUP (TEMPORARY)
+                        setTimeout(() => {
+                            FraudService.analyzeAllShifts()
+                                .then(() => console.log("🏁 Análise automática finalizada."))
+                                .catch(err => console.error("💥 Erro na análise:", err));
+                        }, 10000);
+                    }
                 });
             }).catch(async err => {
                 console.error("⚠️  AVISO CRÍTICO: Falha na auto-migração. O servidor continuará rodando para permitir reparos via API.", err);
