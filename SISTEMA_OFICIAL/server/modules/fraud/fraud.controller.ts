@@ -129,7 +129,7 @@ export const FraudController = {
 
             // MANUAL JOIN
             if (events.length > 0) {
-                const dIds = [...new Set(events.map(e => e.driverId).filter(Boolean))];
+                const dIds = [...new Set(events.map(e => e.driverId).filter(Boolean))] as string[];
                 if (dIds.length > 0) {
                     const driversList = await db.query.drivers.findMany({
                         where: (d, { inArray }) => inArray(d.id, dIds),
