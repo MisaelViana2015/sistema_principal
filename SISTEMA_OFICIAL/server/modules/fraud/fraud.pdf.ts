@@ -134,15 +134,19 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
         doc.text(`KM Inicial: ${shift.kmInicial}`, col1X, y);
         doc.text(`KM Final: ${shift.kmFinal}`, col2X, y); y += 15;
         doc.text(`KM Total: ${kmTotal} km`, col1X, y);
-        doc.text(`Duração Total: ${durationHours.toFixed(2)}h`, col2X, y); y += 15;
-        const ticketMedio = shift.totalCorridas > 0 ? shift.totalBruto / shift.totalCorridas : 0;
-        const runsPerHour = durationHours > 0 ? shift.totalCorridas / durationHours : 0;
+        if (durationHours > 0.01) {
+            doc.text(`Duração Total: ${durationHours.toFixed(2)}h`, col2X, y);
+        } else {
+            doc.fillColor('red').text(`Duração: Não calculável (inconsistente)`, col2X, y).fillColor('black');
+        }
+        y += 15;
 
-        doc.text(`Receita Total: ${fmtBRL(shift.totalBruto)}`, col1X, y);
-        doc.text(`Corridas: ${shift.totalCorridas}`, col2X, y); y += 15;
         // Standard 10 & 11
         doc.text(`Ticket Médio: ${fmtBRL(ticketMedio)}`, col1X, y);
-        doc.text(`Produtividade: ${runsPerHour.toFixed(1)} corr/h`, col2X, y); y += 15;
+        if (durationHours > 0.01) {
+            doc.text(`Produtividade: ${runsPerHour.toFixed(1)} corr/h`, col2X, y);
+        }
+        y += 15;
 
         doc.text(`Receita por KM: ${fmtBRL(recPerKm)}/km`, col1X, y);
         doc.text(`Receita por Hora: ${fmtBRL(recPerHour)}/h`, col2X, y); y += 25;

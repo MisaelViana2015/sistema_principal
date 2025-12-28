@@ -304,7 +304,7 @@ export const FraudController = {
 
             const vehicle = await db.query.vehicles.findFirst({
                 where: (v, { eq }) => eq(v.id, shift.vehicleId),
-                columns: { placa: true, modelo: true }
+                columns: { plate: true, modelo: true }
             });
 
             // EXPLICIT CALCULATION FROM RIDES (MANDATORY REQUIREMENT)
@@ -351,17 +351,10 @@ export const FraudController = {
                     totalCorridas: Number(shift.totalCorridas || 0),
                     duracaoMin: Number(shift.duracaoMin || 0),
                     // New Explicit Aggregations
-                    ridesAppCount,
-                    ridesParticularCount,
-                    ridesUnknownCount,
-                    ridesParticularCount,
-                    ridesUnknownCount,
-                    revenueApp,
-                    revenueParticular,
                     revenueUnknown,
                     // Identity Details
                     driverName: driver?.nome || "Desconhecido",
-                    vehiclePlate: vehicle?.placa || "Desconhecido",
+                    vehiclePlate: vehicle?.plate || "Desconhecido",
                     vehicleModel: vehicle?.modelo || ""
                 }
             });
