@@ -101,11 +101,7 @@ function App() {
                                             <PerformancePage />
                                         </Suspense>
                                     } />
-                                    <Route path="/fraude" element={
-                                        <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
-                                            <FraudDashboard />
-                                        </Suspense>
-                                    } />
+                                    {/* Fraud detail routes - main dashboard accessed via Admin tab */}
                                     <Route path="/fraude/eventos" element={
                                         <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
                                             <FraudEventsList />
