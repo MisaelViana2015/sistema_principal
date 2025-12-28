@@ -44,13 +44,13 @@ const RULES_INFO = [
 ];
 
 const getSeverityBadge = (severity: string) => {
-    const styles: Record<string, string> = {
-        low: 'bg-blue-100 text-blue-800 border-blue-200',
-        medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-        high: 'bg-orange-100 text-orange-800 border-orange-200',
-        critical: 'bg-red-100 text-red-800 border-red-200',
+    const styleMap: Record<string, string> = {
+        low: 'bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700',
+        medium: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-700',
+        high: 'bg-orange-50 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200 border-orange-200 dark:border-orange-700',
+        critical: 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border-red-200 dark:border-red-700',
     };
-    return <Badge className={`${styles[severity]} border`}>{severity.toUpperCase()}</Badge>;
+    return <div className={`inline-flex items-center px-3 py-1.5 rounded-lg border font-semibold text-sm ${styleMap[severity] || styleMap.low}`}>{severity.toUpperCase()}</div>;
 };
 
 const FraudConfiguration = () => {
