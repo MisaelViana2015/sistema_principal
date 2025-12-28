@@ -143,7 +143,7 @@ const FraudEventsList: React.FC<FraudEventsListProps> = ({ onSelectEvent }) => {
                                     eventsList.map((event: FraudEvent) => (
                                         <tr key={event.id} className="border-t hover:bg-muted/50 transition-colors">
                                             <td className="p-3 whitespace-nowrap">
-                                                {new Date(event.detectedAt).toLocaleString()}
+                                                {new Date((event as any).metadata?.date || event.detectedAt).toLocaleDateString()}
                                             </td>
                                             <td className="p-3">
                                                 <div className="flex items-center gap-2">

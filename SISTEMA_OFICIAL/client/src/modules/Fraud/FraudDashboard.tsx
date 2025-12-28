@@ -203,7 +203,7 @@ const FraudDashboard = () => {
                                                     {getStatusBadge(alert.status)}
                                                 </div>
                                                 <p className="text-sm text-muted-foreground mt-1">
-                                                    Score: {alert.riskScore} • {new Date(alert.detectedAt).toLocaleString()}
+                                                    Score: {alert.riskScore} • {new Date((alert as any).metadata?.date || alert.detectedAt).toLocaleDateString()}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground mt-1">
                                                     Turno: {alert.shiftId?.slice(0, 8)}... | Motorista: <strong>{alert.driver?.name || alert.driverId}</strong>

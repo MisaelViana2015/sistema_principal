@@ -122,12 +122,6 @@ async function startServer() {
                 testConnection().then((connected) => {
                     if (connected) {
                         console.log("✅ Banco de dados conectado e sincronizado!");
-                        // TRIGGER FRAUD ANALYSIS ON STARTUP (TEMPORARY)
-                        setTimeout(() => {
-                            FraudService.analyzeAllShifts()
-                                .then(() => console.log("🏁 Análise automática finalizada."))
-                                .catch(err => console.error("💥 Erro na análise:", err));
-                        }, 10000);
                     }
                 });
             }).catch(async err => {
