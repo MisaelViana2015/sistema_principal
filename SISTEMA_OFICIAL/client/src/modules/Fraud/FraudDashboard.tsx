@@ -226,8 +226,8 @@ const FraudDashboard = () => {
 
             {/* TAB CONTENT: SUB-PAGES */}
             {currentTab === 'relatorios' && <FraudReports />}
-            {currentTab === 'fila' && <FraudAnalysisQueue />}
-            {currentTab === 'eventos' && <FraudEventsList />}
+            {currentTab === 'fila' && <FraudAnalysisQueue onSelectEvent={setSelectedAlertId} />}
+            {currentTab === 'eventos' && <FraudEventsList onSelectEvent={setSelectedAlertId} />}
             {currentTab === 'configuracao' && <FraudConfiguration />}
             {currentTab === 'logs' && <FraudLogs />}
 
