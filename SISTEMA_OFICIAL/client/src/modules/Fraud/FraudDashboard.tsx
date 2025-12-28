@@ -43,7 +43,7 @@ const FraudDashboard = () => {
     const { data: stats } = useQuery({
         queryKey: ['fraud-stats'],
         queryFn: async () => {
-            const res = await api.get('/api/fraud/stats');
+            const res = await api.get('/api/fraud/dashboard-stats');
             return res.data;
         }
     });
@@ -51,19 +51,19 @@ const FraudDashboard = () => {
     const { data: alerts } = useQuery({
         queryKey: ['fraud-recent-alerts'],
         queryFn: async () => {
-            const res = await api.get('/api/fraud/events/recent');
+            const res = await api.get('/api/fraud/alerts');
             return res.data;
         }
     });
 
-    const displayStats: FraudStats = stats?.data || {
+    const displayStats: FraudStats = stats || {
         riskScore: 0,
         activeAlerts: 0,
         processedShifts: 0,
         highRiskDrivers: 0
     };
 
-    const recentAlerts: FraudEvent[] = alerts?.data || [];
+    const recentAlerts: FraudEvent[] = alerts || [];
 
     const filteredAlerts = statusFilter === 'all'
         ? recentAlerts
