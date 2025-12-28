@@ -199,10 +199,49 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                 </div>
 
                 {isDurationInvalid && (
-                    <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded text-sm font-medium text-center">
+                    <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded text-sm font-medium text-center mb-4">
                         ⚠️ Atenção: a duração do turno foi calculada como zero ou inválida neste registro. Por este motivo, métricas derivadas do tempo (Receita por Hora e Corridas por Hora) podem não ser representativas e são apresentadas apenas para auditoria.
                     </div>
                 )}
+
+                {/* Breakdown App vs Particular */}
+                <div className="bg-gray-50 border p-4 rounded text-sm">
+                    <h3 className="font-bold text-gray-800 mb-2 border-b pb-1">Distribuição por Tipo de Corrida</h3>
+                    <div className="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <span className="text-gray-600 block">App</span>
+                            <span className="font-medium">{shift.ridesAppCount || 0} corridas ({fmtBRL(shift.revenueApp || 0)})</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-600 block">Particular</span>
+                            <span className="font-medium">{shift.ridesParticularCount || 0} corridas ({fmtBRL(shift.revenueParticular || 0)})</span>
+                        </div>
+                    </div>
+
+                    {(shift.revenueParticular || 0) > 0 ? (
+                        <>
+                            <div className="grid grid-cols-3 gap-2 text-xs mb-2">
+                                <div className="bg-white p-1 rounded border">
+                                    <span className="text-gray-500 block">Receita/KM (Só App)</span>
+                                    <span className="font-bold">{fmtBRL(kmTotal > 0 ? (shift.revenueApp || 0) / kmTotal : 0)}/km</span>
+                                </div>
+                                <div className="bg-white p-1 rounded border">
+                                    <span className="text-gray-500 block">Receita/Hora (Só App)</span>
+                                    <span className="font-bold">{fmtBRL(durationHours > 0 ? (shift.revenueApp || 0) / durationHours : 0)}/h</span>
+                                </div>
+                                <div className="bg-white p-1 rounded border">
+                                    <span className="text-gray-500 block">Share Particular</span>
+                                    <span className="font-bold">{((shift.revenueParticular || 0) / (shift.totalBruto || 1) * 100).toFixed(1)}%</span>
+                                </div>
+                            </div>
+                            <p className="text-xs italic text-gray-600 border-l-2 border-gray-300 pl-2">
+                                “Quando uma parcela relevante da receita do turno é proveniente de corridas particulares, métricas globais como receita por quilômetro e por hora podem apresentar valores inferiores ao padrão de aplicativo, sem caracterizar fraude.”
+                            </p>
+                        </>
+                    ) : (
+                        <p className="text-xs text-green-600 font-medium bg-green-50 p-1 rounded inline-block">✅ 100% Receita de Aplicativo</p>
+                    )}
+                </div>
             </div>
 
             {/* NOVA SEÇÃO: Explicação dos Indicadores */}

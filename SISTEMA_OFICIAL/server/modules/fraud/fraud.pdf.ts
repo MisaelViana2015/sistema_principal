@@ -12,6 +12,11 @@ interface ShiftData {
     totalBruto: number;
     totalCorridas: number;
     duracaoMin: number;
+    // New Fields for Breakdown
+    ridesAppCount?: number;
+    ridesParticularCount?: number;
+    revenueApp?: number;
+    revenueParticular?: number;
 }
 
 // 12. ANEXO EXPLICATIVO (Hardcoded to avoid engine modification)
@@ -128,6 +133,47 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
         doc.text(`Corridas: ${shift.totalCorridas}`, col2X, y); y += 15;
         doc.text(`Receita por KM: ${fmtBRL(recPerKm)}/km`, col1X, y);
         doc.text(`Receita por Hora: ${fmtBRL(recPerHour)}/h`, col2X, y); y += 25;
+
+        // --- App vs Particular Breakdown (MANDATORY) ---
+        const revApp = shift.revenueApp || 0;
+        const revPart = shift.revenueParticular || 0;
+        const countApp = shift.ridesAppCount || 0;
+        const countPart = shift.ridesParticularCount || 0;
+        const hasParticular = revPart > 0;
+
+        // Calc Specific Indicators
+        const recPerKmApp = kmTotal > 0 ? revApp / kmTotal : 0;
+        const recPerHourApp = durationHours > 0 ? revApp / durationHours : 0;
+        const partShare = shift.totalBruto > 0 ? (revPart / shift.totalBruto) * 100 : 0;
+
+        doc.rect(50, y, 500, 75).fill('#f8fafc').stroke('#e2e8f0');
+        doc.fillColor('black');
+        let by = y + 10;
+
+        doc.font('Helvetica-Bold').fontSize(10).text("Distribuição por Tipo de Corrida", 60, by);
+        by += 15;
+
+        doc.font('Helvetica').fontSize(9);
+        doc.text(`App: ${countApp} corridas (${fmtBRL(revApp)})`, 60, by);
+        doc.text(`Particular: ${countPart} corridas (${fmtBRL(revPart)})`, 250, by);
+        by += 15;
+
+        if (hasParticular) {
+            doc.text(`Receita/KM (Só App): ${fmtBRL(recPerKmApp)}/km`, 60, by);
+            doc.text(`Receita/Hora (Só App): ${fmtBRL(recPerHourApp)}/h`, 250, by);
+            doc.text(`Share Particular: ${partShare.toFixed(1)}%`, 400, by);
+
+            by += 15;
+            doc.font('Helvetica-Oblique').fontSize(8).text(
+                "“Quando uma parcela relevante da receita do turno é proveniente de corridas particulares, métricas globais como receita por quilômetro e por hora podem apresentar valores inferiores ao padrão de aplicativo, sem caracterizar fraude.”",
+                60, by, { width: 480, align: 'justify' }
+            );
+        } else {
+            doc.text("100% Receita de Aplicativo", 60, by);
+        }
+
+        y += 85; // Spacing after box
+        doc.y = y;
 
         // --- Explicação dos Indicadores do Turno (NOVA SEÇÃO) ---
         doc.font('Helvetica-Bold').fontSize(14).text("Explicação dos Indicadores do Turno");

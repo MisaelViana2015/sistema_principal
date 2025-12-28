@@ -31,6 +31,11 @@ interface ShiftData {
     totalBruto: number;
     totalCorridas: number;
     duracaoMin: number;
+    // New Fields for Breakdown
+    ridesAppCount?: number;
+    ridesParticularCount?: number;
+    revenueApp?: number;
+    revenueParticular?: number;
 }
 
 interface EventDetailResponse {
