@@ -489,9 +489,11 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
 
         // Classification Verdict
         let verdict = "Operacional Normal";
-        if (event.riskScore >= 70) verdict = "Anomalia Crítica";
-        else if (event.riskScore >= 40) verdict = "Anomalia Relevante";
-        else if (event.riskScore >= 20) verdict = "Ineficiência Operacional";
+        const score = event.riskScore || 0;
+
+        if (score >= 70) verdict = "Anomalia Crítica";
+        else if (score >= 40) verdict = "Anomalia Relevante";
+        else if (score >= 20) verdict = "Ineficiência Operacional";
 
         doc.moveDown(2);
         doc.font('Helvetica-Bold').fontSize(12).text(`Classificação Operacional do Turno: ${verdict}`, { align: 'center' });
