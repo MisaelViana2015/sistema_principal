@@ -58,21 +58,19 @@ export const FraudController = {
         try {
             // Optimization: Aggregate by date in SQL
             const result = await db.execute(sql`
-                const result = await db.execute(sql`
-                    SELECT 
-                        COALESCE(
-                (metadata:: jsonb->> 'date'):: date,
-                DATE(detected_at)
-            ):: text as date,
-                COUNT(*) as count,
+                SELECT 
+                    COALESCE(
+                        (metadata::jsonb->>'date')::date, 
+                        DATE(detected_at)
+                    )::text as date,
+                    COUNT(*) as count,
                     AVG(risk_score) as avg_score,
                     MAX(risk_score) as max_score
-                    FROM fraud_events
-                    WHERE detected_at >= NOW() - INTERVAL '1 year'
-                    GROUP BY 1
-                    ORDER BY date
-                `);
-                `);
+                FROM fraud_events
+                WHERE detected_at >= NOW() - INTERVAL '1 year'
+                GROUP BY 1
+                ORDER BY date
+            `);
 
             const data = result.rows.map((row: any) => ({
                 date: new Date(row.date).toISOString().split('T')[0], // YYYY-MM-DD
