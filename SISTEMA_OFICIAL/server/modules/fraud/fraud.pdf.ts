@@ -129,17 +129,83 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
         doc.text(`Receita por KM: ${fmtBRL(recPerKm)}/km`, col1X, y);
         doc.text(`Receita por Hora: ${fmtBRL(recPerHour)}/h`, col2X, y); y += 25;
 
-        // Warning if Duration is 0 (PARCIALMENTE CORRETO FIX)
+        // --- Explicação dos Indicadores do Turno (NOVA SEÇÃO) ---
+        doc.font('Helvetica-Bold').fontSize(14).text("Explicação dos Indicadores do Turno");
+        doc.moveDown(0.5);
+        doc.fontSize(10).font('Helvetica').text(
+            "Os indicadores abaixo representam métricas operacionais utilizadas pelo sistema antifraude para avaliar a coerência do turno. Cada métrica possui faixas consideradas normais. Desvios relevantes podem gerar alertas, porém anomalia não implica confirmação de fraude.",
+            { align: 'justify' }
+        );
+        doc.moveDown();
+
+        const itemTitle = (t: string) => doc.font('Helvetica-Bold').text(t);
+        const itemDesc = (l: string, t: string) => {
+            doc.font('Helvetica-Bold').text(l + ": ", { continued: true });
+            doc.font('Helvetica').text(t);
+        };
+
+        // 1. KM Total
+        itemTitle("1. KM Total");
+        itemDesc("O que é", "distância percorrida no turno (KM Final − KM Inicial).");
+        itemDesc("Por que importa", "é a base para validar coerência física do deslocamento.");
+        itemDesc("Como interpretar", "KM muito baixo com receita alta ou KM muito alto com poucas corridas pode indicar inconsistência.");
+        doc.moveDown(0.5);
+
+        // 2. Duração Total
+        itemTitle("2. Duração Total");
+        itemDesc("O que é", "tempo total do turno (fim − início) ou duracaoMin/60 quando disponível.");
+        itemDesc("Por que importa", "é base para métricas “por hora”.");
+        itemDesc("Como interpretar", "turnos longos demais podem indicar esquecimento de encerramento ou uso indevido.");
+        doc.moveDown(0.5);
+
+        // 3. Receita Total
+        itemTitle("3. Receita Total");
+        itemDesc("O que é", "soma do faturamento do turno.");
+        itemDesc("Por que importa", "base para receita por KM, por Hora e ticket médio.");
+        doc.moveDown(0.5);
+
+        // 4. Receita por KM
+        itemTitle("4. Receita por KM");
+        itemDesc("O que é", "Receita Total ÷ KM Total.");
+        itemDesc("Faixa esperada do sistema", "mínimo R$ 3,00/km e máximo R$ 20,00/km.");
+        itemDesc("Como interpretar", "abaixo do mínimo pode indicar corridas não registradas; acima do máximo pode indicar manipulação.");
+        doc.font('Helvetica-Bold').text(`Atual: ${fmtBRL(recPerKm)}/km`, { indent: 10 });
+        doc.moveDown(0.5);
+
+        // 5. Receita por Hora
+        itemTitle("5. Receita por Hora");
+        itemDesc("O que é", "Receita Total ÷ Duração Total (em horas).");
+        itemDesc("Faixa esperada do sistema", "máximo R$ 150,00/h.");
+        itemDesc("Como interpretar", "valores altos demais podem indicar concentração artificial de receita.");
+        doc.font('Helvetica-Bold').text(`Atual: ${fmtBRL(recPerHour)}/h`, { indent: 10 });
+        doc.moveDown(0.5);
+
+        // 6. Corridas
+        itemTitle("6. Corridas (Total de Corridas)");
+        itemDesc("O que é", "quantidade de corridas registradas no turno.");
+        itemDesc("Por que importa", "ajuda a validar coerência entre receita e atividade.");
+        doc.moveDown(0.5);
+
+        // 7. Corridas por Hora
+        itemTitle("7. Corridas por Hora (se aplicável)");
+        itemDesc("O que é", "total de corridas ÷ duração total.");
+        itemDesc("Como interpretar", "produtividade baixa pode indicar inconsistência operacional.");
+        doc.moveDown();
+
+        // Warning if Duration is 0 (MANDATORY CHECK)
         if (durationHours <= 0.01) {
-            doc.y = y;
-            doc.font('Helvetica-Oblique').fontSize(9).fillColor('#ca8a04').text(
-                "⚠️ A duração do turno foi calculada como zero ou inválida. Valores derivados por hora podem não ser representativos neste caso.",
-                { align: 'left' }
+            doc.rect(50, doc.y, 500, 35).fill('#fffbeb').stroke('#f59e0b');
+            doc.fillColor('#92400e'); // Darker amber for text
+            doc.y += 10;
+            doc.font('Helvetica-Bold').text(
+                "⚠️ Atenção: a duração do turno foi calculada como zero ou inválida neste registro. Por este motivo, métricas derivadas do tempo (Receita por Hora e Corridas por Hora) podem não ser representativas e são apresentadas apenas para auditoria.",
+                { align: 'center', width: 480, indent: 10 }
             );
             doc.fillColor('black');
+            doc.y += 10;
             doc.moveDown();
         } else {
-            doc.y = y;
+            // doc.y = y; // Remove sync Y from previous code as we are inserting content
         }
 
         // --- 11. ANÁLISE DE DETECÇÃO ---
@@ -183,51 +249,50 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
             let observed = "";
             let diff = "";
 
-            // Construct structured lines
+            // Construct structured lines - MANDATORY MAPPING
             switch (primary.code) {
-                case "KM_ZERO_COM_RECEITA":
-                    expected = "KM Total > 0";
-                    observed = `KM Total = ${d.kmTotal}`;
-                    diff = "Inconsistência Física";
-                    break;
                 case "RECEITA_KM_MUITO_BAIXA":
-                    expected = `Mínimo R$ ${d.minThreshold?.toFixed(2)}/km`;
-                    observed = `Atual R$ ${d.revPerKm?.toFixed(2)}/km`;
-                    diff = `-${(100 - (d.revPerKm / d.minThreshold) * 100).toFixed(0)}% abaixo do mínimo`;
+                    expected = "Receita por KM ≥ R$ 3,00/km";
+                    observed = `R$ ${recPerKm.toFixed(2)}/km`;
+                    diff = `${(100 - (recPerKm / 3.00) * 100).toFixed(0)}% abaixo`;
                     break;
                 case "RECEITA_KM_MUITO_ALTA":
-                    expected = `Máximo R$ ${d.maxThreshold?.toFixed(2)}/km`;
-                    observed = `Atual R$ ${d.revPerKm?.toFixed(2)}/km`;
-                    diff = `${(d.revPerKm / d.maxThreshold).toFixed(1)}x acima do máximo`;
-                    break;
-                case "RECEITA_KM_DESVIO_CRITICO":
-                    expected = `Ref. Média R$ ${d.baseline?.toFixed(2)}/km`;
-                    observed = `Atual R$ ${d.revPerKm?.toFixed(2)}/km`;
-                    diff = `${d.actualMultiplier?.toFixed(1)}x da média histórica`;
-                    break;
-                case "RECEITA_HORA_MUITO_ALTA":
-                    expected = `Máximo R$ ${d.maxThreshold?.toFixed(2)}/h`;
-                    observed = `Atual R$ ${d.revPerHour?.toFixed(2)}/h`;
-                    break;
-                case "TURNO_CURTO_DEMAIS":
-                    expected = `Mínimo ${(d.minThresholdHours * 60).toFixed(0)} min`;
-                    observed = `Atual ${(d.durationHours * 60).toFixed(0)} min`;
+                    expected = "Receita por KM ≤ R$ 20,00/km";
+                    observed = `R$ ${recPerKm.toFixed(2)}/km`;
+                    diff = `${((recPerKm / 20.00 - 1) * 100).toFixed(0)}% acima`;
                     break;
                 case "TURNO_LONGO_DEMAIS":
-                    expected = `Máximo ${d.maxThresholdHours}h`;
-                    observed = `Atual ${d.durationHours?.toFixed(1)}h`;
+                    expected = "Duração ≤ 14h";
+                    observed = `${durationHours.toFixed(1)}h`;
+                    diff = `${(durationHours - 14).toFixed(1)}h acima`;
+                    break;
+                case "RECEITA_HORA_MUITO_ALTA":
+                    expected = "Receita por Hora ≤ R$ 150,00/h";
+                    observed = `R$ ${recPerHour.toFixed(2)}/h`;
+                    diff = `${((recPerHour / 150.00 - 1) * 100).toFixed(0)}% acima`;
+                    break;
+                case "KM_ZERO_COM_RECEITA":
+                    expected = "KM Total > 0 quando há receita";
+                    observed = `KM Total = ${kmTotal} com Receita = ${fmtBRL(shift.totalBruto)}`;
+                    diff = "Inconsistência física (receita com km zero)";
+                    break;
+                case "KM_RETROCEDEU":
+                    expected = "KM Inicial ≥ KM Final do turno anterior";
+                    const gap = (primary.data as any)?.gap || 0;
+                    const prevKm = (primary.data as any)?.prevShiftKmEnd || "N/A";
+                    observed = `KM Inicial = ${shift.kmInicial} e KM Anterior Final = ${prevKm}`;
+                    diff = `${gap} km (retrocesso)`;
                     break;
                 default:
-                    details = primary.description; // Fallback
+                    expected = "Ver regra no Anexo";
+                    observed = "Dados do turno (vide tabela acima)";
+                    details = primary.description;
             }
 
-            if (expected) {
-                doc.text(`• Esperado: ${expected}`, { indent: 20 });
-                doc.text(`• Observado: ${observed}`, { indent: 20 });
-                if (diff) doc.font('Helvetica-Bold').text(`• Desvio: ${diff}`, { indent: 20 });
-            } else {
-                doc.text(`• ${details}`, { indent: 20 });
-            }
+            if (expected) doc.text(`• Esperado: ${expected}`, { indent: 20 });
+            if (observed) doc.text(`• Observado: ${observed}`, { indent: 20 });
+            if (diff) doc.font('Helvetica-Bold').text(`• Desvio: ${diff}`, { indent: 20 });
+            if (details && !expected.startsWith("Ver")) doc.font('Helvetica').text(`• Detalhe: ${details}`, { indent: 20 });
 
             doc.y += 10; // Padding bottom box
             doc.moveDown();
@@ -239,7 +304,7 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
                 sortedRules.slice(1).forEach(rule => {
                     const rDef = OFFICIAL_RULES_LIST.find(r => r.code === rule.code);
                     doc.font('Helvetica-Bold').fontSize(10).text(`• ${rDef?.name || rule.label || rule.code} (${rule.severity?.toUpperCase()})`);
-                    doc.font('Helvetica').text(`  ${rule.description}`);
+                    doc.font('Helvetica').text(`  ${rule.description} Esta regra existe para identificar comportamentos que, em operação normal, indicam inconsistência operacional ou financeira e demandam revisão humana.`);
                     doc.moveDown(0.5);
                 });
             }
@@ -257,6 +322,8 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
             doc.fontSize(10).font('Helvetica').text(
                 "O sistema utiliza como referência o histórico do próprio motorista, considerando apenas turnos válidos anteriores. O turno analisado apresentou desvios em relação à média histórica, reforçando o alerta gerado."
             );
+            doc.moveDown(0.5);
+            doc.text("A tabela abaixo compara a média histórica do motorista com os indicadores do turno analisado. Desvios relevantes reforçam a necessidade de revisão, mas não confirmam fraude automaticamente.");
             doc.moveDown();
 
             doc.text(`Amostra: ${bl.sampleSize} turnos (últimos 30 dias)`);
@@ -305,9 +372,18 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
         );
         doc.moveDown();
 
+        // Check which rules were fired for audit
+        const firedCodes = new Set((reasons as any[]).map(r => r.code));
+
         OFFICIAL_RULES_LIST.forEach(rule => {
             doc.font('Helvetica-Bold').fontSize(9).text(rule.name);
             doc.font('Helvetica').text(rule.desc, { indent: 10 });
+
+            const triggered = firedCodes.has(rule.code);
+            doc.font(triggered ? 'Helvetica-Bold' : 'Helvetica').fillColor(triggered ? '#b91c1c' : '#374151')
+                .text(`Disparou neste evento: ${triggered ? "SIM" : "NÃO"}`, { indent: 10 });
+            doc.fillColor('black');
+
             doc.moveDown(0.5);
         });
         doc.moveDown();
