@@ -188,6 +188,16 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                         <span className="text-gray-600">Corridas:</span>
                         <span>{shift.totalCorridas}</span>
                     </div>
+                    {/* Derived Metrics (Standard 10 & 11) */}
+                    <div className="grid grid-cols-2 gap-1 p-1">
+                        <span className="text-gray-600">Ticket Médio:</span>
+                        <span>{fmtBRL(shift.totalCorridas > 0 ? shift.totalBruto / shift.totalCorridas : 0)}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 p-1">
+                        <span className="text-gray-600">Produtividade:</span>
+                        <span>{durationHours > 0 ? (shift.totalCorridas / durationHours).toFixed(1) : 0} corr/h</span>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-1 bg-blue-50 p-1 font-bold rounded text-blue-900">
                         <span>Receita/KM:</span>
                         <span>{fmtBRL(recPerKm)}/km</span>
@@ -224,33 +234,41 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                         )}
                     </div>
 
-                    {(shift.revenueParticular || 0) > 0 ? (
-                        <>
-                            <div className="grid grid-cols-3 gap-2 text-xs mb-2">
-                                <div className="bg-white p-1 rounded border">
-                                    <span className="text-gray-500 block">Receita/KM (Só App)*</span>
-                                    <span className="font-bold">{fmtBRL(kmTotal > 0 ? (shift.revenueApp || 0) / kmTotal : 0)}/km</span>
+                    {(shift.revenueParticular || 0) > 0 ? (() => {
+                        const share = (shift.revenueParticular || 0) / (shift.totalBruto || 1) * 100;
+                        let shareClass = "Predominantemente App";
+                        if (share > 60) shareClass = "Predominantemente Particular";
+                        else if (share >= 30) shareClass = "Misto";
+
+                        return (
+                            <>
+                                <div className="grid grid-cols-3 gap-2 text-xs mb-2">
+                                    <div className="bg-white p-1 rounded border">
+                                        <span className="text-gray-500 block">Receita/KM (Só App)*</span>
+                                        <span className="font-bold">{fmtBRL(kmTotal > 0 ? (shift.revenueApp || 0) / kmTotal : 0)}/km</span>
+                                    </div>
+                                    <div className="bg-white p-1 rounded border">
+                                        <span className="text-gray-500 block">Receita/Hora (Só App)</span>
+                                        <span className="font-bold">{fmtBRL(durationHours > 0 ? (shift.revenueApp || 0) / durationHours : 0)}/h</span>
+                                    </div>
+                                    <div className="bg-white p-1 rounded border">
+                                        <span className="text-gray-500 block">Share Particular</span>
+                                        <span className="font-bold">{share.toFixed(1)}%</span>
+                                        <span className="block text-[10px] text-gray-400 font-normal uppercase mt-0.5">{shareClass}</span>
+                                    </div>
                                 </div>
-                                <div className="bg-white p-1 rounded border">
-                                    <span className="text-gray-500 block">Receita/Hora (Só App)</span>
-                                    <span className="font-bold">{fmtBRL(durationHours > 0 ? (shift.revenueApp || 0) / durationHours : 0)}/h</span>
+                                <div className="space-y-1">
+                                    <p className="text-xs italic text-gray-500">
+                                        * Receita/KM (Só App) utiliza KM total do turno por ausência de segregação física de deslocamento.
+                                    </p>
+                                    <p className="text-xs italic text-gray-600 border-l-2 border-gray-300 pl-2">
+                                        “Quando uma parcela relevante da receita do turno é proveniente de corridas particulares, métricas globais como receita por quilômetro e por hora podem apresentar valores inferiores ao padrão de aplicativo, sem caracterizar fraude.”
+                                    </p>
                                 </div>
-                                <div className="bg-white p-1 rounded border">
-                                    <span className="text-gray-500 block">Share Particular</span>
-                                    <span className="font-bold">{((shift.revenueParticular || 0) / (shift.totalBruto || 1) * 100).toFixed(1)}%</span>
-                                </div>
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-xs italic text-gray-500">
-                                    * Receita/KM (Só App) utiliza KM total do turno por ausência de segregação física de deslocamento.
-                                </p>
-                                <p className="text-xs italic text-gray-600 border-l-2 border-gray-300 pl-2">
-                                    “Quando uma parcela relevante da receita do turno é proveniente de corridas particulares, métricas globais como receita por quilômetro e por hora podem apresentar valores inferiores ao padrão de aplicativo, sem caracterizar fraude.”
-                                </p>
-                            </div>
-                        </>
-                    ) : (
-                        <p className="text-xs text-green-600 font-medium bg-green-50 p-1 rounded inline-block">✅ 100% Receita de Aplicativo</p>
+                            </>
+                        );
+                    })() : (
+                        <p className="text-xs text-green-600 font-medium bg-green-50 p-1 rounded inline-block">✅ 100% Receita de Aplicativo (Predominantemente App)</p>
                     )}
                 </div>
 
