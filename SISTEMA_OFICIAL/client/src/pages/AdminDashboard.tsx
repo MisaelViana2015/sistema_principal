@@ -8,7 +8,7 @@ import ShiftsList from "../modules/shifts/ShiftsList";
 import { RidesList } from "../modules/rides/RidesList";
 import ImportTab from "./admin/tabs/ImportTab";
 import PerformanceContent from "../modules/performance/components/PerformanceContent";
-import { FraudDashboard } from "../modules/Fraud/FraudDashboard";
+import FraudDashboard from "../modules/Fraud/FraudDashboard";
 import { useTheme } from "../contexts/ThemeContext";
 
 /**
