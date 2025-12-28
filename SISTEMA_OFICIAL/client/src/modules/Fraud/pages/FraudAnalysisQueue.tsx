@@ -19,7 +19,11 @@ interface FraudEvent {
     rules: { label: string }[];
 }
 
-const FraudAnalysisQueue = () => {
+export interface FraudAnalysisQueueProps {
+    onSelectEvent?: (id: string) => void;
+}
+
+const FraudAnalysisQueue: React.FC<FraudAnalysisQueueProps> = ({ onSelectEvent } = {}) => {
     const navigate = useNavigate();
 
     // Fetch pending and in_analysis events
