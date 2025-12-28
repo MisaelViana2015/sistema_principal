@@ -26,6 +26,11 @@ export interface FraudAnalysisQueueProps {
 const FraudAnalysisQueue: React.FC<FraudAnalysisQueueProps> = ({ onSelectEvent } = {}) => {
     const navigate = useNavigate();
 
+    const handleDetailClick = (id: string) => {
+        if (onSelectEvent) onSelectEvent(id);
+        else navigate(`/fraude/evento/${id}`);
+    };
+
     // Fetch pending and in_analysis events
     const { data: events, isLoading } = useQuery({
         queryKey: ['fraud-queue'],
@@ -111,7 +116,7 @@ const FraudAnalysisQueue: React.FC<FraudAnalysisQueueProps> = ({ onSelectEvent }
                                 </p>
                             </CardContent>
                             <CardFooter>
-                                <Button className="w-full gap-2 group" onClick={() => navigate(`/fraude/evento/${event.id}`)}>
+                                <Button className="w-full gap-2 group" onClick={() => handleDetailClick(event.id)}>
                                     Revisar Agora
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </Button>
