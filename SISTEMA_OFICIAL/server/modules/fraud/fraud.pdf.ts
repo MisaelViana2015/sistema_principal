@@ -80,6 +80,23 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
             "Este evento foi identificado automaticamente pelo sistema antifraude do Rota Verde devido à detecção de comportamentos operacionais anômalos, com base em regras determinísticas e critérios objetivos previamente definidos.",
             { align: 'justify' }
         );
+        doc.moveDown(0.5);
+
+        // Disclaimer Jurídico (CRÍTICO)
+        doc.font('Helvetica-Bold').fillColor('#b91c1c').text(
+            "⚠️  A detecção de anomalia NÃO implica confirmação de fraude. O alerta indica exclusivamente a necessidade de análise humana.",
+            { align: 'justify' }
+        );
+        doc.fillColor('black');
+        doc.moveDown();
+
+        // --- DEFINIÇÃO DE TURNO NORMAL (CRÍTICO) ---
+        doc.font('Helvetica-Bold').fontSize(12).text("Critérios de Normalidade Operacional");
+        doc.moveDown(0.5);
+        doc.font('Helvetica').fontSize(10).text(
+            "Um turno é considerado operacionalmente normal quando apresenta evolução contínua de quilometragem, duração compatível (10min a 14h), distribuição variada de corridas e indicadores financeiros dentro das faixas esperadas (Receita/KM entre R$ 3,00 e R$ 20,00).",
+            { align: 'justify' }
+        );
         doc.moveDown();
 
         // --- 10.3 Identificação Operacional ---
@@ -112,7 +129,18 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
         doc.text(`Receita por KM: ${fmtBRL(recPerKm)}/km`, col1X, y);
         doc.text(`Receita por Hora: ${fmtBRL(recPerHour)}/h`, col2X, y); y += 25;
 
-        doc.y = y; // Sync Y
+        // Warning if Duration is 0 (PARCIALMENTE CORRETO FIX)
+        if (durationHours <= 0.01) {
+            doc.y = y;
+            doc.font('Helvetica-Oblique').fontSize(9).fillColor('#ca8a04').text(
+                "⚠️ A duração do turno foi calculada como zero ou inválida. Valores derivados por hora podem não ser representativos neste caso.",
+                { align: 'left' }
+            );
+            doc.fillColor('black');
+            doc.moveDown();
+        } else {
+            doc.y = y;
+        }
 
         // --- 11. ANÁLISE DE DETECÇÃO ---
         doc.font('Helvetica-Bold').fontSize(14).text("Análise de Detecção");
@@ -132,7 +160,7 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
             const primary = sortedRules[0];
             const ruleDef = OFFICIAL_RULES_LIST.find(r => r.code === primary.code) || { name: primary.label || primary.code, desc: primary.description };
 
-            doc.rect(50, doc.y, 500, 80).fill('#f3f4f6'); // Light grey background box
+            doc.rect(50, doc.y, 500, 100).fill('#f3f4f6'); // Light grey background box (taller for breakdown)
             doc.fillColor('black');
             doc.y += 10;
 
@@ -140,13 +168,67 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
             doc.fontSize(10).font('Helvetica').text(`Severidade: ${primary.severity?.toUpperCase()}`, { indent: 10 });
             doc.moveDown(0.5);
             doc.font('Helvetica-Oblique').text(
-                "A regra acima foi aplicada porque o valor observado neste turno ultrapassou os limites operacionais definidos pelo sistema, caracterizando um desvio relevante em relação ao comportamento esperado.",
+                "A regra acima foi aplicada porque o valor observado neste turno ultrapassou os limites operacionais definidos pelo sistema.",
                 { indent: 10, align: 'justify', width: 480 }
             );
 
-            // Explanation with Observed vs Expected
+            // Explicit Structured Data (PARCIALMENTE CORRETO FIX)
             doc.moveDown(0.5);
-            doc.font('Helvetica').text(`Detalhe Técnico: ${primary.description}`, { indent: 10 });
+            doc.font('Helvetica-Bold').text("Detalhe Técnico da Anomalia:", { indent: 10 });
+            doc.font('Helvetica');
+
+            const d = primary.data || {};
+            let details = "";
+            let expected = "";
+            let observed = "";
+            let diff = "";
+
+            // Construct structured lines
+            switch (primary.code) {
+                case "KM_ZERO_COM_RECEITA":
+                    expected = "KM Total > 0";
+                    observed = `KM Total = ${d.kmTotal}`;
+                    diff = "Inconsistência Física";
+                    break;
+                case "RECEITA_KM_MUITO_BAIXA":
+                    expected = `Mínimo R$ ${d.minThreshold?.toFixed(2)}/km`;
+                    observed = `Atual R$ ${d.revPerKm?.toFixed(2)}/km`;
+                    diff = `-${(100 - (d.revPerKm / d.minThreshold) * 100).toFixed(0)}% abaixo do mínimo`;
+                    break;
+                case "RECEITA_KM_MUITO_ALTA":
+                    expected = `Máximo R$ ${d.maxThreshold?.toFixed(2)}/km`;
+                    observed = `Atual R$ ${d.revPerKm?.toFixed(2)}/km`;
+                    diff = `${(d.revPerKm / d.maxThreshold).toFixed(1)}x acima do máximo`;
+                    break;
+                case "RECEITA_KM_DESVIO_CRITICO":
+                    expected = `Ref. Média R$ ${d.baseline?.toFixed(2)}/km`;
+                    observed = `Atual R$ ${d.revPerKm?.toFixed(2)}/km`;
+                    diff = `${d.actualMultiplier?.toFixed(1)}x da média histórica`;
+                    break;
+                case "RECEITA_HORA_MUITO_ALTA":
+                    expected = `Máximo R$ ${d.maxThreshold?.toFixed(2)}/h`;
+                    observed = `Atual R$ ${d.revPerHour?.toFixed(2)}/h`;
+                    break;
+                case "TURNO_CURTO_DEMAIS":
+                    expected = `Mínimo ${(d.minThresholdHours * 60).toFixed(0)} min`;
+                    observed = `Atual ${(d.durationHours * 60).toFixed(0)} min`;
+                    break;
+                case "TURNO_LONGO_DEMAIS":
+                    expected = `Máximo ${d.maxThresholdHours}h`;
+                    observed = `Atual ${d.durationHours?.toFixed(1)}h`;
+                    break;
+                default:
+                    details = primary.description; // Fallback
+            }
+
+            if (expected) {
+                doc.text(`• Esperado: ${expected}`, { indent: 20 });
+                doc.text(`• Observado: ${observed}`, { indent: 20 });
+                if (diff) doc.font('Helvetica-Bold').text(`• Desvio: ${diff}`, { indent: 20 });
+            } else {
+                doc.text(`• ${details}`, { indent: 20 });
+            }
+
             doc.y += 10; // Padding bottom box
             doc.moveDown();
 
