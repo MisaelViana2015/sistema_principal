@@ -90,7 +90,7 @@ export const FraudController = {
 
             // MANUAL JOIN: Fetch drivers to ensure names are displayed
             if (alerts.length > 0) {
-                const driverIds = [...new Set(alerts.map(a => a.driverId).filter(Boolean))];
+                const driverIds = [...new Set(alerts.map(a => a.driverId).filter(Boolean))] as string[];
                 if (driverIds.length > 0) {
                     const driversFound = await db.query.drivers.findMany({
                         where: (d, { inArray }) => inArray(d.id, driverIds),
