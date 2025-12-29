@@ -300,61 +300,58 @@ function ruleKmBetweenShifts(
  * REGRA 11: Sequência de Corridas com Valores Iguais
  * Detecta padrão suspeito de múltiplas corridas com exatamente o mesmo valor.
  */
+// 3.0.0 REFACTOR: Lógica estritamente sequencial a pedido do usuário
+// Detecta APENAS se vierem um atrás do outro (ex: 12, 12, 12, 12)
 function ruleRepeatedRideValues(
     rideValues: number[]
 ): FraudRuleHit[] {
     const hits: FraudRuleHit[] = [];
-    if (rideValues.length < 3) return hits;
+    if (rideValues.length < 4) return hits;
 
-    // Conta ocorrências de cada valor
-    const valueCounts: Record<string, number> = {};
-    for (const val of rideValues) {
-        const key = val.toFixed(2);
-        valueCounts[key] = (valueCounts[key] || 0) + 1;
-    }
+    let streak = 1;
+    let streakValue = rideValues[0];
+    const reportedStreaks = new Set<string>(); // Evita reportar a mesma sequência várias vezes
 
-    // Verifica se algum valor aparece 4 ou mais vezes
-    for (const [valor, count] of Object.entries(valueCounts)) {
-        if (count >= 4) {
-            hits.push({
-                code: "SEQUENCIA_VALORES_IGUAIS",
-                label: "Corridas com valores repetidos",
-                description: `${count} corridas com valor de R$ ${valor} no mesmo turno.`,
-                severity: "high",
-                score: THRESHOLDS.SCORE.HIGH,
-                data: { valor, count },
-            });
-        } else if (count >= 3) {
-            hits.push({
-                code: "SEQUENCIA_VALORES_SUSPEITA",
-                label: "Padrão de valores suspeito",
-                description: `${count} corridas com valor de R$ ${valor} no mesmo turno.`,
-                severity: "medium",
-                score: THRESHOLDS.SCORE.MEDIUM,
-                data: { valor, count },
-            });
+    for (let i = 1; i < rideValues.length; i++) {
+        const val = rideValues[i];
+
+        // Compara com tolerância para float
+        if (Math.abs(val - streakValue) < 0.01) {
+            streak++;
+        } else {
+            // Fim da sequência, avalia
+            if (streak >= 4) {
+                const key = `${streakValue}-${streak}`; // Unique key para este hit
+                if (!reportedStreaks.has(key)) {
+                    hits.push({
+                        code: "SEQUENCIA_VALORES_IGUAIS",
+                        label: "Sequência de valores iguais",
+                        description: `${streak} corridas CONSECUTIVAS de R$ ${streakValue.toFixed(2)}.`,
+                        severity: "high",
+                        score: THRESHOLDS.SCORE.HIGH,
+                        data: { valor: streakValue, count: streak },
+                    });
+                    reportedStreaks.add(key);
+                }
+            }
+            // Reseta
+            streak = 1;
+            streakValue = val;
         }
     }
 
-    // Detecta sequência consecutiva (3+ corridas seguidas com mesmo valor)
-    let streak = 1;
-    let streakValue = rideValues[0];
-    for (let i = 1; i < rideValues.length; i++) {
-        if (Math.abs(rideValues[i] - streakValue) < 0.01) {
-            streak++;
-            if (streak >= 3 && !hits.some(h => h.code === "SEQUENCIA_CONSECUTIVA")) {
-                hits.push({
-                    code: "SEQUENCIA_CONSECUTIVA",
-                    label: "Sequência consecutiva de valores",
-                    description: `${streak}+ corridas consecutivas de R$ ${streakValue.toFixed(2)}.`,
-                    severity: "high",
-                    score: THRESHOLDS.SCORE.HIGH,
-                    data: { streakValue, streak },
-                });
-            }
-        } else {
-            streak = 1;
-            streakValue = rideValues[i];
+    // Check final (caso termine em streak)
+    if (streak >= 4) {
+        const key = `${streakValue}-${streak}`;
+        if (!reportedStreaks.has(key)) {
+            hits.push({
+                code: "SEQUENCIA_VALORES_IGUAIS",
+                label: "Sequência de valores iguais",
+                description: `${streak} corridas CONSECUTIVAS de R$ ${streakValue.toFixed(2)}.`,
+                severity: "high",
+                score: THRESHOLDS.SCORE.HIGH,
+                data: { valor: streakValue, count: streak },
+            });
         }
     }
 

@@ -384,7 +384,7 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
                 sortedRules.slice(1).forEach(rule => {
                     const rDef = OFFICIAL_RULES_LIST.find(r => r.code === rule.code);
                     doc.font('Helvetica-Bold').fontSize(10).text(`• ${rDef?.name || rule.label || rule.code} (${rule.severity?.toUpperCase()})`);
-                    doc.font('Helvetica').text(`  ${rule.description} Esta regra existe para identificar comportamentos que, em operação normal, indicam inconsistência operacional ou financeira e demandam revisão humana.`);
+                    doc.font('Helvetica').text(`  ${rule.description}`);
                     doc.moveDown(0.5);
                 });
             }
