@@ -401,12 +401,28 @@ export const FraudController = {
                 return res.status(404).json({ error: "Evento sem turno associado" });
             }
 
-            const shift = await db.query.shifts.findFirst({
+            let shift = await db.query.shifts.findFirst({
                 where: (s, { eq }) => eq(s.id, event.shiftId as string)
             });
 
+            // FALLBACK GRACEFUL PARA EVENTOS ÓRFÃOS
             if (!shift) {
-                return res.status(404).json({ error: "Turno associado não encontrado" });
+                console.warn(`[FRAUD] Evento ${id} possui turno órfão ${event.shiftId}. Usando fallback de metadata.`);
+                const meta = event.metadata as any || {};
+
+                // Reconstrói um objeto de turno "falso" apenas para visualização
+                shift = {
+                    id: event.shiftId as string,
+                    driverId: event.driverId as string,
+                    vehicleId: meta.vehicleId || 'desconhecido',
+                    inicio: meta.date ? new Date(meta.date + "T00:00:00").toISOString() : event.detectedAt.toISOString(),
+                    fim: meta.date ? new Date(meta.date + "T23:59:59").toISOString() : event.detectedAt.toISOString(),
+                    totalBruto: meta.revenueTotal || "0",
+                    totalCorridas: 0,
+                    kmInicial: "0",
+                    kmFinal: String(meta.kmTotal || 0),
+                    status: "excluido_ou_nao_encontrado" // Sinalizador visual
+                } as any;
             }
 
             // Fetch Driver and Vehicle Details
