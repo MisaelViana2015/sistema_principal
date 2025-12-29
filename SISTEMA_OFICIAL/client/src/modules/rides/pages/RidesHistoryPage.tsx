@@ -275,26 +275,26 @@ export default function RidesHistoryPage() {
 
                             {/* Totals in Header */}
                             {rides.length > 0 && (
-                                <div className="flex gap-4 overflow-x-auto pb-2 md:pb-0">
-                                    <div className="bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 min-w-[120px]">
-                                        <div className="text-xs text-gray-400 mb-1">App (Página)</div>
-                                        <div className="text-lg font-bold text-blue-400">{formatCurrency(totalApp)}</div>
+                                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 w-full md:w-auto">
+                                    <div className="bg-gray-800 px-3 py-2 rounded-lg border border-gray-700 text-center">
+                                        <div className="text-[10px] text-gray-400 mb-1">App (Pág)</div>
+                                        <div className="text-sm md:text-lg font-bold text-blue-400">{formatCurrency(totalApp)}</div>
                                     </div>
-                                    <div className="bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 min-w-[120px]">
-                                        <div className="text-xs text-gray-400 mb-1">Particular (Pág)</div>
-                                        <div className="text-lg font-bold text-green-400">{formatCurrency(totalParticular)}</div>
+                                    <div className="bg-gray-800 px-3 py-2 rounded-lg border border-gray-700 text-center">
+                                        <div className="text-[10px] text-gray-400 mb-1">Part. (Pág)</div>
+                                        <div className="text-sm md:text-lg font-bold text-green-400">{formatCurrency(totalParticular)}</div>
                                     </div>
-                                    <div className="bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 min-w-[120px]">
-                                        <div className="text-xs text-gray-400 mb-1">App (Período)</div>
-                                        <div className="text-lg font-bold text-blue-500">{formatCurrency(periodTotals.totalApp)}</div>
+                                    <div className="bg-gray-800 px-3 py-2 rounded-lg border border-gray-700 text-center">
+                                        <div className="text-[10px] text-gray-400 mb-1">App (Per)</div>
+                                        <div className="text-sm md:text-lg font-bold text-blue-500">{formatCurrency(periodTotals.totalApp)}</div>
                                     </div>
-                                    <div className="bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 min-w-[120px]">
-                                        <div className="text-xs text-gray-400 mb-1">Particular (Período)</div>
-                                        <div className="text-lg font-bold text-green-500">{formatCurrency(periodTotals.totalPrivate)}</div>
+                                    <div className="bg-gray-800 px-3 py-2 rounded-lg border border-gray-700 text-center">
+                                        <div className="text-[10px] text-gray-400 mb-1">Part. (Per)</div>
+                                        <div className="text-sm md:text-lg font-bold text-green-500">{formatCurrency(periodTotals.totalPrivate)}</div>
                                     </div>
-                                    <div className="bg-gray-800 px-4 py-2 rounded-lg border border-gray-700 min-w-[120px]">
-                                        <div className="text-xs text-gray-400 mb-1">Total (Período)</div>
-                                        <div className="text-lg font-bold text-indigo-400">{formatCurrency(periodTotals.totalApp + periodTotals.totalPrivate)}</div>
+                                    <div className="bg-gray-800 px-3 py-2 rounded-lg border border-gray-700 text-center">
+                                        <div className="text-[10px] text-gray-400 mb-1">Total (Per)</div>
+                                        <div className="text-sm md:text-lg font-bold text-indigo-400">{formatCurrency(periodTotals.totalApp + periodTotals.totalPrivate)}</div>
                                     </div>
                                 </div>
                             )}

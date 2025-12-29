@@ -180,11 +180,6 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                     Este evento foi identificado automaticamente pelo sistema antifraude do Rota Verde devido à detecção de comportamentos operacionais anômalos, com base em regras determinísticas e critérios objetivos previamente definidos.
                 </p>
 
-                <div className="bg-red-50 border-l-4 border-red-600 p-3 mb-6">
-                    <p className="text-red-700 font-bold text-sm">
-                        ⚠️ A detecção de anomalia NÃO implica confirmação de fraude. O alerta indica exclusivamente a necessidade de análise humana.
-                    </p>
-                </div>
 
                 <h3 className="text-md font-bold mb-2">Critérios de Normalidade Operacional</h3>
                 <p className="text-sm text-gray-700 text-justify">
