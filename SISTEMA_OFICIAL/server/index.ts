@@ -93,6 +93,38 @@ async function ensureSchemaIntegrity() {
 }
 
 /**
+ * Fraud Analysis Scheduler
+ * Analisa turnos abertos automaticamente a cada 5 minutos
+ */
+let fraudSchedulerInterval: NodeJS.Timeout | null = null;
+const FRAUD_SCHEDULER_INTERVAL = 5 * 60 * 1000; // 5 minutos
+
+function startFraudScheduler() {
+    if (fraudSchedulerInterval) {
+        console.log("⚠️  Fraud scheduler já está rodando.");
+        return;
+    }
+
+    console.log("🔄 Iniciando Fraud Scheduler (a cada 5 minutos)...");
+
+    // Roda imediatamente uma vez
+    runFraudAnalysis();
+
+    // Depois agenda a cada 5 minutos
+    fraudSchedulerInterval = setInterval(runFraudAnalysis, FRAUD_SCHEDULER_INTERVAL);
+}
+
+async function runFraudAnalysis() {
+    try {
+        console.log(`\n🔍 [${new Date().toLocaleTimeString('pt-BR')}] Executando análise de fraude em turnos abertos...`);
+        const results = await FraudService.analyzeTodayOpenShifts();
+        console.log(`✅ Análise concluída: ${results.length} turnos analisados.`);
+    } catch (error) {
+        console.error("❌ Erro na análise automática de fraude:", error);
+    }
+}
+
+/**
  * Função de inicialização
  */
 async function startServer() {
@@ -122,13 +154,17 @@ async function startServer() {
                 testConnection().then((connected) => {
                     if (connected) {
                         console.log("✅ Banco de dados conectado e sincronizado!");
+                        // Inicia scheduler de análise de fraude
+                        startFraudScheduler();
                     }
                 });
             }).catch(async err => {
                 console.error("⚠️  AVISO CRÍTICO: Falha na auto-migração. O servidor continuará rodando para permitir reparos via API.", err);
                 // Mesmo com erro, tenta hotfix e conectar
                 await ensureSchemaIntegrity();
-                testConnection();
+                testConnection().then((connected) => {
+                    if (connected) startFraudScheduler();
+                });
             });
         } else {
             testConnection().then(async (connected) => {
@@ -136,6 +172,8 @@ async function startServer() {
                     console.log("✅ Banco de dados conectado!");
                     // Dev mode também roda pra garantir
                     await ensureSchemaIntegrity();
+                    // Inicia scheduler de análise de fraude
+                    startFraudScheduler();
                 }
             });
         }

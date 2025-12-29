@@ -63,6 +63,8 @@ const FraudDashboard = () => {
     const [isLoadingPreview, setIsLoadingPreview] = useState(false);
     const [previewData, setPreviewData] = useState<any>(null);
     const [reprocessStatus, setReprocessStatus] = useState<any>(null);
+    const [isAnalyzingOpen, setIsAnalyzingOpen] = useState(false);
+    const [analyzeOpenResult, setAnalyzeOpenResult] = useState<any>(null);
 
     // Polling for status
     React.useEffect(() => {
