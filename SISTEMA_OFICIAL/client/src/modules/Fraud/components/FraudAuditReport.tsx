@@ -163,58 +163,60 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                 </div>
                 <div className="text-right">
                     <p><strong>Detecção:</strong> {fmtDate(event.detectedAt)}</p>
-                    <p><strong>Gerado em:</strong> {new Date().toLocaleString('pt-BR')}</p>
+                    <p><strong>Status:</strong> <span className="uppercase font-bold">{event.status}</span></p>
                 </div>
             </div>
 
-            {/* 10.2 Resumo Executivo */}
-            <div className="mb-8">
-                <h2 className="text-lg font-bold border-b border-gray-800 mb-3 pb-1">Resumo Executivo de Risco</h2>
-                <div className="grid grid-cols-3 gap-4 mb-4 bg-gray-50 p-3 rounded">
-                    <div><span className="text-gray-600 text-sm">Risk Score:</span> <span className="font-bold text-lg block">{event.riskScore}</span></div>
-                    <div><span className="text-gray-600 text-sm">Risk Level:</span> <span className={`font-bold text-lg block uppercase ${event.riskLevel === 'critical' ? 'text-red-600' : event.riskLevel === 'high' ? 'text-orange-600' : 'text-yellow-600'}`}>{event.riskLevel}</span></div>
-                    <div><span className="text-gray-600 text-sm">Status:</span> <span className="font-bold text-lg block uppercase">{event.status}</span></div>
-                </div>
-
-                {/* Quadro de Resumo - Regras Disparadas */}
-                {sortedRules.length > 0 && (
-                    <div className="border border-gray-300 rounded-lg p-4 mb-4 bg-gray-50">
-                        <h3 className="text-md font-bold mb-3 text-gray-800">📋 Resumo das Regras Disparadas</h3>
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-gray-300">
-                                    <th className="text-left py-2 font-semibold">Regra</th>
-                                    <th className="text-center py-2 font-semibold">Severidade</th>
-                                    <th className="text-right py-2 font-semibold">Pontos</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {sortedRules.map((rule: any, idx: number) => {
-                                    const rDef = OFFICIAL_RULES_LIST.find(r => r.code === rule.code);
-                                    const sevColor = rule.severity === 'critical' ? 'text-red-600' : rule.severity === 'high' ? 'text-orange-600' : rule.severity === 'medium' ? 'text-yellow-600' : 'text-blue-600';
-                                    return (
-                                        <tr key={idx} className="border-b border-gray-200">
-                                            <td className="py-2">{rDef?.name || rule.label || rule.code}</td>
-                                            <td className={`py-2 text-center font-semibold uppercase ${sevColor}`}>{rule.severity || 'low'}</td>
-                                            <td className="py-2 text-right font-bold">{rule.score || 0}</td>
-                                        </tr>
-                                    );
-                                })}
-                                <tr className="font-bold bg-gray-100">
-                                    <td className="py-2">TOTAL</td>
-                                    <td></td>
-                                    <td className="py-2 text-right text-lg">{event.riskScore || sortedRules.reduce((acc: number, r: any) => acc + (r.score || 0), 0)}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+            {/* 10.2 Resumo Executivo (APENAS SE HOUVER RISCO) */}
+            {event.riskScore > 0 && (
+                <div className="mb-8">
+                    <h2 className="text-lg font-bold border-b border-gray-800 mb-3 pb-1">Resumo Executivo de Risco</h2>
+                    <div className="grid grid-cols-3 gap-4 mb-4 bg-gray-50 p-3 rounded">
+                        <div><span className="text-gray-600 text-sm">Risk Score:</span> <span className="font-bold text-lg block">{event.riskScore}</span></div>
+                        <div><span className="text-gray-600 text-sm">Risk Level:</span> <span className={`font-bold text-lg block uppercase ${event.riskLevel === 'critical' ? 'text-red-600' : event.riskLevel === 'high' ? 'text-orange-600' : 'text-yellow-600'}`}>{event.riskLevel}</span></div>
+                        <div><span className="text-gray-600 text-sm">Status:</span> <span className="font-bold text-lg block uppercase">{event.status}</span></div>
                     </div>
-                )}
 
-                <h3 className="text-md font-bold mb-2">Critérios de Normalidade Operacional</h3>
-                <p className="text-sm text-gray-700 text-justify">
-                    Um turno é considerado operacionalmente normal quando apresenta evolução contínua de quilometragem, duração compatível (10min a 16h), distribuição variada de corridas e indicadores financeiros dentro das faixas esperadas (Receita/KM entre R$ 1,98 e R$ 3,30/km).
-                </p>
-            </div>
+                    {/* Quadro de Resumo - Regras Disparadas */}
+                    {sortedRules.length > 0 && (
+                        <div className="border border-gray-300 rounded-lg p-4 mb-4 bg-gray-50">
+                            <h3 className="text-md font-bold mb-3 text-gray-800">📋 Resumo das Regras Disparadas</h3>
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-gray-300">
+                                        <th className="text-left py-2 font-semibold">Regra</th>
+                                        <th className="text-center py-2 font-semibold">Severidade</th>
+                                        <th className="text-right py-2 font-semibold">Pontos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {sortedRules.map((rule: any, idx: number) => {
+                                        const rDef = OFFICIAL_RULES_LIST.find(r => r.code === rule.code);
+                                        const sevColor = rule.severity === 'critical' ? 'text-red-600' : rule.severity === 'high' ? 'text-orange-600' : rule.severity === 'medium' ? 'text-yellow-600' : 'text-blue-600';
+                                        return (
+                                            <tr key={idx} className="border-b border-gray-200">
+                                                <td className="py-2">{rDef?.name || rule.label || rule.code}</td>
+                                                <td className={`py-2 text-center font-semibold uppercase ${sevColor}`}>{rule.severity || 'low'}</td>
+                                                <td className="py-2 text-right font-bold">{rule.score || 0}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                    <tr className="font-bold bg-gray-100">
+                                        <td className="py-2">TOTAL</td>
+                                        <td></td>
+                                        <td className="py-2 text-right text-lg">{event.riskScore || sortedRules.reduce((acc: number, r: any) => acc + (r.score || 0), 0)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    <h3 className="text-md font-bold mb-2">Critérios de Normalidade Operacional</h3>
+                    <p className="text-sm text-gray-700 text-justify">
+                        Um turno é considerado operacionalmente normal quando apresenta evolução contínua de quilometragem, duração compatível (10min a 16h), distribuição variada de corridas e indicadores financeiros dentro das faixas esperadas (Receita/KM entre R$ 1,98 e R$ 3,30/km).
+                    </p>
+                </div>
+            )}
 
             {/* 10.3 Identificação Operacional */}
             <div className="mb-8">
