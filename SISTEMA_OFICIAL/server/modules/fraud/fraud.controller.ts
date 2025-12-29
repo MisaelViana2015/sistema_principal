@@ -10,6 +10,18 @@ import { analyzeShiftRules } from "./fraud.engine.js";
 import { generateEventPdf } from "./fraud.pdf.js";
 import { randomUUID } from "node:crypto";
 
+
+// Simple in-memory status tracker (sufficient for maintenance tasks)
+let batchStatus = {
+    isRunning: false,
+    processed: 0,
+    total: 0,
+    errors: 0,
+    lastError: null as string | null,
+    startTime: null as number | null,
+    duration: null as string | null
+};
+
 export const FraudController = {
     // POST /api/fraud/analyze/:shiftId
     async manualAnalyze(req: Request, res: Response) {
@@ -640,4 +652,102 @@ export const FraudController = {
             res.status(500).json({ error: error.message });
         }
     },
+
+    // GET /api/fraud/reprocess-status
+    async getBatchStatus(req: Request, res: Response) {
+        res.json(batchStatus);
+    },
+
+    // GET /api/fraud/reprocess-preview
+    async getReprocessPreview(req: Request, res: Response) {
+        try {
+            const result = await db.execute(sql`
+                SELECT 
+                    COUNT(*) as total,
+                    MIN(inicio) as min_date,
+                    MAX(inicio) as max_date
+                FROM shifts
+                WHERE status = 'finalizado'
+            `);
+
+            const stats = result.rows[0] as any;
+            const total = Number(stats.total) || 0;
+            const estimatedSeconds = Math.ceil(total * 0.3);
+
+            res.json({
+                action: "preview",
+                totalShifts: total,
+                dateRange: stats.min_date && stats.max_date
+                    ? `${new Date(stats.min_date).toLocaleDateString('pt-BR')} - ${new Date(stats.max_date).toLocaleDateString('pt-BR')}`
+                    : "N/A",
+                estimatedTime: estimatedSeconds > 60
+                    ? `~${Math.ceil(estimatedSeconds / 60)} minutos`
+                    : `~${estimatedSeconds} segundos`,
+                message: `Serão reprocessados ${total} turnos finalizados`
+            });
+        } catch (error: any) {
+            console.error("[FRAUD] Erro no preview:", error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // POST /api/fraud/reprocess-all
+    async reprocessAllShifts(req: Request, res: Response) {
+        if (batchStatus.isRunning) {
+            return res.status(409).json({ error: "Já existe um reprocessamento em andamento." });
+        }
+
+        try {
+            const allShifts = await db.execute(sql`
+                SELECT id FROM shifts WHERE status = 'finalizado'
+            `);
+            const shifts = allShifts.rows as any[];
+
+            if (shifts.length === 0) {
+                return res.json({ message: "Nenhum turno para processar." });
+            }
+
+            batchStatus = {
+                isRunning: true,
+                processed: 0,
+                total: shifts.length,
+                errors: 0,
+                lastError: null,
+                startTime: Date.now(),
+                duration: null
+            };
+
+            res.json({
+                message: "Reprocessamento iniciado em background.",
+                totalShifts: shifts.length,
+                checkStatusUrl: "/api/fraud/reprocess-status"
+            });
+
+            setImmediate(async () => {
+                const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+                console.log(`[FRAUD BATCH] Iniciando com ${shifts.length} turnos...`);
+
+                for (const shift of shifts) {
+                    try {
+                        await FraudService.analyzeShift(shift.id);
+                        batchStatus.processed++;
+                        if (batchStatus.processed % 10 === 0) await wait(50);
+                    } catch (err: any) {
+                        batchStatus.errors++;
+                        batchStatus.lastError = `Shift ${shift.id}: ${err.message}`;
+                        console.error(`[FRAUD BATCH] Erro ${shift.id}:`, err.message);
+                    }
+                }
+
+                const durationSeconds = Math.round((Date.now() - (batchStatus.startTime || 0)) / 1000);
+                batchStatus.isRunning = false;
+                batchStatus.duration = `${durationSeconds}s`;
+                console.log(`[FRAUD BATCH] Concluído: ${batchStatus.processed} ok, ${batchStatus.errors} erros em ${durationSeconds}s`);
+            });
+
+        } catch (error: any) {
+            console.error("[FRAUD BATCH] Erro ao iniciar:", error);
+            res.status(500).json({ error: error.message });
+        }
+    }
 };

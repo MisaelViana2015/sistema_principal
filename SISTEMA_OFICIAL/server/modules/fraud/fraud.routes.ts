@@ -17,7 +17,16 @@ router.get("/events", FraudController.getEventsList);
 // Actions
 router.post("/seed", FraudController.seedData);
 router.post("/analyze/:shiftId", FraudController.manualAnalyze);
+
+
+
+// POST /api/fraud/analyze-all
 router.post("/analyze-all", FraudController.analyzeAllShifts);
+
+// Batch Reprocessing
+router.get("/reprocess-status", FraudController.getBatchStatus);
+router.get("/reprocess-preview", FraudController.getReprocessPreview);
+router.post("/reprocess-all", FraudController.reprocessAllShifts);
 router.get("/preview/:shiftId", FraudController.previewAnalysis);
 router.get("/event/:id", FraudController.getEventDetail);
 router.post("/event/:id/status", FraudController.updateEventStatus);
