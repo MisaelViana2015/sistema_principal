@@ -119,7 +119,7 @@ const HeaderNew = ({
                     <div className="flex items-center gap-2">
                         {/* Changed to block (visible on mobile) */}
                         <div className="text-right block">
-                            <span className="text-sm font-medium text-foreground block md:inline max-w-[100px] md:max-w-none truncate">{displayUserName}</span>
+                            <span className="text-sm font-medium text-foreground block md:inline max-w-[80px] sm:max-w-none truncate">{displayUserName}</span>
                             <span className={`text-[10px] md:text-xs font-semibold block ${isUserAdmin
                                 ? 'text-purple-500 dark:text-purple-400'
                                 : 'text-blue-500 dark:text-blue-400'
