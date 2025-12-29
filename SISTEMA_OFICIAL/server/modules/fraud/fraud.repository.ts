@@ -43,39 +43,46 @@ export const FraudRepository = {
     },
 
     async getFraudEvents(options: { limit?: number, offset?: number, status?: string, driverId?: string, vehicleId?: string, date?: string, startDate?: string, endDate?: string } = {}) {
-        const { limit = 50, offset = 0, status, driverId, vehicleId, date, startDate, endDate } = options;
-        return await db.query.fraudEvents.findMany({
-            where: (f, { eq, inArray, and, sql }) => {
-                const conditions = [];
+        const { limit = 50, offset = 0, status, driverId, startDate, endDate } = options;
 
-                if (status && status !== 'all') {
-                    if (status.includes(',')) {
-                        const statuses = status.split(',').map(s => s.trim());
-                        conditions.push(inArray(f.status, statuses));
-                    } else {
-                        conditions.push(eq(f.status, status as FraudEventStatus));
-                    }
-                }
+        // Build WHERE clause dynamically using raw SQL for reliable date filtering
+        let whereClause = sql`1=1`;
 
-                if (driverId) conditions.push(eq(f.driverId, driverId));
+        if (status && status !== 'all') {
+            if (status.includes(',')) {
+                const statuses = status.split(',').map(s => `'${s.trim()}'`).join(',');
+                whereClause = sql`${whereClause} AND fe.status IN (${sql.raw(statuses)})`;
+            } else {
+                whereClause = sql`${whereClause} AND fe.status = ${status}`;
+            }
+        }
 
-                // Filter by date - use detected_at directly with proper date casting
-                if (startDate) {
-                    conditions.push(sql`DATE(${f.detectedAt}) >= ${startDate}::date`);
-                }
-                if (endDate) {
-                    conditions.push(sql`DATE(${f.detectedAt}) <= ${endDate}::date`);
-                }
+        if (driverId && driverId !== 'all') {
+            whereClause = sql`${whereClause} AND fe.driver_id = ${driverId}`;
+        }
 
-                return conditions.length > 0 ? and(...conditions) : undefined;
-            },
-            with: {
-                driver: true
-            },
-            orderBy: (f, { desc }) => [desc(f.detectedAt)],
-            limit,
-            offset
-        });
+        // Date filtering using detected_at (now correctly set to shift.inicio)
+        if (startDate) {
+            whereClause = sql`${whereClause} AND DATE(fe.detected_at) >= ${startDate}::date`;
+        }
+        if (endDate) {
+            whereClause = sql`${whereClause} AND DATE(fe.detected_at) <= ${endDate}::date`;
+        }
+
+        console.log('[FRAUD-REPO] getFraudEvents:', { startDate, endDate, status, driverId });
+
+        const result = await db.execute(sql`
+            SELECT 
+                fe.id, fe.shift_id as "shiftId", fe.driver_id as "driverId", fe.vehicle_id as "vehicleId",
+                fe.risk_score as "riskScore", fe.risk_level as "riskLevel", fe.status, 
+                fe.rules, fe.metadata, fe.detected_at as "detectedAt", fe.updated_at as "updatedAt", fe.comment
+            FROM fraud_events fe
+            WHERE ${whereClause}
+            ORDER BY fe.detected_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+        `);
+
+        return result.rows;
     },
 
     async getEventsCount(options: { status?: string, driverId?: string, startDate?: string, endDate?: string } = {}) {
