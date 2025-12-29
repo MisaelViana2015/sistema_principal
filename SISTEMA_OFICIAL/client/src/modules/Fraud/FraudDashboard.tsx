@@ -272,42 +272,38 @@ const FraudDashboard = () => {
                         </Card>
                     </div>
 
-                    {/* Global Driver Filter - Above Heatmap */}
-                    <div className="flex items-center gap-4 mt-6">
-                        <label className="text-sm font-medium text-muted-foreground">Filtrar por Motorista:</label>
-                        <Select
-                            value={selectedDriver}
-                            onValueChange={(val) => {
-                                setSelectedDriver(val);
-                                setAlertPage(1);
-                            }}
-                        >
-                            <SelectTrigger className="w-[250px] bg-slate-900/50 border-slate-800">
-                                <SelectValue placeholder="Todos os Motoristas" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todos os Motoristas</SelectItem>
-                                {driversList.map((driver: any) => (
-                                    <SelectItem key={driver.id} value={driver.id}>
-                                        {driver.nome || driver.name || driver.id}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Heatmap Section */}
-                    <div className="grid gap-6 md:grid-cols-1 mt-6">
-                        <FraudHeatmap driverId={selectedDriver} />
-                    </div>
-
-                    {/* Filters Section - Date Range Only */}
+                    {/* Combined Filters - Above Heatmap */}
                     <Card className="p-4 mt-6 border-slate-700 bg-slate-900/60">
                         <div className="flex items-center gap-2 mb-3">
                             <Filter className="w-4 h-4 text-emerald-500" />
-                            <h3 className="text-sm font-semibold text-gray-200">Filtros de Data</h3>
+                            <h3 className="text-sm font-semibold text-gray-200">Filtros</h3>
                         </div>
                         <div className="flex flex-wrap gap-4 items-end">
+                            {/* Driver Filter */}
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-gray-400">Motorista</label>
+                                <Select
+                                    value={selectedDriver}
+                                    onValueChange={(val) => {
+                                        setSelectedDriver(val);
+                                        setAlertPage(1);
+                                    }}
+                                >
+                                    <SelectTrigger className="w-[180px] h-9 bg-slate-800 border-slate-600 text-white">
+                                        <SelectValue placeholder="Todos" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos os Motoristas</SelectItem>
+                                        {driversList.map((driver: any) => (
+                                            <SelectItem key={driver.id} value={driver.id}>
+                                                {driver.nome || driver.name || driver.id}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Date Filters */}
                             <div className="space-y-1">
                                 <label className="text-xs font-medium text-gray-400">Data Inicial</label>
                                 <Input
@@ -317,7 +313,7 @@ const FraudDashboard = () => {
                                         setDateFilter(prev => ({ ...prev, start: e.target.value }));
                                         setAlertPage(1);
                                     }}
-                                    className="w-[160px] h-9 bg-slate-800 border-slate-600 text-white placeholder:text-gray-500 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-100"
+                                    className="w-[140px] h-9 bg-slate-800 border-slate-600 text-white [&::-webkit-calendar-picker-indicator]:invert"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -329,24 +325,32 @@ const FraudDashboard = () => {
                                         setDateFilter(prev => ({ ...prev, end: e.target.value }));
                                         setAlertPage(1);
                                     }}
-                                    className="w-[160px] h-9 bg-slate-800 border-slate-600 text-white placeholder:text-gray-500 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-100"
+                                    className="w-[140px] h-9 bg-slate-800 border-slate-600 text-white [&::-webkit-calendar-picker-indicator]:invert"
                                 />
                             </div>
-                            {(dateFilter.start || dateFilter.end) && (
+
+                            {/* Clear Button */}
+                            {(dateFilter.start || dateFilter.end || (selectedDriver && selectedDriver !== 'all')) && (
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => {
                                         setDateFilter({ start: '', end: '' });
+                                        setSelectedDriver('all');
                                         setAlertPage(1);
                                     }}
                                     className="text-gray-400 hover:text-white h-9"
                                 >
-                                    Limpar
+                                    Limpar Tudo
                                 </Button>
                             )}
                         </div>
                     </Card>
+
+                    {/* Heatmap Section */}
+                    <div className="grid gap-6 md:grid-cols-1 mt-4">
+                        <FraudHeatmap driverId={selectedDriver} />
+                    </div>
 
                     {/* Recent Alerts List */}
                     <Card className="p-6 mt-6">
