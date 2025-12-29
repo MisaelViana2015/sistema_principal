@@ -42,68 +42,83 @@ export const FraudRepository = {
     },
 
     async getFraudEvents(options: { limit?: number, offset?: number, status?: string, driverId?: string, vehicleId?: string, date?: string, startDate?: string, endDate?: string } = {}) {
-        const { limit = 50, offset = 0, status, driverId, vehicleId, date, startDate, endDate } = options;
-        return await db.query.fraudEvents.findMany({
-            where: (f, { eq, inArray, and, sql }) => {
-                const conditions = [];
+        const { limit = 50, offset = 0, status, driverId, startDate, endDate } = options;
 
-                if (status && status !== 'all') {
-                    if (status.includes(',')) {
-                        const statuses = status.split(',').map(s => s.trim());
-                        conditions.push(inArray(f.status, statuses));
-                    } else {
-                        conditions.push(eq(f.status, status as FraudEventStatus));
-                    }
-                }
-
-                if (driverId) conditions.push(eq(f.driverId, driverId));
-
-                // Filter by date - use detected_at directly with proper date casting
-                if (startDate) {
-                    conditions.push(sql`DATE(${f.detectedAt}) >= ${startDate}::date`);
-                }
-                if (endDate) {
-                    conditions.push(sql`DATE(${f.detectedAt}) <= ${endDate}::date`);
-                }
-
-                return conditions.length > 0 ? and(...conditions) : undefined;
-            },
-            with: {
-                driver: true
-            },
-            orderBy: (f, { desc }) => [desc(f.detectedAt)],
-            limit,
-            offset
-        });
-    },
-
-    async getEventsCount(options: { status?: string, driverId?: string, startDate?: string, endDate?: string } = {}) {
-        const { status, driverId, startDate, endDate } = options;
-
-        // Build raw SQL for count with date filters
+        // Build WHERE clause dynamically - filter by SHIFT date (inicio), not detected_at
         let whereClause = sql`1=1`;
 
         if (status && status !== 'all') {
             if (status.includes(',')) {
                 const statuses = status.split(',').map(s => `'${s.trim()}'`).join(',');
-                whereClause = sql`${whereClause} AND status IN (${sql.raw(statuses)})`;
+                whereClause = sql`${whereClause} AND fe.status IN (${sql.raw(statuses)})`;
             } else {
-                whereClause = sql`${whereClause} AND status = ${status}`;
+                whereClause = sql`${whereClause} AND fe.status = ${status}`;
             }
         }
 
         if (driverId) {
-            whereClause = sql`${whereClause} AND driver_id = ${driverId}`;
+            whereClause = sql`${whereClause} AND fe.driver_id = ${driverId}`;
         }
 
+        // Filter by SHIFT date (s.inicio) - this is what the user expects
         if (startDate) {
-            whereClause = sql`${whereClause} AND DATE(detected_at) >= ${startDate}::date`;
+            whereClause = sql`${whereClause} AND DATE(s.inicio) >= ${startDate}::date`;
         }
         if (endDate) {
-            whereClause = sql`${whereClause} AND DATE(detected_at) <= ${endDate}::date`;
+            whereClause = sql`${whereClause} AND DATE(s.inicio) <= ${endDate}::date`;
         }
 
-        const result = await db.execute(sql`SELECT count(*) as count FROM fraud_events WHERE ${whereClause}`);
+        console.log('[FRAUD-REPO] Query with shift date filter:', { startDate, endDate, status, driverId });
+
+        const result = await db.execute(sql`
+            SELECT 
+                fe.id, fe.shift_id as "shiftId", fe.driver_id as "driverId", fe.vehicle_id as "vehicleId",
+                fe.risk_score as "riskScore", fe.risk_level as "riskLevel", fe.status, 
+                fe.rules, fe.metadata, fe.detected_at as "detectedAt", fe.updated_at as "updatedAt", fe.comment,
+                DATE(s.inicio) as "shiftDate"
+            FROM fraud_events fe
+            JOIN shifts s ON fe.shift_id = s.id
+            WHERE ${whereClause}
+            ORDER BY s.inicio DESC
+            LIMIT ${limit} OFFSET ${offset}
+        `);
+
+        return result.rows;
+    },
+
+    async getEventsCount(options: { status?: string, driverId?: string, startDate?: string, endDate?: string } = {}) {
+        const { status, driverId, startDate, endDate } = options;
+
+        // Build raw SQL for count with SHIFT date filters (same logic as getFraudEvents)
+        let whereClause = sql`1=1`;
+
+        if (status && status !== 'all') {
+            if (status.includes(',')) {
+                const statuses = status.split(',').map(s => `'${s.trim()}'`).join(',');
+                whereClause = sql`${whereClause} AND fe.status IN (${sql.raw(statuses)})`;
+            } else {
+                whereClause = sql`${whereClause} AND fe.status = ${status}`;
+            }
+        }
+
+        if (driverId) {
+            whereClause = sql`${whereClause} AND fe.driver_id = ${driverId}`;
+        }
+
+        // Filter by SHIFT date (s.inicio) - matches getFraudEvents
+        if (startDate) {
+            whereClause = sql`${whereClause} AND DATE(s.inicio) >= ${startDate}::date`;
+        }
+        if (endDate) {
+            whereClause = sql`${whereClause} AND DATE(s.inicio) <= ${endDate}::date`;
+        }
+
+        const result = await db.execute(sql`
+            SELECT count(*) as count 
+            FROM fraud_events fe
+            JOIN shifts s ON fe.shift_id = s.id
+            WHERE ${whereClause}
+        `);
         return Number(result.rows[0]?.count || 0);
     },
 
