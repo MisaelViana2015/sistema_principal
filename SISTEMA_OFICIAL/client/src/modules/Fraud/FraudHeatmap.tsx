@@ -84,7 +84,7 @@ export const FraudHeatmap = () => {
                                     <div
                                         key={dIndex}
                                         className={`w-3 h-3 rounded-sm ${getRiskColor(day.avgScore, day.count)} transition-colors hover:scale-125 cursor-pointer`}
-                                        title={`${day.date.toLocaleDateString()}: ${day.count} eventos, Média: ${day.avgScore.toFixed(1)}, Max: ${day.maxScore}`}
+                                        title={`${day.date.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}: ${day.count} eventos, Média: ${day.avgScore.toFixed(1)}, Max: ${day.maxScore}`}
                                     />
                                 ))}
                             </div>

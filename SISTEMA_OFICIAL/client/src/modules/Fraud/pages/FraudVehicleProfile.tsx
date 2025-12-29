@@ -45,7 +45,7 @@ const FraudVehicleProfile = () => {
         : '0.0';
 
     const chartData = [...events].reverse().map(e => ({
-        date: new Date(e.detectedAt).toLocaleDateString(),
+        date: new Date(e.detectedAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
         score: e.riskScore
     }));
 
@@ -125,7 +125,7 @@ const FraudVehicleProfile = () => {
                             <tbody>
                                 {events.map((event) => (
                                     <tr key={event.id} className="border-t hover:bg-muted/50">
-                                        <td className="p-3">{new Date(event.detectedAt).toLocaleString()}</td>
+                                        <td className="p-3">{new Date(event.detectedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</td>
                                         <td className="p-3 font-bold">{event.riskScore.toFixed(1)}</td>
                                         <td className="p-3">
                                             <button
