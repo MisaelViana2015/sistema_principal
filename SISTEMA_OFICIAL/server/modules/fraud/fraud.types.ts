@@ -51,6 +51,7 @@ export interface FraudShiftAnalysis {
     score: FraudScore;
     baseline?: DriverBaseline;
     shiftInicio?: Date; // Full start timestamp for accurate detectedAt
+    isPartialAnalysis?: boolean; // Turno ainda em andamento
 }
 
 export interface ShiftContext {

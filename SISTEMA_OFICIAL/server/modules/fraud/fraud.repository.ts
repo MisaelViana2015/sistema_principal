@@ -23,7 +23,8 @@ export const FraudRepository = {
                 kmTotal: analysis.kmTotal,
                 revenueTotal: analysis.revenueTotal,
                 revenuePerKm: analysis.revenuePerKm,
-                baseline: analysis.baseline // Persist baseline for PDF reports
+                baseline: analysis.baseline, // Persist baseline for PDF reports
+                isPartialAnalysis: analysis.isPartialAnalysis || false
             },
             status: existing ? existing.status : "pendente",
             // Use shiftInicio (full timestamp) instead of date string to preserve timezone
@@ -31,6 +32,18 @@ export const FraudRepository = {
         };
 
         if (existing) {
+            // 🔴 NOVA VERIFICAÇÃO: Só atualiza se houver mudança relevante
+            const existingMeta = existing.metadata as any || {};
+            const hasRelevantChange =
+                existingMeta.kmTotal !== analysis.kmTotal ||
+                existingMeta.revenueTotal !== analysis.revenueTotal ||
+                existing.riskScore !== analysis.score.totalScore;
+
+            if (!hasRelevantChange) {
+                // console.log(`⏭️ Turno ${analysis.shiftId.slice(0,8)} sem alterações, pulando atualização.`);
+                return existing.id; // Não atualiza
+            }
+
             await db
                 .update(fraudEvents)
                 .set(payload)

@@ -89,6 +89,7 @@ export const FraudService = {
             ridesPerHour: totalCorridas / durationHours,
             score,
             baseline: baseline || undefined, // Persist for PDF
+            isPartialAnalysis: shift.status === 'em_andamento', // 🔴 NOVO: Marca se análise é parcial
         };
 
         // 6. Persistir Resultado
@@ -134,14 +135,8 @@ export const FraudService = {
     async analyzeTodayOpenShifts() {
         console.log("🔍 Analisando turnos ABERTOS de hoje...");
         try {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
             const openShifts = await db.query.shifts.findMany({
-                where: (s, { eq, gte, and }) => and(
-                    eq(s.status, 'em_andamento'),
-                    gte(s.inicio, today)
-                )
+                where: (s, { eq }) => eq(s.status, 'em_andamento')
             });
 
             console.log(`📊 Encontrados ${openShifts.length} turnos abertos para análise em tempo real.`);
