@@ -27,7 +27,7 @@ const THRESHOLDS = {
 
     // Duração Turno
     MIN_SHIFT_HOURS: 1 / 6,              // 10 min = LOW
-    MAX_SHIFT_HOURS: 14,                 // > 14h = LOW (v2)
+    MAX_SHIFT_HOURS: 16,                 // > 16h = LOW (v2)
 
     // Gap KM
     MAX_KM_GAP_NORMAL: 250,              // > 250km = HIGH
