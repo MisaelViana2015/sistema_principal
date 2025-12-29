@@ -26,7 +26,7 @@ export const FraudRepository = {
                 baseline: analysis.baseline // Persist baseline for PDF reports
             },
             status: existing ? existing.status : "pendente",
-            detectedAt: new Date(),
+            detectedAt: analysis.date ? new Date(analysis.date) : new Date(),
         };
 
         if (existing) {
