@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as shiftsService from "./shifts.service.js";
 import { startShiftSchema, finishShiftSchema, updateShiftSchema } from "./shifts.validators.js";
+import { FraudService } from "../fraud/fraud.service.js"; // Import FraudService
 
 export async function getAllShiftsController(req: Request, res: Response) {
     try {
@@ -67,6 +68,13 @@ export async function finishShiftController(req: Request, res: Response) {
         const validatedData = finishShiftSchema.parse(req.body);
 
         const shift = await shiftsService.finishShift(id, validatedData.kmFinal);
+
+        // 🔴 NOVO: Dispara análise de fraude automaticamente ao fechar turno
+        // Fire-and-forget para não bloquear o response
+        FraudService.analyzeShift(id).catch(err =>
+            console.error(`❌ Erro análise fraude pós-turno ${id}:`, err)
+        );
+
         return res.json(shift);
     } catch (error: any) {
         if (error.issues) return res.status(400).json({ message: "Validation error", details: error.issues });

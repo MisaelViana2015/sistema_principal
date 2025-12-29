@@ -96,33 +96,10 @@ async function ensureSchemaIntegrity() {
  * Fraud Analysis Scheduler
  * Analisa turnos abertos automaticamente a cada 5 minutos
  */
-let fraudSchedulerInterval: NodeJS.Timeout | null = null;
-const FRAUD_SCHEDULER_INTERVAL = 5 * 60 * 1000; // 5 minutos
+// Fraud scheduler removed in favor of event-based trigger on shift finish
+// function startFraudScheduler() { ... }
 
-function startFraudScheduler() {
-    if (fraudSchedulerInterval) {
-        console.log("⚠️  Fraud scheduler já está rodando.");
-        return;
-    }
-
-    console.log("🔄 Iniciando Fraud Scheduler (a cada 5 minutos)...");
-
-    // Roda imediatamente uma vez
-    runFraudAnalysis();
-
-    // Depois agenda a cada 5 minutos
-    fraudSchedulerInterval = setInterval(runFraudAnalysis, FRAUD_SCHEDULER_INTERVAL);
-}
-
-async function runFraudAnalysis() {
-    try {
-        console.log(`\n🔍 [${new Date().toLocaleTimeString('pt-BR')}] Executando análise de fraude em turnos abertos...`);
-        const results = await FraudService.analyzeTodayOpenShifts();
-        console.log(`✅ Análise concluída: ${results.length} turnos analisados.`);
-    } catch (error) {
-        console.error("❌ Erro na análise automática de fraude:", error);
-    }
-}
+// function runFraudAnalysis() { ... }
 
 /**
  * Função de inicialização
@@ -154,8 +131,7 @@ async function startServer() {
                 testConnection().then((connected) => {
                     if (connected) {
                         console.log("✅ Banco de dados conectado e sincronizado!");
-                        // Inicia scheduler de análise de fraude
-                        startFraudScheduler();
+                        // Fraud scheduler removed
                     }
                 });
             }).catch(async err => {
@@ -163,7 +139,7 @@ async function startServer() {
                 // Mesmo com erro, tenta hotfix e conectar
                 await ensureSchemaIntegrity();
                 testConnection().then((connected) => {
-                    if (connected) startFraudScheduler();
+                    if (connected) { /* Fraud scheduler removed */ }
                 });
             });
         } else {
@@ -172,8 +148,7 @@ async function startServer() {
                     console.log("✅ Banco de dados conectado!");
                     // Dev mode também roda pra garantir
                     await ensureSchemaIntegrity();
-                    // Inicia scheduler de análise de fraude
-                    startFraudScheduler();
+                    // Fraud scheduler removed used to be here
                 }
             });
         }
