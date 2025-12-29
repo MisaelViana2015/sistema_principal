@@ -1,4 +1,4 @@
-import { Home, Banknote, Package, BarChart3, Car } from "lucide-react";
+import { Home, Banknote, Package, BarChart3, Car, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
 
@@ -9,6 +9,7 @@ const navItems = [
     { path: "/corridas", label: "Corridas", icon: Banknote },
     { path: "/caixa", label: "Caixa", icon: Package },
     { path: "/desempenho", label: "Desempenho", icon: BarChart3 },
+    { path: "/fraude", label: "Fraude", icon: ShieldAlert, adminOnly: true },
 ];
 
 const BottomNavNew = () => {
@@ -20,7 +21,7 @@ const BottomNavNew = () => {
         <nav className="bottom-nav">
             <div className="flex items-center justify-around px-2 py-1">
                 {navItems
-                    .filter(item => item.path !== "/desempenho" || isUserAdmin)
+                    .filter(item => !item.adminOnly || isUserAdmin)
                     .map((item) => {
                         const isActive = location.pathname.startsWith(item.path);
                         const Icon = item.icon;
