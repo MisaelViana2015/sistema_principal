@@ -119,15 +119,15 @@ const HeaderNew = ({
                     <div className="flex items-center gap-2">
                         {/* Changed to block (visible on mobile) */}
                         <div className="text-right block">
-                            <span className="text-sm font-medium text-foreground block md:inline">{displayUserName}</span>
-                            <span className={`text-xs font-semibold block ${isUserAdmin
+                            <span className="text-sm font-medium text-foreground block md:inline max-w-[100px] md:max-w-none truncate">{displayUserName}</span>
+                            <span className={`text-[10px] md:text-xs font-semibold block ${isUserAdmin
                                 ? 'text-purple-500 dark:text-purple-400'
                                 : 'text-blue-500 dark:text-blue-400'
                                 }`}>
                                 {isUserAdmin ? 'Administrador' : 'Motorista'}
                             </span>
-                            {/* Date/Time Display */}
-                            <span className="text-[10px] text-muted-foreground block leading-tight mt-0.5">
+                            {/* Date/Time Display (Hidden on mobile to save space) */}
+                            <span className="text-[10px] text-muted-foreground hidden md:block leading-tight mt-0.5">
                                 {currentTime.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </span>
                         </div>

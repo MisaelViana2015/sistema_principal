@@ -84,7 +84,7 @@ const FraudConfiguration = () => {
                         <CardDescription>Valores usados para identificar anomalias</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                             <div className="p-3 bg-muted rounded-lg">
                                 <p className="text-muted-foreground">Receita/km (10% abaixo)</p>
                                 <p className="text-lg font-bold">R$ {THRESHOLDS.MIN_REVENUE_PER_KM_HIGH}</p>
