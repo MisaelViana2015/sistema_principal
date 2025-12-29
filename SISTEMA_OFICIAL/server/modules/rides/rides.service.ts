@@ -86,9 +86,12 @@ async function triggerFraudReanalysis(shiftId: string) {
         });
 
         if (shift?.status === 'finalizado') {
-            console.log(`[FRAUD] Re-analisando turno finalizado ${shiftId} após alteração de corrida...`);
-            FraudService.analyzeShift(shiftId).catch(err => {
-                console.error(`[FRAUD] Erro ao re-analisar turno ${shiftId}:`, err);
+            setImmediate(() => {
+                const start = Date.now();
+                console.log(`[FRAUD] Re-analisando turno ${shiftId} após alteração de corrida...`);
+                FraudService.analyzeShift(shiftId)
+                    .then(() => console.log(`[FRAUD] Re-análise ${shiftId} concluída em ${Date.now() - start}ms`))
+                    .catch(err => console.error(`[FRAUD] Erro ao re-analisar turno ${shiftId}:`, err));
             });
         }
     } catch (err) {
