@@ -401,22 +401,23 @@ export const FraudController = {
                 return res.status(404).json({ error: "Evento sem turno associado" });
             }
 
-            let shift = await db.query.shifts.findFirst({
+            let shiftData = await db.query.shifts.findFirst({
                 where: (s, { eq }) => eq(s.id, event.shiftId as string)
             });
 
             // FALLBACK GRACEFUL PARA EVENTOS ÓRFÃOS
-            if (!shift) {
+            if (!shiftData) {
                 console.warn(`[FRAUD] Evento ${id} possui turno órfão ${event.shiftId}. Usando fallback de metadata.`);
                 const meta = event.metadata as any || {};
+                const fallbackDate = event.detectedAt ? event.detectedAt.toISOString() : new Date().toISOString();
 
                 // Reconstrói um objeto de turno "falso" apenas para visualização
-                shift = {
+                shiftData = {
                     id: event.shiftId as string,
                     driverId: event.driverId as string,
                     vehicleId: meta.vehicleId || 'desconhecido',
-                    inicio: meta.date ? new Date(meta.date + "T00:00:00").toISOString() : event.detectedAt.toISOString(),
-                    fim: meta.date ? new Date(meta.date + "T23:59:59").toISOString() : event.detectedAt.toISOString(),
+                    inicio: meta.date ? new Date(meta.date + "T00:00:00").toISOString() : fallbackDate,
+                    fim: meta.date ? new Date(meta.date + "T23:59:59").toISOString() : fallbackDate,
                     totalBruto: meta.revenueTotal || "0",
                     totalCorridas: 0,
                     kmInicial: "0",
@@ -424,6 +425,9 @@ export const FraudController = {
                     status: "excluido_ou_nao_encontrado" // Sinalizador visual
                 } as any;
             }
+
+            // At this point, shiftData is guaranteed to be defined
+            const shift = shiftData!;
 
             // Fetch Driver and Vehicle Details
             const driver = await db.query.drivers.findFirst({
