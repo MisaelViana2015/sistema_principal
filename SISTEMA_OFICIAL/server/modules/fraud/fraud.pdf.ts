@@ -29,19 +29,19 @@ interface ShiftData {
 }
 
 // 12. ANEXO EXPLICATIVO (Hardcoded to avoid engine modification)
+// 12. ANEXO EXPLICATIVO (Hardcoded to avoid engine modification)
 const OFFICIAL_RULES_LIST = [
     { code: "KM_ZERO_COM_RECEITA", name: "REGRA 01 — KM ZERO COM RECEITA", desc: "Existe receita registrada com km total menor ou igual a zero. Não é possível gerar receita sem deslocamento." },
-    { code: "KM_RETROCEDEU", name: "REGRA 02 — KM RETROCEDEU", desc: "O km inicial do turno atual é menor que o km final do turno anterior. Odômetro não pode andar para trás." },
-    { code: "KM_SALTO_ABSURDO", name: "REGRA 03 — SALTO DE KM ABSURDO ENTRE TURNOS", desc: "Diferença excessiva de km entre turnos consecutivos (> 250 km). Indica uso fora do sistema ou erro grave." },
-    { code: "RECEITA_KM_MUITO_BAIXA", name: "REGRA 04 — RECEITA/KM MUITO BAIXA", desc: "Receita por km abaixo do mínimo aceitável (R$ 3,00/km). Indica corridas subdeclaradas." },
-    { code: "RECEITA_KM_MUITO_ALTA", name: "REGRA 05 — RECEITA/KM MUITO ALTA", desc: "Receita por km acima do máximo aceitável (R$ 20,00/km). Pode indicar manipulação de valores." },
-    { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 06 — DESVIO CRÍTICO DA MÉDIA DO MOTORISTA", desc: "Receita por km muito acima da média histórica do motorista (≥ 4x). Comportamento fora do padrão individual." },
-    { code: "TURNO_CURTO_DEMAIS", name: "REGRA 07 — TURNO CURTO DEMAIS", desc: "Turno com duração extremamente curta (< 10 min) mas com corridas. Corridas exigem tempo mínimo." },
-    { code: "TURNO_LONGO_DEMAIS", name: "REGRA 08 — TURNO LONGO DEMAIS", desc: "Turno com duração excessiva (> 14h). Possível esquecimento ou uso indevido." },
-    { code: "RECEITA_HORA_MUITO_ALTA", name: "REGRA 09 — RECEITA POR HORA MUITO ALTA", desc: "Receita por hora acima do limite aceitável (R$ 150,00/h). Manipulação ou concentração artificial." },
-    { code: "POUCAS_CORRIDAS_HORA", name: "REGRA 10 — POUCAS CORRIDAS POR HORA", desc: "Baixa produtividade (< 0,3 corridas/h) em turno com corridas. Uso improdutivo." },
-    { code: "SEQUENCIA_VALORES_IGUAIS", name: "REGRA 11 — VALORES DE CORRIDAS REPETIDOS", desc: "Múltiplas corridas com exatamente o mesmo valor. Foge do comportamento natural." },
-    { code: "SEQUENCIA_CONSECUTIVA", name: "REGRA 12 — SEQUÊNCIA CONSECUTIVA DE VALORES", desc: "Corridas consecutivas com valores idênticos. Indica possível automação ou fraude manual." }
+    { code: "RECEITA_KM_MUITO_BAIXA", name: "REGRA 02 — BAIXA RECEITA POR KM", desc: "Receita por km abaixo do piso operacional (R$ 2,00/km). Indica ineficiência ou subdeclaração." },
+    { code: "RECEITA_KM_MUITO_ALTA", name: "REGRA 03 — ALTA RECEITA POR KM", desc: "Receita por km acima do pico real (R$ 3,10/km). Indica possível inconsistência de km." },
+    { code: "RECEITA_HORA_MUITO_BAIXA", name: "REGRA 04 — BAIXA RECEITA POR HORA", desc: "Receita por hora abaixo de R$ 20,00/h. Turno com produtividade suspeita." },
+    { code: "RECEITA_HORA_MUITO_ALTA", name: "REGRA 05 — ALTA RECEITA POR HORA", desc: "Receita por hora acima de R$ 70,00/h. Pode indicar erro de duração." },
+    { code: "TURNO_CURTO_DEMAIS", name: "REGRA 06 — TURNO MUITO CURTO", desc: "Duração inferior a 10 minutos. Turno técnico irrelevante para análise padrão." },
+    { code: "TURNO_LONGO_DEMAIS", name: "REGRA 07 — TURNO MUITO LONGO", desc: "Duração superior a 14 horas. Comportamento fora do padrão típico." },
+    { code: "RECEITA_KM_DESVIO_ALTO", name: "REGRA 08 — DESVIO DE BASELINE ALTO", desc: "Receita/KM variou +/- 50% em relação à média pessoal." },
+    { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 09 — DESVIO DE BASELINE CRÍTICO", desc: "Receita/KM variou +/- 100% (2x) em relação à média pessoal." },
+    { code: "KM_SALTO_ABSURDO", name: "REGRA 10 — GAP DE KM ANÔMALO", desc: "Diferença entre turnos maior que 250 km. Indica uso não registrado." },
+    { code: "KM_RETROCEDEU", name: "REGRA ERROR — KM RETROCEDEU", desc: "O km inicial do turno atual é menor que o km final do turno anterior." },
 ];
 
 // Helper to determine severity level for primary rule sort
@@ -63,7 +63,7 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
         doc.on("end", () => resolve(Buffer.concat(buffers)));
         doc.on("error", (err) => reject(err));
 
-        const fmtDate = (d: Date | string | null) => d ? new Date(d).toLocaleString('pt-BR') : "N/A";
+        const fmtDate = (d: Date | string | null) => d ? new Date(d).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : "N/A";
         const fmtBRL = (v: number) => `R$ ${v.toFixed(2)}`;
 
         // --- 10.1 Cabeçalho / Identificação Geral ---
