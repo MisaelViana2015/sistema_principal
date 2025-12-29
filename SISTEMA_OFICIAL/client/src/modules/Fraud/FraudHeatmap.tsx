@@ -4,12 +4,15 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 // Cores baseadas na média de risco (avgScore)
+// Engine Scores: Low=5, Medium=10, High=20, Critical=40
 const getRiskColor = (score: number, count: number) => {
     if (count === 0) return 'bg-gray-100 dark:bg-gray-800';
-    if (score < 4) return 'bg-emerald-200 dark:bg-emerald-900'; // Baixo Risco
-    if (score < 7) return 'bg-yellow-200 dark:bg-yellow-900';   // Médio Risco
-    return 'bg-red-400 dark:bg-red-900';                        // Alto Risco
+    if (score < 6) return 'bg-emerald-200 dark:bg-emerald-900';  // Sem risco ou Baixo (5)
+    if (score < 15) return 'bg-yellow-200 dark:bg-yellow-900'; // Médio (10)
+    return 'bg-red-400 dark:bg-red-900';                         // Alto (20) ou Crítico (40)
 };
+
+
 
 const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -96,9 +99,9 @@ export const FraudHeatmap = () => {
             <div className="flex gap-4 mt-6 text-xs text-gray-500 items-center flex-wrap">
                 <span>Legenda (Score Médio):</span>
                 <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-gray-100 dark:bg-gray-800"></div> Sem eventos</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-emerald-200 dark:bg-emerald-900"></div> &lt; 4 (Baixo)</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-yellow-200 dark:bg-yellow-900"></div> 4-7 (Médio)</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-red-400 dark:bg-red-900"></div> &gt; 7 (Alto)</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-emerald-200 dark:bg-emerald-900"></div> &lt; 6 (Baixo)</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-yellow-200 dark:bg-yellow-900"></div> 6-15 (Médio)</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-red-400 dark:bg-red-900"></div> &gt; 15 (Alto)</div>
             </div>
         </Card>
     );

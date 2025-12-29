@@ -4,7 +4,7 @@ import { api } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ShieldAlert, Activity, ShieldCheck, RefreshCcw, Loader2, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { ShieldAlert, Activity, ShieldCheck, RefreshCcw, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { FraudHeatmap } from './FraudHeatmap'; // Assuming FraudHeatmap was default exported or named export. Step 2342 showed named export in import { FraudHeatmap }... actually wait. Step 2342 showed named export.
 import FraudNavigation from './components/FraudNavigation';
 
