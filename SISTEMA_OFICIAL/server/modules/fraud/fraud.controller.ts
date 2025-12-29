@@ -119,6 +119,9 @@ export const FraudController = {
             // Default status filter for active alerts
             const statusFilter = status && status !== 'all' ? status : 'pendente,em_analise,confirmado';
 
+            // DEBUG: Log date filter params
+            console.log('[FRAUD] Date filter params:', { startDate, endDate, status: statusFilter, driverId });
+
             const alerts = await FraudRepository.getFraudEvents({
                 limit,
                 offset,
@@ -149,8 +152,15 @@ export const FraudController = {
                 }
             }
 
-            // Get total count for pagination
-            const total = await FraudRepository.getEventsCount({ status: statusFilter, driverId });
+            // Get total count for pagination (now includes date filters)
+            const total = await FraudRepository.getEventsCount({
+                status: statusFilter,
+                driverId,
+                startDate,
+                endDate
+            });
+
+            console.log('[FRAUD] Query result:', { alertsCount: alerts.length, total, startDate, endDate });
 
             res.json({
                 data: alerts,

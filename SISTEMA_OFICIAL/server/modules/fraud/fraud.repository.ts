@@ -77,31 +77,34 @@ export const FraudRepository = {
         });
     },
 
-    async getEventsCount(options: { status?: string, driverId?: string } = {}) {
-        const { status, driverId } = options;
+    async getEventsCount(options: { status?: string, driverId?: string, startDate?: string, endDate?: string } = {}) {
+        const { status, driverId, startDate, endDate } = options;
 
-        // Build conditions array using Drizzle ORM operators
-        const conditions: ReturnType<typeof eq>[] = [];
+        // Build raw SQL for count with date filters
+        let whereClause = sql`1=1`;
 
         if (status && status !== 'all') {
             if (status.includes(',')) {
-                const statuses = status.split(',').map(s => s.trim());
-                conditions.push(inArray(fraudEvents.status, statuses));
+                const statuses = status.split(',').map(s => `'${s.trim()}'`).join(',');
+                whereClause = sql`${whereClause} AND status IN (${sql.raw(statuses)})`;
             } else {
-                conditions.push(eq(fraudEvents.status, status as FraudEventStatus));
+                whereClause = sql`${whereClause} AND status = ${status}`;
             }
         }
+
         if (driverId) {
-            conditions.push(eq(fraudEvents.driverId, driverId));
+            whereClause = sql`${whereClause} AND driver_id = ${driverId}`;
         }
 
-        // Use Drizzle's select().from().where() with count aggregation
-        const result = await db
-            .select({ count: sql<number>`count(*)` })
-            .from(fraudEvents)
-            .where(conditions.length > 0 ? and(...conditions) : undefined);
+        if (startDate) {
+            whereClause = sql`${whereClause} AND DATE(detected_at) >= ${startDate}::date`;
+        }
+        if (endDate) {
+            whereClause = sql`${whereClause} AND DATE(detected_at) <= ${endDate}::date`;
+        }
 
-        return Number(result[0]?.count || 0);
+        const result = await db.execute(sql`SELECT count(*) as count FROM fraud_events WHERE ${whereClause}`);
+        return Number(result.rows[0]?.count || 0);
     },
 
     async getPendingEventsCount() {
