@@ -121,32 +121,38 @@ const FraudEventDetail = ({ eventId: propEventId, onClose }: FraudEventDetailPro
                         </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <Button variant="outline" onClick={handlePrint} className="gap-2">
-                        <Printer className="h-4 w-4" /> Imprimir Relatório
+                <div className="flex flex-wrap items-center gap-2 justify-end">
+                    <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 hidden sm:flex">
+                        <Printer className="h-4 w-4" /> <span className="hidden lg:inline">Imprimir Relatório</span><span className="lg:hidden">Imprimir</span>
                     </Button>
+
                     {/* Status Actions */}
                     {event.status === 'pendente' && (
                         <>
                             <Button
                                 variant="destructive"
+                                size="sm"
                                 onClick={() => handleStatusChange('confirmado')}
                                 disabled={updateStatusMutation.isPending}
                             >
-                                <Ban className="h-4 w-4 mr-2" /> Confirmar Fraude
+                                <Ban className="h-4 w-4 mr-2" /> <span className="hidden sm:inline">Confirmar Fraude</span><span className="sm:hidden">Confirmar</span>
                             </Button>
                             <Button
                                 variant="outline"
+                                size="sm"
                                 className="border-green-600 text-green-700 hover:bg-green-50"
                                 onClick={() => handleStatusChange('descartado')}
                                 disabled={updateStatusMutation.isPending}
                             >
-                                <CheckCircle className="h-4 w-4 mr-2" /> Descartar (Falso Positivo)
+                                <CheckCircle className="h-4 w-4 mr-2" /> <span className="hidden sm:inline">Descartar (Falso Positivo)</span><span className="sm:hidden">Descartar</span>
                             </Button>
                         </>
                     )}
+
                     {isModal && onClose && (
-                        <Button variant="ghost" onClick={onClose}>Fechar</Button>
+                        <Button variant="secondary" size="sm" onClick={onClose} className="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold border-l-2 border-gray-300 pl-4">
+                            <XCircle className="h-4 w-4 mr-2" /> Fechar
+                        </Button>
                     )}
                 </div>
             </div>
