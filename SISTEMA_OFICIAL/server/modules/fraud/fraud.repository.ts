@@ -41,10 +41,10 @@ export const FraudRepository = {
         }
     },
 
-    async getFraudEvents(options: { limit?: number, offset?: number, status?: string, driverId?: string, vehicleId?: string } = {}) {
-        const { limit = 50, offset = 0, status, driverId, vehicleId } = options;
+    async getFraudEvents(options: { limit?: number, offset?: number, status?: string, driverId?: string, vehicleId?: string, date?: string, startDate?: string, endDate?: string } = {}) {
+        const { limit = 50, offset = 0, status, driverId, vehicleId, date, startDate, endDate } = options;
         return await db.query.fraudEvents.findMany({
-            where: (f, { eq, inArray, and }) => {
+            where: (f, { eq, inArray, and, sql }) => {
                 const conditions = [];
 
                 if (status && status !== 'all') {
@@ -57,9 +57,14 @@ export const FraudRepository = {
                 }
 
                 if (driverId) conditions.push(eq(f.driverId, driverId));
-                // Note: vehicleId filtering on metadata jsonb is complex in drizzle query builder type-safe way.
-                // We'll skip vehicleId for now or implement strict sql check if really needed.
-                // if (vehicleId) ... 
+
+                // Filter by metadata date (YYYY-MM-DD)
+                if (options.startDate) {
+                    conditions.push(sql`${f.metadata} ->> 'date' >= ${options.startDate}`);
+                }
+                if (options.endDate) {
+                    conditions.push(sql`${f.metadata} ->> 'date' <= ${options.endDate}`);
+                }
 
                 return conditions.length > 0 ? and(...conditions) : undefined;
             },

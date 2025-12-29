@@ -3,8 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useNavigate } from 'react-router-dom';
-import { ShieldAlert, Activity, ShieldCheck, RefreshCcw, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, Activity, ShieldCheck, RefreshCcw, Search, ChevronLeft, ChevronRight, Filter, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { FraudHeatmap } from './FraudHeatmap'; // Assuming FraudHeatmap was default exported or named export. Step 2342 showed named export in import { FraudHeatmap }... actually wait. Step 2342 showed named export.
 import FraudNavigation from './components/FraudNavigation';
 
@@ -44,6 +46,16 @@ const FraudDashboard = () => {
     const navigate = useNavigate();
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [currentTab, setCurrentTab] = useState('painel');
+    // Filters & Pagination State
+    const [alertPage, setAlertPage] = useState(1);
+    const [selectedDriver, setSelectedDriver] = useState<string>('all');
+    const [dateFilter, setDateFilter] = useState<{ start: string; end: string }>({ start: '', end: '' });
+
+    // Helper to get first day of current month for default view? 
+    // User requested "from first day of month to today".
+    // We can set default state on mount if needed, or leave empty for "Recent".
+    // Let's leave empty for now, user can filter.
+
     const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
 
     // Batch Reprocess States
@@ -120,13 +132,40 @@ const FraudDashboard = () => {
         }
     });
 
-    const { data: alerts } = useQuery({
-        queryKey: ['fraud-recent-alerts'],
+    // Fetch Alerts with Pagination & Filters
+    const { data: alertsResponse, isLoading: isLoadingAlerts } = useQuery({
+        queryKey: ['fraud-recent-alerts', alertPage, selectedDriver, dateFilter, reprocessStatus?.lastUpdate],
         queryFn: async () => {
-            const res = await api.get('/fraud/alerts');
-            return res.data;
-        }
+            const params = new URLSearchParams();
+            params.append('page', alertPage.toString());
+            params.append('limit', '30'); // Requested 30 per page
+            if (selectedDriver && selectedDriver !== 'all' && selectedDriver !== '') params.append('driverId', selectedDriver);
+            if (dateFilter.start) params.append('startDate', dateFilter.start);
+            if (dateFilter.end) params.append('endDate', dateFilter.end);
+
+            // Pass current status filter to backend
+            if (statusFilter && statusFilter !== 'all') {
+                params.append('status', statusFilter);
+            } else {
+                params.append('status', 'pendente,em_analise,confirmado');
+            }
+
+            const res = await api.get('/fraud/alerts', { params });
+            return res.data; // Now returns { data: [], meta: {} }
+        },
+        placeholderData: (previousData) => previousData
     });
+
+    const recentAlerts = alertsResponse?.data || [];
+    const meta = alertsResponse?.meta || { total: 0, totalPages: 1, page: 1 };
+
+    // Fetch Drivers for Filter (Optional - mock or fetch)
+    // We'll trust user input or use a simple list if available.
+    // For now, let's assume we can type the driver name or ID, OR use a simplified list from existing data?
+    // Let's use Input for Driver ID for now to avoid complexity of fetching full driver list
+    // OR fetch distinct drivers from alerts? No, that's circular.
+    // Let's use Input Text for "Filtrar Motorista" 
+
 
     const displayStats: FraudStats = stats || {
         riskScore: 0,
@@ -135,11 +174,8 @@ const FraudDashboard = () => {
         highRiskDrivers: 0
     };
 
-    const recentAlerts: FraudEvent[] = alerts || [];
-
-    const filteredAlerts = statusFilter === 'all'
-        ? recentAlerts
-        : recentAlerts.filter(a => a.status === statusFilter);
+    // Filtered Alerts are now handled by Backend via useEffect/Query on statusFilter change
+    const filteredAlerts = recentAlerts; // Direct assignment as backend already filtered
 
     const getStatusBadge = (status: string) => {
         const styles = {
@@ -237,6 +273,55 @@ const FraudDashboard = () => {
                         <FraudHeatmap />
                     </div>
 
+                    {/* Filters Section */}
+                    <Card className="p-6 mt-6 border-slate-800 bg-slate-950/50">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Filter className="w-4 h-4 text-emerald-500" />
+                            <h3 className="text-sm font-semibold text-gray-200">Filtros Avançados</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-muted-foreground">Motorista</label>
+                                <div className="relative">
+                                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Nome ou ID..."
+                                        value={selectedDriver === 'all' ? '' : selectedDriver}
+                                        onChange={(e) => {
+                                            setSelectedDriver(e.target.value);
+                                            setAlertPage(1); // Reset page on filter change
+                                        }}
+                                        className="pl-8 bg-slate-900/50 border-slate-800"
+                                    />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-muted-foreground">Data Inicial</label>
+                                <Input
+                                    type="date"
+                                    value={dateFilter.start}
+                                    onChange={e => {
+                                        setDateFilter(prev => ({ ...prev, start: e.target.value }));
+                                        setAlertPage(1);
+                                    }}
+                                    className="bg-slate-900/50 border-slate-800"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-muted-foreground">Data Final</label>
+                                <Input
+                                    type="date"
+                                    value={dateFilter.end}
+                                    onChange={e => {
+                                        setDateFilter(prev => ({ ...prev, end: e.target.value }));
+                                        setAlertPage(1);
+                                    }}
+                                    className="bg-slate-900/50 border-slate-800"
+                                />
+                            </div>
+                        </div>
+                    </Card>
+
                     {/* Recent Alerts List */}
                     <Card className="p-6 mt-6">
                         <div className="flex justify-between items-center mb-4">
@@ -245,13 +330,16 @@ const FraudDashboard = () => {
                                 {['all', 'pendente', 'em_analise', 'confirmado'].map(status => (
                                     <button
                                         key={status}
-                                        onClick={() => setStatusFilter(status)}
+                                        onClick={() => {
+                                            setStatusFilter(status);
+                                            setAlertPage(1);
+                                        }}
                                         className={`px-3 py-1 text-sm rounded-full transition-colors ${statusFilter === status
                                             ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
                                             : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
                                             }`}
                                     >
-                                        {status === 'all' ? 'Todos' : status.replace('_', ' ')}
+                                        {status === 'all' ? 'Ativos' : status.replace('_', ' ')}
                                     </button>
                                 ))}
                             </div>
