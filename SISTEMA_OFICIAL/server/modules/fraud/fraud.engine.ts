@@ -8,17 +8,34 @@
 import { FraudRuleHit, FraudScore, FraudSeverity, ShiftContext } from "./fraud.types.js";
 
 const THRESHOLDS = {
-    MIN_REVENUE_PER_KM: 2.0,     // User Rule 2
-    MAX_REVENUE_PER_KM: 3.10,    // User Rule 3
-    MIN_REVENUE_PER_HOUR: 20,    // User Rule 4
-    MAX_REVENUE_PER_HOUR: 70,    // User Rule 5
+    // Receita/KM - Base: R$ 2.20 média
+    MIN_REVENUE_PER_KM_HIGH: 1.98,       // 10% abaixo = HIGH
+    MIN_REVENUE_PER_KM_CRITICAL: 1.87,   // 15% abaixo = CRITICAL
+    MAX_REVENUE_PER_KM: 3.30,            // 50% acima = HIGH
+
+    // Receita/Hora
+    MIN_REVENUE_PER_HOUR: 20,            // MEDIUM
+    MAX_REVENUE_PER_HOUR: 70,            // HIGH
+
+    // Arrecadação/Turno (NEW v2)
+    MIN_REVENUE_PER_SHIFT: 200,          // < R$200 = MEDIUM
+    MAX_REVENUE_PER_SHIFT: 550,          // > R$550 = HIGH
+
+    // Produtividade
     MIN_RIDES_PER_HOUR: 0.3,
     MAX_RIDES_PER_HOUR: 8,
-    MIN_SHIFT_HOURS: 1 / 6,      // 10 min (User Rule 6)
-    MAX_SHIFT_HOURS: 14,         // User Rule 7
-    MAX_KM_GAP_NORMAL: 250,      // User Rule 10
-    DEVIATION_MULTIPLIER_HIGH: 1.5,      // User Rule 8
-    DEVIATION_MULTIPLIER_CRITICAL: 2.0,  // User Rule 9
+
+    // Duração Turno
+    MIN_SHIFT_HOURS: 1 / 6,              // 10 min = LOW
+    MAX_SHIFT_HOURS: 14,                 // > 14h = LOW (v2)
+
+    // Gap KM
+    MAX_KM_GAP_NORMAL: 250,              // > 250km = HIGH
+
+    // Baseline Deviation
+    DEVIATION_MULTIPLIER_HIGH: 1.5,      // >= 1.5x = HIGH
+    DEVIATION_MULTIPLIER_CRITICAL: 2.0,  // >= 2x = CRITICAL
+
     SCORE: {
         LOW: 5,
         MEDIUM: 10,
@@ -57,25 +74,36 @@ function ruleShiftKmAndRevenue(
 
     const revPerKm = revenueTotal / kmTotal;
 
-    // 2. Receita/KM Baixa (Rule 2)
-    if (revPerKm < THRESHOLDS.MIN_REVENUE_PER_KM) {
+    // 2/3. Receita/KM Baixa - Escalonamento por gravidade (v2)
+    if (revPerKm < THRESHOLDS.MIN_REVENUE_PER_KM_CRITICAL) {
+        // 15% abaixo da média = CRITICAL
         hits.push({
-            code: "RECEITA_KM_MUITO_BAIXA", // Keeping key for compatibility
+            code: "RECEITA_KM_CRITICA",
+            label: "Receita/km crítica",
+            description: `Receita por km 15%+ abaixo da média (R$ ${revPerKm.toFixed(2)}/km).`,
+            severity: "critical",
+            score: THRESHOLDS.SCORE.CRITICAL,
+            data: { revPerKm, threshold: THRESHOLDS.MIN_REVENUE_PER_KM_CRITICAL },
+        });
+    } else if (revPerKm < THRESHOLDS.MIN_REVENUE_PER_KM_HIGH) {
+        // 10% abaixo da média = HIGH
+        hits.push({
+            code: "RECEITA_KM_BAIXA",
             label: "Receita/km baixa",
-            description: `Receita por km abaixo do piso (R$ ${revPerKm.toFixed(2)}/km).`,
-            severity: "medium", // User Rule 2 Severity
-            score: THRESHOLDS.SCORE.MEDIUM,
-            data: { revPerKm, minThreshold: THRESHOLDS.MIN_REVENUE_PER_KM },
+            description: `Receita por km 10%+ abaixo da média (R$ ${revPerKm.toFixed(2)}/km).`,
+            severity: "high",
+            score: THRESHOLDS.SCORE.HIGH,
+            data: { revPerKm, threshold: THRESHOLDS.MIN_REVENUE_PER_KM_HIGH },
         });
     }
 
-    // 3. Receita/KM Alta (Rule 3)
+    // 4. Receita/KM Alta (50% acima)
     if (revPerKm > THRESHOLDS.MAX_REVENUE_PER_KM) {
         hits.push({
-            code: "RECEITA_KM_MUITO_ALTA",
-            label: "Receita/km alta demais",
-            description: `Receita por km acima do pico real (R$ ${revPerKm.toFixed(2)}/km).`,
-            severity: "high", // User Rule 3 Severity
+            code: "RECEITA_KM_ALTA",
+            label: "Receita/km alta",
+            description: `Receita por km 50%+ acima da média (R$ ${revPerKm.toFixed(2)}/km).`,
+            severity: "high",
             score: THRESHOLDS.SCORE.HIGH,
             data: { revPerKm, maxThreshold: THRESHOLDS.MAX_REVENUE_PER_KM },
         });
@@ -182,15 +210,51 @@ function ruleShiftDuration(
         });
     }
 
-    // 8. Turno Longo Demais (Rule 7)
+    // 10. Turno Longo Demais (> 14h = LOW, v2)
     if (durationHours > THRESHOLDS.MAX_SHIFT_HOURS) {
         hits.push({
             code: "TURNO_LONGO_DEMAIS",
-            label: "Turno longo demais",
-            description: `Duração suspeita: ${durationHours.toFixed(1)} horas.`,
-            severity: "medium", // User Rule 7 Severity
-            score: THRESHOLDS.SCORE.MEDIUM,
+            label: "Turno longo",
+            description: `Duração acima do padrão: ${durationHours.toFixed(1)} horas.`,
+            severity: "low", // Changed to LOW (v2)
+            score: THRESHOLDS.SCORE.LOW,
             data: { durationHours, maxThresholdHours: THRESHOLDS.MAX_SHIFT_HOURS },
+        });
+    }
+
+    return hits;
+}
+
+/**
+ * REGRA 7/8: Arrecadação Total do Turno (NEW v2)
+ * Detecta arrecadação muito baixa (<R$200) ou muito alta (>R$550).
+ */
+function ruleShiftRevenue(
+    revenueTotal: number
+): FraudRuleHit[] {
+    const hits: FraudRuleHit[] = [];
+
+    // 7. Baixa Arrecadação/Turno (< R$200 = MEDIUM)
+    if (revenueTotal > 0 && revenueTotal < THRESHOLDS.MIN_REVENUE_PER_SHIFT) {
+        hits.push({
+            code: "ARRECADACAO_TURNO_BAIXA",
+            label: "Arrecadação do turno baixa",
+            description: `Receita total abaixo do esperado (R$ ${revenueTotal.toFixed(2)}).`,
+            severity: "medium",
+            score: THRESHOLDS.SCORE.MEDIUM,
+            data: { revenueTotal, minThreshold: THRESHOLDS.MIN_REVENUE_PER_SHIFT },
+        });
+    }
+
+    // 8. Alta Arrecadação/Turno (> R$550 = HIGH)
+    if (revenueTotal > THRESHOLDS.MAX_REVENUE_PER_SHIFT) {
+        hits.push({
+            code: "ARRECADACAO_TURNO_ALTA",
+            label: "Arrecadação do turno alta",
+            description: `Receita total acima do padrão (R$ ${revenueTotal.toFixed(2)}).`,
+            severity: "high",
+            score: THRESHOLDS.SCORE.HIGH,
+            data: { revenueTotal, maxThreshold: THRESHOLDS.MAX_REVENUE_PER_SHIFT },
         });
     }
 
@@ -330,8 +394,9 @@ export function analyzeShiftRules(
         ...ruleShiftKmAndRevenue(kmTotal, totalBruto, ctx),
         ...ruleShiftRevenueAndRidesPerHour(totalBruto, totalCorridas, durationHours, ctx),
         ...ruleShiftDuration(durationHours, totalCorridas),
+        ...ruleShiftRevenue(totalBruto), // NEW v2: Arrecadação por turno
         ...ruleKmBetweenShifts(kmStart, ctx.prevShiftKmEnd),
-        ...ruleRepeatedRideValues(rideValues) // NEW: Check for repeated values
+        ...ruleRepeatedRideValues(rideValues)
     );
 
     return computeScore(ruleHits);

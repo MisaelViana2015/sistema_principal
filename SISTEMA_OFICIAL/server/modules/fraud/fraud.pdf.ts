@@ -28,20 +28,22 @@ interface ShiftData {
     auditMetrics?: AuditMetrics | null;
 }
 
-// 12. ANEXO EXPLICATIVO (Hardcoded to avoid engine modification)
-// 12. ANEXO EXPLICATIVO (Hardcoded to avoid engine modification)
+// ANEXO EXPLICATIVO - Regras v2 (28/12/2025)
 const OFFICIAL_RULES_LIST = [
-    { code: "KM_ZERO_COM_RECEITA", name: "REGRA 01 — KM ZERO COM RECEITA", desc: "Existe receita registrada com km total menor ou igual a zero. Não é possível gerar receita sem deslocamento." },
-    { code: "RECEITA_KM_MUITO_BAIXA", name: "REGRA 02 — BAIXA RECEITA POR KM", desc: "Receita por km abaixo do piso operacional (R$ 2,00/km). Indica ineficiência ou subdeclaração." },
-    { code: "RECEITA_KM_MUITO_ALTA", name: "REGRA 03 — ALTA RECEITA POR KM", desc: "Receita por km acima do pico real (R$ 3,10/km). Indica possível inconsistência de km." },
-    { code: "RECEITA_HORA_MUITO_BAIXA", name: "REGRA 04 — BAIXA RECEITA POR HORA", desc: "Receita por hora abaixo de R$ 20,00/h. Turno com produtividade suspeita." },
-    { code: "RECEITA_HORA_MUITO_ALTA", name: "REGRA 05 — ALTA RECEITA POR HORA", desc: "Receita por hora acima de R$ 70,00/h. Pode indicar erro de duração." },
-    { code: "TURNO_CURTO_DEMAIS", name: "REGRA 06 — TURNO MUITO CURTO", desc: "Duração inferior a 10 minutos. Turno técnico irrelevante para análise padrão." },
-    { code: "TURNO_LONGO_DEMAIS", name: "REGRA 07 — TURNO MUITO LONGO", desc: "Duração superior a 14 horas. Comportamento fora do padrão típico." },
-    { code: "RECEITA_KM_DESVIO_ALTO", name: "REGRA 08 — DESVIO DE BASELINE ALTO", desc: "Receita/KM variou +/- 50% em relação à média pessoal." },
-    { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 09 — DESVIO DE BASELINE CRÍTICO", desc: "Receita/KM variou +/- 100% (2x) em relação à média pessoal." },
-    { code: "KM_SALTO_ABSURDO", name: "REGRA 10 — GAP DE KM ANÔMALO", desc: "Diferença entre turnos maior que 250 km. Indica uso não registrado." },
-    { code: "KM_RETROCEDEU", name: "REGRA ERROR — KM RETROCEDEU", desc: "O km inicial do turno atual é menor que o km final do turno anterior." },
+    { code: "KM_ZERO_COM_RECEITA", name: "REGRA 01 — KM ZERO COM RECEITA", desc: "Receita registrada com km zero. Não é possível gerar receita sem deslocamento." },
+    { code: "RECEITA_KM_BAIXA", name: "REGRA 02 — RECEITA/KM BAIXA (10%)", desc: "Receita/km 10% abaixo da média (< R$ 1,98/km)." },
+    { code: "RECEITA_KM_CRITICA", name: "REGRA 03 — RECEITA/KM CRÍTICA (15%)", desc: "Receita/km 15% abaixo da média (< R$ 1,87/km). Severidade CRÍTICA." },
+    { code: "RECEITA_KM_ALTA", name: "REGRA 04 — RECEITA/KM ALTA", desc: "Receita/km 50% acima da média (> R$ 3,30/km)." },
+    { code: "RECEITA_HORA_MUITO_BAIXA", name: "REGRA 05 — RECEITA/HORA BAIXA", desc: "Receita por hora abaixo de R$ 20/h." },
+    { code: "RECEITA_HORA_MUITO_ALTA", name: "REGRA 06 — RECEITA/HORA ALTA", desc: "Receita por hora acima de R$ 70/h." },
+    { code: "ARRECADACAO_TURNO_BAIXA", name: "REGRA 07 — ARRECADAÇÃO BAIXA", desc: "Arrecadação total do turno abaixo de R$ 200." },
+    { code: "ARRECADACAO_TURNO_ALTA", name: "REGRA 08 — ARRECADAÇÃO ALTA", desc: "Arrecadação total do turno acima de R$ 550." },
+    { code: "TURNO_CURTO_DEMAIS", name: "REGRA 09 — TURNO CURTO", desc: "Duração inferior a 10 minutos." },
+    { code: "TURNO_LONGO_DEMAIS", name: "REGRA 10 — TURNO LONGO", desc: "Duração superior a 14 horas (severidade baixa)." },
+    { code: "RECEITA_KM_DESVIO_ALTO", name: "REGRA 11 — DESVIO BASELINE ALTO", desc: "Receita/KM variou ≥1.5x em relação à média pessoal." },
+    { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 12 — DESVIO BASELINE CRÍTICO", desc: "Receita/KM variou ≥2x em relação à média pessoal." },
+    { code: "GAP_KM_ANOMALO", name: "REGRA 13 — GAP DE KM ANÔMALO", desc: "Diferença entre turnos maior que 250 km." },
+    { code: "KM_RETROCEDEU", name: "REGRA ERROR — KM RETROCEDEU", desc: "Km inicial menor que km final do turno anterior." },
 ];
 
 // Helper to determine severity level for primary rule sort
@@ -90,25 +92,14 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
         doc.font('Helvetica').text(`Status Atual: `, { continued: true }).font('Helvetica-Bold').text(`${(event.status || 'pendente').toUpperCase()}`);
         doc.moveDown();
 
-        doc.font('Helvetica-Oblique').fontSize(10).text(
-            "Este evento foi identificado automaticamente pelo sistema antifraude do Rota Verde devido à detecção de comportamentos operacionais anômalos, com base em regras determinísticas e critérios objetivos previamente definidos.",
-            { align: 'justify' }
-        );
-        doc.moveDown(0.5);
 
-        // Disclaimer Jurídico (CRÍTICO)
-        doc.font('Helvetica-Bold').fillColor('#b91c1c').text(
-            "⚠️  A detecção de anomalia NÃO implica confirmação de fraude. O alerta indica exclusivamente a necessidade de análise humana.",
-            { align: 'justify' }
-        );
-        doc.fillColor('black');
         doc.moveDown();
 
-        // --- DEFINIÇÃO DE TURNO NORMAL (CRÍTICO) ---
-        doc.font('Helvetica-Bold').fontSize(12).text("Critérios de Normalidade Operacional");
+        // --- DEFINIÇÃO DE TURNO NORMAL (v2 28/12) ---
+        doc.font('Helvetica-Bold').fontSize(12).text("Critérios de Normalidade Operacional (v2)");
         doc.moveDown(0.5);
         doc.font('Helvetica').fontSize(10).text(
-            "Um turno é considerado operacionalmente normal quando apresenta evolução contínua de quilometragem, duração compatível (10min a 14h), distribuição variada de corridas e indicadores financeiros dentro das faixas esperadas (Receita/KM entre R$ 3,00 e R$ 20,00).",
+            "Um turno é considerado normal quando apresenta: km contínuo, duração entre 10min e 14h, receita/km entre R$ 1,87 e R$ 3,30, receita/hora entre R$ 20 e R$ 70, e arrecadação total entre R$ 200 e R$ 550.",
             { align: 'justify' }
         );
         doc.moveDown();

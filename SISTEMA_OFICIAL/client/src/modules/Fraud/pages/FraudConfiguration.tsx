@@ -5,19 +5,25 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Settings, AlertTriangle, Shield, Activity, Clock, TrendingUp, Gauge, Target, ArrowLeft, ShieldCheck } from 'lucide-react';
 
-// These thresholds are read-only and match the backend fraud.engine.ts
+// These thresholds are read-only and match the backend fraud.engine.ts (v2)
 const THRESHOLDS = {
-    MIN_REVENUE_PER_KM: 3,
-    MAX_REVENUE_PER_KM: 20,
-    MIN_REVENUE_PER_HOUR: 20,
-    MAX_REVENUE_PER_HOUR: 150,
-    MIN_RIDES_PER_HOUR: 0.3,
-    MAX_RIDES_PER_HOUR: 8,
-    MIN_SHIFT_HOURS: 1 / 6,
-    MAX_SHIFT_HOURS: 14,
+    // Receita/KM - Base: R$ 2.20 média
+    MIN_REVENUE_PER_KM_HIGH: 1.98,       // 10% abaixo = HIGH
+    MIN_REVENUE_PER_KM_CRITICAL: 1.87,   // 15% abaixo = CRITICAL
+    MAX_REVENUE_PER_KM: 3.30,            // 50% acima = HIGH
+    // Receita/Hora
+    MIN_REVENUE_PER_HOUR: 20,            // MEDIUM
+    MAX_REVENUE_PER_HOUR: 70,            // HIGH
+    // Arrecadação/Turno (v2)
+    MIN_REVENUE_PER_SHIFT: 200,          // MEDIUM
+    MAX_REVENUE_PER_SHIFT: 550,          // HIGH
+    // Duração
+    MIN_SHIFT_HOURS: 1 / 6,              // 10 min = LOW
+    MAX_SHIFT_HOURS: 14,                 // > 14h = LOW (v2)
+    // Gap KM e Baseline
     MAX_KM_GAP_NORMAL: 250,
-    DEVIATION_MULTIPLIER_HIGH: 2.5,
-    DEVIATION_MULTIPLIER_CRITICAL: 4,
+    DEVIATION_MULTIPLIER_HIGH: 1.5,
+    DEVIATION_MULTIPLIER_CRITICAL: 2,
     SCORE: {
         LOW: 5,
         MEDIUM: 10,
@@ -32,15 +38,18 @@ const THRESHOLDS = {
 
 const RULES_INFO = [
     { code: 'KM_ZERO_COM_RECEITA', label: 'Receita com km zero', severity: 'critical', description: 'Turno com receita mas km total <= 0' },
-    { code: 'BAIXA_RECEITA_POR_KM', label: 'Baixa receita por km', severity: 'medium', description: `Receita/km < R$ ${THRESHOLDS.MIN_REVENUE_PER_KM}` },
-    { code: 'ALTA_RECEITA_POR_KM', label: 'Alta receita por km', severity: 'high', description: `Receita/km > R$ ${THRESHOLDS.MAX_REVENUE_PER_KM}` },
-    { code: 'BAIXA_RECEITA_POR_HORA', label: 'Baixa receita por hora', severity: 'medium', description: `Receita/hora < R$ ${THRESHOLDS.MIN_REVENUE_PER_HOUR}` },
-    { code: 'ALTA_RECEITA_POR_HORA', label: 'Alta receita por hora', severity: 'high', description: `Receita/hora > R$ ${THRESHOLDS.MAX_REVENUE_PER_HOUR}` },
-    { code: 'TURNO_MUITO_CURTO', label: 'Turno muito curto', severity: 'low', description: `Duração < ${(THRESHOLDS.MIN_SHIFT_HOURS * 60).toFixed(0)} min` },
-    { code: 'TURNO_MUITO_LONGO', label: 'Turno muito longo', severity: 'medium', description: `Duração > ${THRESHOLDS.MAX_SHIFT_HOURS} horas` },
-    { code: 'DESVIO_BASELINE_ALTO', label: 'Desvio alto do baseline', severity: 'high', description: `> ${THRESHOLDS.DEVIATION_MULTIPLIER_HIGH}x do padrão histórico` },
-    { code: 'DESVIO_BASELINE_CRITICO', label: 'Desvio crítico do baseline', severity: 'critical', description: `> ${THRESHOLDS.DEVIATION_MULTIPLIER_CRITICAL}x do padrão histórico` },
-    { code: 'GAP_KM_ANOMALO', label: 'Gap de km anômalo', severity: 'high', description: `Diferença entre turnos > ${THRESHOLDS.MAX_KM_GAP_NORMAL} km` },
+    { code: 'RECEITA_KM_BAIXA', label: 'Receita/km baixa (10%)', severity: 'high', description: `Receita/km < R$ ${THRESHOLDS.MIN_REVENUE_PER_KM_HIGH}` },
+    { code: 'RECEITA_KM_CRITICA', label: 'Receita/km crítica (15%)', severity: 'critical', description: `Receita/km < R$ ${THRESHOLDS.MIN_REVENUE_PER_KM_CRITICAL}` },
+    { code: 'RECEITA_KM_ALTA', label: 'Receita/km alta', severity: 'high', description: `Receita/km > R$ ${THRESHOLDS.MAX_REVENUE_PER_KM}` },
+    { code: 'RECEITA_HORA_MUITO_BAIXA', label: 'Receita/hora baixa', severity: 'medium', description: `Receita/hora < R$ ${THRESHOLDS.MIN_REVENUE_PER_HOUR}` },
+    { code: 'RECEITA_HORA_MUITO_ALTA', label: 'Receita/hora alta', severity: 'high', description: `Receita/hora > R$ ${THRESHOLDS.MAX_REVENUE_PER_HOUR}` },
+    { code: 'ARRECADACAO_TURNO_BAIXA', label: 'Arrecadação baixa', severity: 'medium', description: `Total < R$ ${THRESHOLDS.MIN_REVENUE_PER_SHIFT}` },
+    { code: 'ARRECADACAO_TURNO_ALTA', label: 'Arrecadação alta', severity: 'high', description: `Total > R$ ${THRESHOLDS.MAX_REVENUE_PER_SHIFT}` },
+    { code: 'TURNO_CURTO_DEMAIS', label: 'Turno muito curto', severity: 'low', description: `Duração < ${(THRESHOLDS.MIN_SHIFT_HOURS * 60).toFixed(0)} min` },
+    { code: 'TURNO_LONGO_DEMAIS', label: 'Turno longo', severity: 'low', description: `Duração > ${THRESHOLDS.MAX_SHIFT_HOURS} horas` },
+    { code: 'RECEITA_KM_DESVIO_ALTO', label: 'Desvio alto do baseline', severity: 'high', description: `>= ${THRESHOLDS.DEVIATION_MULTIPLIER_HIGH}x do padrão` },
+    { code: 'RECEITA_KM_DESVIO_CRITICO', label: 'Desvio crítico do baseline', severity: 'critical', description: `>= ${THRESHOLDS.DEVIATION_MULTIPLIER_CRITICAL}x do padrão` },
+    { code: 'GAP_KM_ANOMALO', label: 'Gap de km anômalo', severity: 'high', description: `Diferença > ${THRESHOLDS.MAX_KM_GAP_NORMAL} km` },
 ];
 
 const getSeverityBadge = (severity: string) => {
@@ -77,8 +86,12 @@ const FraudConfiguration = () => {
                     <CardContent className="space-y-3">
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div className="p-3 bg-muted rounded-lg">
-                                <p className="text-muted-foreground">Receita/km mínima</p>
-                                <p className="text-lg font-bold">R$ {THRESHOLDS.MIN_REVENUE_PER_KM}</p>
+                                <p className="text-muted-foreground">Receita/km (10% abaixo)</p>
+                                <p className="text-lg font-bold">R$ {THRESHOLDS.MIN_REVENUE_PER_KM_HIGH}</p>
+                            </div>
+                            <div className="p-3 bg-muted rounded-lg">
+                                <p className="text-muted-foreground">Receita/km (15% abaixo)</p>
+                                <p className="text-lg font-bold text-destructive">R$ {THRESHOLDS.MIN_REVENUE_PER_KM_CRITICAL}</p>
                             </div>
                             <div className="p-3 bg-muted rounded-lg">
                                 <p className="text-muted-foreground">Receita/km máxima</p>
@@ -93,6 +106,14 @@ const FraudConfiguration = () => {
                                 <p className="text-lg font-bold">R$ {THRESHOLDS.MAX_REVENUE_PER_HOUR}</p>
                             </div>
                             <div className="p-3 bg-muted rounded-lg">
+                                <p className="text-muted-foreground">Arrecadação/turno mínima</p>
+                                <p className="text-lg font-bold">R$ {THRESHOLDS.MIN_REVENUE_PER_SHIFT}</p>
+                            </div>
+                            <div className="p-3 bg-muted rounded-lg">
+                                <p className="text-muted-foreground">Arrecadação/turno máxima</p>
+                                <p className="text-lg font-bold">R$ {THRESHOLDS.MAX_REVENUE_PER_SHIFT}</p>
+                            </div>
+                            <div className="p-3 bg-muted rounded-lg">
                                 <p className="text-muted-foreground">Turno mínimo</p>
                                 <p className="text-lg font-bold">{(THRESHOLDS.MIN_SHIFT_HOURS * 60).toFixed(0)} min</p>
                             </div>
@@ -101,7 +122,7 @@ const FraudConfiguration = () => {
                                 <p className="text-lg font-bold">{THRESHOLDS.MAX_SHIFT_HOURS} horas</p>
                             </div>
                             <div className="p-3 bg-muted rounded-lg">
-                                <p className="text-muted-foreground">Gap km normal</p>
+                                <p className="text-muted-foreground">Gap km anômalo</p>
                                 <p className="text-lg font-bold">{THRESHOLDS.MAX_KM_GAP_NORMAL} km</p>
                             </div>
                             <div className="p-3 bg-muted rounded-lg">
