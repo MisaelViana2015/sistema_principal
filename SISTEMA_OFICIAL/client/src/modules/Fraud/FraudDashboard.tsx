@@ -4,7 +4,7 @@ import { api } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ShieldAlert, Activity, ShieldCheck } from 'lucide-react';
+import { ShieldAlert, Activity, ShieldCheck, RefreshCcw, Loader2, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { FraudHeatmap } from './FraudHeatmap'; // Assuming FraudHeatmap was default exported or named export. Step 2342 showed named export in import { FraudHeatmap }... actually wait. Step 2342 showed named export.
 import FraudNavigation from './components/FraudNavigation';
 
@@ -36,7 +36,7 @@ interface FraudEvent {
     driver?: { id: string; name: string; };
 }
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import FraudEventDetail from './pages/FraudEventDetail';
 
 const FraudDashboard = () => {
@@ -44,6 +44,72 @@ const FraudDashboard = () => {
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [currentTab, setCurrentTab] = useState('painel');
     const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+
+    // Batch Reprocess States
+    const [reprocessModalOpen, setReprocessModalOpen] = useState(false);
+    const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+    const [previewData, setPreviewData] = useState<any>(null);
+    const [reprocessStatus, setReprocessStatus] = useState<any>(null);
+
+    // Polling for status
+    React.useEffect(() => {
+        let interval: NodeJS.Timeout;
+
+        const checkStatus = async () => {
+            try {
+                const res = await api.get('/fraud/reprocess-status');
+                const status = res.data;
+                setReprocessStatus(status);
+
+                if (!status.isRunning && status.processed > 0 && reprocessModalOpen) {
+                    // Completed
+                }
+            } catch (err) {
+                console.error("Error checking batch status", err);
+            }
+        };
+
+        if (reprocessModalOpen) {
+            checkStatus(); // Initial check
+            interval = setInterval(checkStatus, 2000);
+        }
+
+        return () => clearInterval(interval);
+    }, [reprocessModalOpen]);
+
+    const handleOpenReprocess = async () => {
+        setReprocessModalOpen(true);
+        setIsLoadingPreview(true);
+        setPreviewData(null);
+        try {
+            // Check status first
+            const statusRes = await api.get('/fraud/reprocess-status');
+            if (statusRes.data.isRunning) {
+                setReprocessStatus(statusRes.data);
+                setIsLoadingPreview(false);
+                return;
+            }
+
+            // If not running, get preview
+            const previewRes = await api.get('/fraud/reprocess-preview');
+            setPreviewData(previewRes.data);
+            setReprocessStatus(statusRes.data); // Reset status display
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsLoadingPreview(false);
+        }
+    };
+
+    const handleConfirmReprocess = async () => {
+        try {
+            await api.post('/fraud/reprocess-all');
+            // Status update will be caught by polling
+            setPreviewData(null); // Switch to status view
+        } catch (err) {
+            alert('Erro ao iniciar reprocessamento. Verifique se já não há um em andamento.');
+        }
+    };
 
     const { data: stats } = useQuery({
         queryKey: ['fraud-stats'],
@@ -102,6 +168,10 @@ const FraudDashboard = () => {
                     <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Painel de Detecção de Fraude</h2>
                     <p className="text-muted-foreground mt-1">Monitoramento em tempo real de anomalias financeiras e operacionais.</p>
                 </div>
+                <Button variant="outline" onClick={handleOpenReprocess} className="gap-2">
+                    <RefreshCcw className="w-4 h-4" />
+                    Reprocessar Histórico
+                </Button>
             </div>
 
             {/* Navigation Tabs - Controlled by State */}
@@ -241,6 +311,88 @@ const FraudDashboard = () => {
                             onClose={() => setSelectedAlertId(null)}
                         />
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* MODAL REPROCESSAMENTO BATCH */}
+            <Dialog open={reprocessModalOpen} onOpenChange={setReprocessModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Reprocessamento de Histórico</DialogTitle>
+                        <DialogDescription>
+                            Reanalise todos os turnos finalizados com as regras atuais de fraude.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="py-4">
+                        {isLoadingPreview ? (
+                            <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                                <p className="text-sm text-muted-foreground">Calculando escopo...</p>
+                            </div>
+                        ) : reprocessStatus?.isRunning ? (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">Progresso:</span>
+                                    <span className="font-bold">{reprocessStatus.processed} / {reprocessStatus.total}</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 overflow-hidden">
+                                    <div
+                                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, (reprocessStatus.processed / (reprocessStatus.total || 1)) * 100)}%` }}
+                                    ></div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 text-xs mt-2">
+                                    <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded text-red-600">
+                                        Erros: {reprocessStatus.errors}
+                                    </div>
+                                    <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded text-blue-600 text-right">
+                                        Tempo: {Math.round((Date.now() - (reprocessStatus.startTime || Date.now())) / 1000)}s
+                                    </div>
+                                </div>
+                                <p className="text-xs text-center text-muted-foreground animate-pulse">
+                                    Processando em background. Você pode fechar esta janela.
+                                </p>
+                            </div>
+                        ) : previewData ? (
+                            <div className="space-y-4">
+                                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-900">
+                                    <div className="flex items-start gap-3">
+                                        <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                                        <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                                            <p className="font-bold mb-1">Atenção</p>
+                                            <p>Esta ação irá gerar novas versões de eventos para {previewData.totalShifts} turnos.</p>
+                                            <p className="mt-1">Período: {previewData.dateRange}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-sm text-center text-muted-foreground">
+                                    Tempo estimado: <strong>{previewData.estimatedTime}</strong>
+                                </div>
+                            </div>
+                        ) : reprocessStatus?.duration ? (
+                            <div className="text-center space-y-4 py-4">
+                                <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
+                                <h3 className="text-lg font-bold text-green-600">Concluído!</h3>
+                                <p className="text-sm">
+                                    Processados: {reprocessStatus.processed} | Erros: {reprocessStatus.errors}
+                                    <br />
+                                    Duração: {reprocessStatus.duration}
+                                </p>
+                            </div>
+                        ) : null}
+                    </div>
+
+                    <DialogFooter>
+                        {!reprocessStatus?.isRunning && previewData && (
+                            <Button onClick={handleConfirmReprocess} className="w-full sm:w-auto">
+                                Confirmar e Processar
+                            </Button>
+                        )}
+                        <Button variant="outline" onClick={() => setReprocessModalOpen(false)} className="w-full sm:w-auto">
+                            Fechar
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
