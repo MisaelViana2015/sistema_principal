@@ -32,6 +32,7 @@ interface FraudEvent {
     driverId: string;
     shiftId: string;
     details: any;
+    metadata?: { date?: string };
     rules: { ruleId: string; label: string; score: number }[];
     driver?: { id: string; name: string; };
 }
@@ -273,7 +274,7 @@ const FraudDashboard = () => {
                                                     {getStatusBadge(alert.status)}
                                                 </div>
                                                 <p className="text-sm text-muted-foreground mt-1">
-                                                    Score: {alert.riskScore} • {new Date(alert.detectedAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+                                                    Score: {alert.riskScore} • {new Date((alert.metadata?.date || alert.details?.date || alert.detectedAt)).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground mt-1">
                                                     Turno: {alert.shiftId?.slice(0, 8)}... | Motorista: <strong>{alert.driver?.name || alert.driverId}</strong>

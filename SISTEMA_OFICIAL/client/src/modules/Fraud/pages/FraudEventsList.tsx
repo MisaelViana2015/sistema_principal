@@ -18,6 +18,8 @@ interface FraudEvent {
     shiftId: string;
     driverId: string;
     rules: { label: string }[];
+    metadata?: { date?: string };
+    details?: { date?: string }; // Legacy support if needed
     driver?: { id: string; name: string; };
 }
 
@@ -143,7 +145,7 @@ const FraudEventsList: React.FC<FraudEventsListProps> = ({ onSelectEvent }) => {
                                     eventsList.map((event: FraudEvent) => (
                                         <tr key={event.id} className="border-t hover:bg-muted/50 transition-colors">
                                             <td className="p-3 whitespace-nowrap">
-                                                {new Date(event.detectedAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+                                                {new Date((event.metadata?.date || event.details?.date || event.detectedAt)).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                                             </td>
                                             <td className="p-3">
                                                 <div className="flex items-center gap-2">
