@@ -302,14 +302,14 @@ const FraudDashboard = () => {
                     </div>
 
                     {/* Filters Section - Date Range Only */}
-                    <Card className="p-6 mt-6 border-slate-800 bg-slate-950/50">
-                        <div className="flex items-center gap-2 mb-4">
+                    <Card className="p-4 mt-6 border-slate-700 bg-slate-900/60">
+                        <div className="flex items-center gap-2 mb-3">
                             <Filter className="w-4 h-4 text-emerald-500" />
                             <h3 className="text-sm font-semibold text-gray-200">Filtros de Data</h3>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-muted-foreground">Data Inicial</label>
+                        <div className="flex flex-wrap gap-4 items-end">
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-gray-400">Data Inicial</label>
                                 <Input
                                     type="date"
                                     value={dateFilter.start}
@@ -317,11 +317,11 @@ const FraudDashboard = () => {
                                         setDateFilter(prev => ({ ...prev, start: e.target.value }));
                                         setAlertPage(1);
                                     }}
-                                    className="bg-slate-900/50 border-slate-800"
+                                    className="w-[160px] h-9 bg-slate-800 border-slate-600 text-white placeholder:text-gray-500 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-100"
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-muted-foreground">Data Final</label>
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-gray-400">Data Final</label>
                                 <Input
                                     type="date"
                                     value={dateFilter.end}
@@ -329,9 +329,22 @@ const FraudDashboard = () => {
                                         setDateFilter(prev => ({ ...prev, end: e.target.value }));
                                         setAlertPage(1);
                                     }}
-                                    className="bg-slate-900/50 border-slate-800"
+                                    className="w-[160px] h-9 bg-slate-800 border-slate-600 text-white placeholder:text-gray-500 [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:brightness-100"
                                 />
                             </div>
+                            {(dateFilter.start || dateFilter.end) && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        setDateFilter({ start: '', end: '' });
+                                        setAlertPage(1);
+                                    }}
+                                    className="text-gray-400 hover:text-white h-9"
+                                >
+                                    Limpar
+                                </Button>
+                            )}
                         </div>
                     </Card>
 

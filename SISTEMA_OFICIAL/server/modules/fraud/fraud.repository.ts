@@ -58,12 +58,12 @@ export const FraudRepository = {
 
                 if (driverId) conditions.push(eq(f.driverId, driverId));
 
-                // Filter by metadata date (YYYY-MM-DD) with fallback to detectedAt for legacy events
+                // Filter by date - use detected_at directly with proper date casting
                 if (startDate) {
-                    conditions.push(sql`COALESCE(${f.metadata} ->> 'date', DATE(${f.detectedAt})::TEXT) >= ${startDate}`);
+                    conditions.push(sql`DATE(${f.detectedAt}) >= ${startDate}::date`);
                 }
                 if (endDate) {
-                    conditions.push(sql`COALESCE(${f.metadata} ->> 'date', DATE(${f.detectedAt})::TEXT) <= ${endDate}`);
+                    conditions.push(sql`DATE(${f.detectedAt}) <= ${endDate}::date`);
                 }
 
                 return conditions.length > 0 ? and(...conditions) : undefined;
