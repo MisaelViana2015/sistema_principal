@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import logoRotaVerde from "@/assets/logo-rota-verde.png";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { SYSTEM_VERSION } from "../../../../shared/version"; // Import Version
 
 interface HeaderProps {
     userName?: string;
@@ -26,6 +27,7 @@ const HeaderNew = ({
 }: HeaderProps) => {
     const { user, logout } = useAuth();
     const [theme, setTheme] = useState("dark");
+    const [currentTime, setCurrentTime] = useState(new Date()); // Clock State
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -39,6 +41,10 @@ const HeaderNew = ({
         } else {
             setTheme("light");
         }
+
+        // Timer Interval
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
     }, []);
 
     const toggleTheme = () => {
@@ -72,7 +78,9 @@ const HeaderNew = ({
                     />
                     <div className="min-w-0">
                         <span className="font-display text-lg font-bold whitespace-nowrap">ROTA VERDE</span>
-                        <p className="text-xs text-muted-foreground hidden sm:block">Sistema de Gestão</p>
+                        <p className="text-[10px] text-muted-foreground block leading-tight">
+                            v{SYSTEM_VERSION} • Sistema de Gestão
+                        </p>
                     </div>
                 </div>
 
@@ -109,13 +117,18 @@ const HeaderNew = ({
                 <div className="flex items-center gap-3">
                     {/* User */}
                     <div className="flex items-center gap-2">
-                        <div className="text-right hidden sm:block">
-                            <span className="text-sm font-medium text-foreground block">{displayUserName}</span>
-                            <span className={`text-xs font-semibold ${isUserAdmin
+                        {/* Changed to block (visible on mobile) */}
+                        <div className="text-right block">
+                            <span className="text-sm font-medium text-foreground block md:inline">{displayUserName}</span>
+                            <span className={`text-xs font-semibold block ${isUserAdmin
                                 ? 'text-purple-500 dark:text-purple-400'
                                 : 'text-blue-500 dark:text-blue-400'
                                 }`}>
                                 {isUserAdmin ? 'Administrador' : 'Motorista'}
+                            </span>
+                            {/* Date/Time Display */}
+                            <span className="text-[10px] text-muted-foreground block leading-tight mt-0.5">
+                                {currentTime.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                             </span>
                         </div>
                     </div>
