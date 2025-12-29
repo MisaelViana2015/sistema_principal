@@ -159,12 +159,16 @@ const FraudDashboard = () => {
     const recentAlerts = alertsResponse?.data || [];
     const meta = alertsResponse?.meta || { total: 0, totalPages: 1, page: 1 };
 
-    // Fetch Drivers for Filter (Optional - mock or fetch)
-    // We'll trust user input or use a simple list if available.
-    // For now, let's assume we can type the driver name or ID, OR use a simplified list from existing data?
-    // Let's use Input for Driver ID for now to avoid complexity of fetching full driver list
-    // OR fetch distinct drivers from alerts? No, that's circular.
-    // Let's use Input Text for "Filtrar Motorista" 
+    // Fetch Drivers for Select Filter
+    const { data: driversData } = useQuery({
+        queryKey: ['drivers-list'],
+        queryFn: async () => {
+            const res = await api.get('/drivers');
+            return res.data;
+        },
+        staleTime: 5 * 60 * 1000 // Cache for 5 min
+    });
+    const driversList = driversData || [];
 
 
     const displayStats: FraudStats = stats || {
@@ -282,18 +286,25 @@ const FraudDashboard = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-muted-foreground">Motorista</label>
-                                <div className="relative">
-                                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Nome ou ID..."
-                                        value={selectedDriver === 'all' ? '' : selectedDriver}
-                                        onChange={(e) => {
-                                            setSelectedDriver(e.target.value);
-                                            setAlertPage(1); // Reset page on filter change
-                                        }}
-                                        className="pl-8 bg-slate-900/50 border-slate-800"
-                                    />
-                                </div>
+                                <Select
+                                    value={selectedDriver}
+                                    onValueChange={(val) => {
+                                        setSelectedDriver(val);
+                                        setAlertPage(1);
+                                    }}
+                                >
+                                    <SelectTrigger className="bg-slate-900/50 border-slate-800">
+                                        <SelectValue placeholder="Todos os Motoristas" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">Todos os Motoristas</SelectItem>
+                                        {driversList.map((driver: any) => (
+                                            <SelectItem key={driver.id} value={driver.id}>
+                                                {driver.nome || driver.name || driver.id}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-muted-foreground">Data Inicial</label>

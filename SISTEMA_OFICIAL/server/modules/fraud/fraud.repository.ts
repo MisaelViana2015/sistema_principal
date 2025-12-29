@@ -58,12 +58,12 @@ export const FraudRepository = {
 
                 if (driverId) conditions.push(eq(f.driverId, driverId));
 
-                // Filter by metadata date (YYYY-MM-DD)
-                if (options.startDate) {
-                    conditions.push(sql`${f.metadata} ->> 'date' >= ${options.startDate}`);
+                // Filter by metadata date (YYYY-MM-DD) with fallback to detectedAt for legacy events
+                if (startDate) {
+                    conditions.push(sql`COALESCE(${f.metadata} ->> 'date', DATE(${f.detectedAt})::TEXT) >= ${startDate}`);
                 }
-                if (options.endDate) {
-                    conditions.push(sql`${f.metadata} ->> 'date' <= ${options.endDate}`);
+                if (endDate) {
+                    conditions.push(sql`COALESCE(${f.metadata} ->> 'date', DATE(${f.detectedAt})::TEXT) <= ${endDate}`);
                 }
 
                 return conditions.length > 0 ? and(...conditions) : undefined;
