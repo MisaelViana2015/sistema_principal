@@ -332,6 +332,20 @@ export async function updateShift(id: string, data: any) {
 
     const result = await shiftsRepository.updateShift(id, cleanData);
     console.log('[updateShift] Result:', JSON.stringify(result, null, 2));
+
+    // Re-analyze fraud if shift is finalized (status === 'finalizado')
+    // We fetch again or use result to check status? result likely has status if updated, 
+    // but better check fresh from DB or if result has it. 
+    // shiftsRepository.updateShift returns the updated shift usually.
+    // Let's safe check by fetching.
+    const updatedResult = await shiftsRepository.findShiftById(id);
+    if (updatedResult?.status === 'finalizado') {
+        console.log(`[FRAUD] Re-analisando turno finalizado ${id} após atualização...`);
+        FraudService.analyzeShift(id).catch(err => {
+            console.error(`[FRAUD] Erro ao re-analisar turno ${id}:`, err);
+        });
+    }
+
     return result;
 }
 

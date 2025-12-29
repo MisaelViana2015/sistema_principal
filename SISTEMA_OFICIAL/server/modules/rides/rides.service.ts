@@ -1,5 +1,6 @@
 
 import * as ridesRepository from "./rides.repository.js";
+import { FraudService } from "../fraud/fraud.service.js";
 
 export async function getAllRides(
     page: number = 1,
@@ -29,6 +30,7 @@ export async function createRide(data: typeof rides.$inferInsert) {
     // 2. Recalculate shift totals
     if (data.shiftId) {
         await recalculateShiftTotals(data.shiftId);
+        triggerFraudReanalysis(data.shiftId);
     }
 
     return newRide;
@@ -45,10 +47,12 @@ export async function updateRide(id: string, data: Partial<typeof rides.$inferIn
     // 3. Recalculate totals for involved shifts
     if (original.shiftId) {
         await recalculateShiftTotals(original.shiftId);
+        triggerFraudReanalysis(original.shiftId);
     }
     // If shiftId changed (unlikely but possible), recalculate the new shift too
     if (data.shiftId && data.shiftId !== original.shiftId) {
         await recalculateShiftTotals(data.shiftId);
+        triggerFraudReanalysis(data.shiftId);
     }
 
     return updated;
@@ -66,10 +70,28 @@ export async function deleteRide(id: string) {
     if (ride.shiftId) {
         try {
             await recalculateShiftTotals(ride.shiftId);
+            triggerFraudReanalysis(ride.shiftId);
         } catch (error) {
             console.warn(`[WARN] Could not recalculate totals for shift ${ride.shiftId} after deleting ride ${id}. Shift might be missing.`, error);
         }
     }
 
     return true;
+}
+
+async function triggerFraudReanalysis(shiftId: string) {
+    try {
+        const shift = await db.query.shifts.findFirst({
+            where: (s, { eq }) => eq(s.id, shiftId)
+        });
+
+        if (shift?.status === 'finalizado') {
+            console.log(`[FRAUD] Re-analisando turno finalizado ${shiftId} após alteração de corrida...`);
+            FraudService.analyzeShift(shiftId).catch(err => {
+                console.error(`[FRAUD] Erro ao re-analisar turno ${shiftId}:`, err);
+            });
+        }
+    } catch (err) {
+        console.error(`[FRAUD] Erro ao verificar turno para re-análise:`, err);
+    }
 }
