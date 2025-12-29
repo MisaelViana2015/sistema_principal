@@ -100,7 +100,26 @@ export const FraudController = {
     // GET /api/fraud/alerts
     async getRecentAlerts(req: Request, res: Response) {
         try {
-            const alerts = await FraudRepository.getFraudEvents({ limit: 10 });
+            // Parse query parameters
+            const limit = Number(req.query.limit) || 30;
+            const page = Number(req.query.page) || 1;
+            const offset = (page - 1) * limit;
+            const driverId = req.query.driverId as string;
+            const status = req.query.status as string;
+            const startDate = req.query.startDate as string;
+            const endDate = req.query.endDate as string;
+
+            // Default status filter for active alerts
+            const statusFilter = status && status !== 'all' ? status : 'pendente,em_analise,confirmado';
+
+            const alerts = await FraudRepository.getFraudEvents({
+                limit,
+                offset,
+                status: statusFilter,
+                driverId,
+                startDate,
+                endDate
+            });
 
             // MANUAL JOIN: Fetch drivers to ensure names are displayed
             if (alerts.length > 0) {
@@ -113,7 +132,6 @@ export const FraudController = {
 
                     const driverMap = new Map(driversFound.map(d => [d.id, d]));
 
-                    // Attach driver info manually
                     alerts.forEach((alert: any) => {
                         if (alert.driverId && driverMap.has(alert.driverId)) {
                             alert.driver = {
@@ -123,8 +141,21 @@ export const FraudController = {
                     });
                 }
             }
-            res.json(alerts);
+
+            // Get total count for pagination
+            const total = await FraudRepository.getEventsCount({ status: statusFilter, driverId });
+
+            res.json({
+                data: alerts,
+                meta: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit)
+                }
+            });
         } catch (error: any) {
+            console.error("[FRAUD] Erro ao buscar alertas:", error);
             res.status(500).json({ error: error.message });
         }
     },
