@@ -125,5 +125,45 @@ export const FraudService = {
         } catch (error) {
             console.error("❌ Erro fatal na análise em massa:", error);
         }
+    },
+
+    /**
+     * Analisa turnos abertos do dia atual (tempo real).
+     * Permite detectar fraudes enquanto o turno ainda está em andamento.
+     */
+    async analyzeTodayOpenShifts() {
+        console.log("🔍 Analisando turnos ABERTOS de hoje...");
+        try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const openShifts = await db.query.shifts.findMany({
+                where: (s, { eq, gte, and }) => and(
+                    eq(s.status, 'em_andamento'),
+                    gte(s.inicio, today)
+                )
+            });
+
+            console.log(`📊 Encontrados ${openShifts.length} turnos abertos para análise em tempo real.`);
+            let count = 0;
+            const results = [];
+
+            for (const shift of openShifts) {
+                try {
+                    const analysis = await this.analyzeShift(shift.id);
+                    if (analysis) {
+                        results.push(analysis);
+                        count++;
+                    }
+                } catch (err) {
+                    console.error(`❌ Erro ao analisar turno aberto ${shift.id}:`, err);
+                }
+            }
+            console.log(`✅ Análise em tempo real concluída! ${count} turnos abertos processados.`);
+            return results;
+        } catch (error) {
+            console.error("❌ Erro na análise de turnos abertos:", error);
+            return [];
+        }
     }
 };

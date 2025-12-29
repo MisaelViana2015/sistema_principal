@@ -276,6 +276,58 @@ export const FraudController = {
         }
     },
 
+    // POST /api/fraud/analyze-today-open - Análise em tempo real de turnos abertos
+    async analyzeTodayOpenShifts(req: Request, res: Response) {
+        try {
+            console.log("🔄 Analisando turnos abertos de hoje...");
+
+            // Busca turnos em andamento de hoje
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const openShiftsResult = await db.execute(sql`
+                SELECT id FROM shifts 
+                WHERE status = 'em_andamento' 
+                AND inicio >= ${today.toISOString()}
+            `);
+
+            const openShifts = openShiftsResult.rows as any[];
+            let analyzed = 0;
+            let errors = 0;
+            const results: any[] = [];
+
+            for (const shift of openShifts) {
+                try {
+                    const result = await FraudService.analyzeShift(shift.id);
+                    if (result) {
+                        results.push({
+                            shiftId: shift.id.substring(0, 8),
+                            score: result.score.totalScore,
+                            level: result.score.level,
+                            reasons: result.score.reasons.map((r: any) => r.label)
+                        });
+                        analyzed++;
+                    }
+                } catch (err) {
+                    errors++;
+                    console.error(`Error processing open shift ${shift.id}:`, err);
+                }
+            }
+
+            res.json({
+                success: true,
+                message: "Análise em tempo real concluída",
+                total: openShifts.length,
+                analyzed,
+                errors,
+                alertsFound: results.filter((r: any) => r.score > 0).length,
+                details: results
+            });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
     // GET /api/fraud/preview/:shiftId
     async previewAnalysis(req: Request, res: Response) {
         try {

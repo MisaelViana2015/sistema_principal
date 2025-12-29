@@ -22,6 +22,7 @@ router.post("/analyze/:shiftId", FraudController.manualAnalyze);
 
 // POST /api/fraud/analyze-all
 router.post("/analyze-all", FraudController.analyzeAllShifts);
+router.post("/analyze-today-open", FraudController.analyzeTodayOpenShifts);
 
 // Batch Reprocessing
 router.get("/reprocess-status", FraudController.getBatchStatus);
