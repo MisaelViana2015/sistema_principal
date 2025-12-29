@@ -182,17 +182,21 @@ const FraudEventDetail = ({ eventId: propEventId, onClose }: FraudEventDetailPro
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
-                                    {event.updatedAt !== event.detectedAt ? (
-                                        <div className="flex gap-3 text-sm">
-                                            <Clock className="h-5 w-5 text-gray-400" />
-                                            <div>
-                                                <p className="font-medium">Status atualizado para <span className="uppercase">{event.status}</span></p>
-                                                <p className="text-gray-500">{new Date(event.updatedAt).toLocaleString()}</p>
-                                                {event.comment && <p className="mt-1 bg-gray-100 p-2 rounded">"{event.comment}"</p>}
+                                    {event.updatedAt && event.updatedAt !== event.detectedAt ? (() => {
+                                        const dateObj = new Date(event.updatedAt);
+                                        const isValidDate = !isNaN(dateObj.getTime());
+                                        return (
+                                            <div className="flex gap-3 text-sm">
+                                                <Clock className="h-5 w-5 text-emerald-400" />
+                                                <div>
+                                                    <p className="font-medium text-white">Status atualizado para <span className="uppercase text-emerald-400">{event.status}</span></p>
+                                                    <p className="text-gray-300">{isValidDate ? dateObj.toLocaleString('pt-BR') : 'Data não disponível'}</p>
+                                                    {event.comment && <p className="mt-1 bg-slate-700 p-2 rounded text-gray-200">"{event.comment}"</p>}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-gray-500 italic">Nenhuma ação registrada ainda.</p>
+                                        );
+                                    })() : (
+                                        <p className="text-sm text-gray-400 italic">Nenhuma ação registrada ainda.</p>
                                     )}
 
                                     {event.status === 'pendente' && (

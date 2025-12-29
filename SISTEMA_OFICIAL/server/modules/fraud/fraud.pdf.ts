@@ -99,7 +99,7 @@ export async function generateEventPdf(event: typeof fraudEvents.$inferSelect, s
         doc.font('Helvetica-Bold').fontSize(12).text("Critérios de Normalidade Operacional (v2)");
         doc.moveDown(0.5);
         doc.font('Helvetica').fontSize(10).text(
-            "Um turno é considerado normal quando apresenta: km contínuo, duração entre 10min e 14h, receita/km entre R$ 1,87 e R$ 3,30, receita/hora entre R$ 20 e R$ 70, e arrecadação total entre R$ 200 e R$ 550.",
+            "Um turno é considerado normal quando apresenta: km contínuo, duração entre 10min e 16h, receita/km entre R$ 1,87 e R$ 3,30, receita/hora entre R$ 20 e R$ 70, e arrecadação total entre R$ 200 e R$ 550.",
             { align: 'justify' }
         );
         doc.moveDown();

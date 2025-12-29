@@ -176,14 +176,43 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                     <div><span className="text-gray-600 text-sm">Status:</span> <span className="font-bold text-lg block uppercase">{event.status}</span></div>
                 </div>
 
-                <p className="text-sm italic text-gray-700 text-justify mb-3">
-                    Este evento foi identificado automaticamente pelo sistema antifraude do Rota Verde devido à detecção de comportamentos operacionais anômalos, com base em regras determinísticas e critérios objetivos previamente definidos.
-                </p>
-
+                {/* Quadro de Resumo - Regras Disparadas */}
+                {sortedRules.length > 0 && (
+                    <div className="border border-gray-300 rounded-lg p-4 mb-4 bg-gray-50">
+                        <h3 className="text-md font-bold mb-3 text-gray-800">📋 Resumo das Regras Disparadas</h3>
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-gray-300">
+                                    <th className="text-left py-2 font-semibold">Regra</th>
+                                    <th className="text-center py-2 font-semibold">Severidade</th>
+                                    <th className="text-right py-2 font-semibold">Pontos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {sortedRules.map((rule: any, idx: number) => {
+                                    const rDef = OFFICIAL_RULES_LIST.find(r => r.code === rule.code);
+                                    const sevColor = rule.severity === 'critical' ? 'text-red-600' : rule.severity === 'high' ? 'text-orange-600' : rule.severity === 'medium' ? 'text-yellow-600' : 'text-blue-600';
+                                    return (
+                                        <tr key={idx} className="border-b border-gray-200">
+                                            <td className="py-2">{rDef?.name || rule.label || rule.code}</td>
+                                            <td className={`py-2 text-center font-semibold uppercase ${sevColor}`}>{rule.severity || 'low'}</td>
+                                            <td className="py-2 text-right font-bold">{rule.score || 0}</td>
+                                        </tr>
+                                    );
+                                })}
+                                <tr className="font-bold bg-gray-100">
+                                    <td className="py-2">TOTAL</td>
+                                    <td></td>
+                                    <td className="py-2 text-right text-lg">{event.riskScore || sortedRules.reduce((acc: number, r: any) => acc + (r.score || 0), 0)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
                 <h3 className="text-md font-bold mb-2">Critérios de Normalidade Operacional</h3>
                 <p className="text-sm text-gray-700 text-justify">
-                    Um turno é considerado operacionalmente normal quando apresenta evolução contínua de quilometragem, duração compatível (10min a 14h), distribuição variada de corridas e indicadores financeiros dentro das faixas esperadas (Receita/KM entre R$ 3,00 e R$ 20,00).
+                    Um turno é considerado operacionalmente normal quando apresenta evolução contínua de quilometragem, duração compatível (10min a 16h), distribuição variada de corridas e indicadores financeiros dentro das faixas esperadas (Receita/KM entre R$ 1,98 e R$ 3,30/km).
                 </p>
             </div>
 
