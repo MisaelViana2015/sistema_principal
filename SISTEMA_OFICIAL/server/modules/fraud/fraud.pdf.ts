@@ -39,9 +39,9 @@ const OFFICIAL_RULES_LIST = [
     { code: "ARRECADACAO_TURNO_BAIXA", name: "REGRA 07 — ARRECADAÇÃO BAIXA", desc: "Arrecadação total do turno abaixo de R$ 200." },
     { code: "ARRECADACAO_TURNO_ALTA", name: "REGRA 08 — ARRECADAÇÃO ALTA", desc: "Arrecadação total do turno acima de R$ 550." },
     { code: "TURNO_CURTO_DEMAIS", name: "REGRA 09 — TURNO CURTO", desc: "Duração inferior a 10 minutos." },
-    { code: "TURNO_LONGO_DEMAIS", name: "REGRA 10 — TURNO LONGO", desc: "Duração superior a 14 horas (severidade baixa)." },
+    { code: "TURNO_LONGO_DEMAIS", name: "REGRA 10 — TURNO LONGO", desc: "Duração superior a 16 horas (severidade baixa)." },
     { code: "RECEITA_KM_DESVIO_ALTO", name: "REGRA 11 — DESVIO BASELINE ALTO", desc: "Receita/KM variou ≥1.5x em relação à média pessoal." },
-    { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 12 — DESVIO BASELINE CRÍTICO", desc: "Receita/KM variou ≥2x em relação à média pessoal." },
+    { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 12 — DESVIO BASELINE CRÍTICO", desc: "Receita/KM variou ≥1.5x em relação à média pessoal." },
     { code: "GAP_KM_ANOMALO", name: "REGRA 13 — GAP DE KM ANÔMALO", desc: "Diferença entre turnos maior que 250 km." },
     { code: "KM_RETROCEDEU", name: "REGRA ERROR — KM RETROCEDEU", desc: "Km inicial menor que km final do turno anterior." },
 ];

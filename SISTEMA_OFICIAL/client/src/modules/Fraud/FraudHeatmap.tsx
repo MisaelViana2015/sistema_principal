@@ -23,12 +23,20 @@ interface HeatmapPoint {
     maxScore: number;
 }
 
-export const FraudHeatmap = () => {
+interface FraudHeatmapProps {
+    driverId?: string;
+}
+
+export const FraudHeatmap = ({ driverId }: FraudHeatmapProps) => {
     // Buscar dados reais da API
     const { data: apiData } = useQuery({
-        queryKey: ['fraud-heatmap'],
+        queryKey: ['fraud-heatmap', driverId],
         queryFn: async () => {
-            const res = await api.get('/fraud/heatmap');
+            const params = new URLSearchParams();
+            if (driverId && driverId !== 'all') {
+                params.append('driverId', driverId);
+            }
+            const res = await api.get('/fraud/heatmap', { params });
             return res.data as HeatmapPoint[];
         }
     });

@@ -34,7 +34,7 @@ const THRESHOLDS = {
 
     // Baseline Deviation
     DEVIATION_MULTIPLIER_HIGH: 1.5,      // >= 1.5x = HIGH
-    DEVIATION_MULTIPLIER_CRITICAL: 2.0,  // >= 2x = CRITICAL
+    DEVIATION_MULTIPLIER_CRITICAL: 1.5,  // >= 1.5x = CRITICAL (user requested)
 
     SCORE: {
         LOW: 5,
@@ -114,7 +114,7 @@ function ruleShiftKmAndRevenue(
     if (base && base.avgRevenuePerKm > 0) {
         const ratio = revPerKm / base.avgRevenuePerKm;
 
-        // 9. Desvio Crítico (≥ 2x ou ≤ 0.5x)
+        // 9. Desvio Crítico (>= 1.5x ou <= 0.67x)
         if (ratio >= THRESHOLDS.DEVIATION_MULTIPLIER_CRITICAL || ratio <= (1 / THRESHOLDS.DEVIATION_MULTIPLIER_CRITICAL)) {
             hits.push({
                 code: "RECEITA_KM_DESVIO_CRITICO",

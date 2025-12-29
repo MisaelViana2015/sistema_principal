@@ -69,7 +69,14 @@ export const FraudController = {
     // GET /api/fraud/heatmap
     async getHeatmapData(req: Request, res: Response) {
         try {
-            // Optimization: Aggregate by date in SQL
+            const driverId = req.query.driverId as string;
+
+            // Build WHERE clause dynamically
+            let whereClause = sql`fe.detected_at >= NOW() - INTERVAL '1 year'`;
+            if (driverId && driverId !== 'all') {
+                whereClause = sql`fe.detected_at >= NOW() - INTERVAL '1 year' AND fe.driver_id = ${driverId}`;
+            }
+
             const result = await db.execute(sql`
                 SELECT 
                     DATE(s.inicio)::text as date,
@@ -78,7 +85,7 @@ export const FraudController = {
                     MAX(fe.risk_score) as max_score
                 FROM fraud_events fe
                 JOIN shifts s ON fe.shift_id = s.id
-                WHERE fe.detected_at >= NOW() - INTERVAL '1 year'
+                WHERE ${whereClause}
                 GROUP BY 1
                 ORDER BY date
             `);

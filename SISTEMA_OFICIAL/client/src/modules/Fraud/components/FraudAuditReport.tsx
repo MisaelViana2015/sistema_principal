@@ -37,9 +37,9 @@ const OFFICIAL_RULES_LIST = [
     { code: "RECEITA_HORA_MUITO_BAIXA", name: "REGRA 04 — BAIXA RECEITA POR HORA", desc: "Receita por hora abaixo de R$ 20,00/h. Turno com produtividade suspeita." },
     { code: "RECEITA_HORA_MUITO_ALTA", name: "REGRA 05 — ALTA RECEITA POR HORA", desc: "Receita por hora acima de R$ 70,00/h. Pode indicar erro de duração." },
     { code: "TURNO_CURTO_DEMAIS", name: "REGRA 06 — TURNO MUITO CURTO", desc: "Duração inferior a 10 minutos. Turno técnico irrelevante para análise padrão." },
-    { code: "TURNO_LONGO_DEMAIS", name: "REGRA 07 — TURNO MUITO LONGO", desc: "Duração superior a 14 horas. Comportamento fora do padrão típico." },
+    { code: "TURNO_LONGO_DEMAIS", name: "REGRA 07 — TURNO MUITO LONGO", desc: "Duração superior a 16 horas. Comportamento fora do padrão típico." },
     { code: "RECEITA_KM_DESVIO_ALTO", name: "REGRA 08 — DESVIO DE BASELINE ALTO", desc: "Receita/KM variou +/- 50% em relação à média pessoal." },
-    { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 09 — DESVIO DE BASELINE CRÍTICO", desc: "Receita/KM variou +/- 100% (2x) em relação à média pessoal." },
+    { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 09 — DESVIO DE BASELINE CRÍTICO", desc: "Receita/KM variou +/- 50% (1.5x) em relação à média pessoal." },
     { code: "KM_SALTO_ABSURDO", name: "REGRA 10 — GAP DE KM ANÔMALO", desc: "Diferença entre turnos maior que 250 km. Indica uso não registrado." },
     { code: "KM_RETROCEDEU", name: "REGRA ERROR — KM RETROCEDEU", desc: "O km inicial do turno atual é menor que o km final do turno anterior." },
 ];

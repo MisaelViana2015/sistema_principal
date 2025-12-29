@@ -272,40 +272,42 @@ const FraudDashboard = () => {
                         </Card>
                     </div>
 
-                    {/* Heatmap Section */}
-                    <div className="grid gap-6 md:grid-cols-1 mt-6">
-                        <FraudHeatmap />
+                    {/* Global Driver Filter - Above Heatmap */}
+                    <div className="flex items-center gap-4 mt-6">
+                        <label className="text-sm font-medium text-muted-foreground">Filtrar por Motorista:</label>
+                        <Select
+                            value={selectedDriver}
+                            onValueChange={(val) => {
+                                setSelectedDriver(val);
+                                setAlertPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="w-[250px] bg-slate-900/50 border-slate-800">
+                                <SelectValue placeholder="Todos os Motoristas" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos os Motoristas</SelectItem>
+                                {driversList.map((driver: any) => (
+                                    <SelectItem key={driver.id} value={driver.id}>
+                                        {driver.nome || driver.name || driver.id}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    {/* Filters Section */}
+                    {/* Heatmap Section */}
+                    <div className="grid gap-6 md:grid-cols-1 mt-6">
+                        <FraudHeatmap driverId={selectedDriver} />
+                    </div>
+
+                    {/* Filters Section - Date Range Only */}
                     <Card className="p-6 mt-6 border-slate-800 bg-slate-950/50">
                         <div className="flex items-center gap-2 mb-4">
                             <Filter className="w-4 h-4 text-emerald-500" />
-                            <h3 className="text-sm font-semibold text-gray-200">Filtros Avançados</h3>
+                            <h3 className="text-sm font-semibold text-gray-200">Filtros de Data</h3>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-muted-foreground">Motorista</label>
-                                <Select
-                                    value={selectedDriver}
-                                    onValueChange={(val) => {
-                                        setSelectedDriver(val);
-                                        setAlertPage(1);
-                                    }}
-                                >
-                                    <SelectTrigger className="bg-slate-900/50 border-slate-800">
-                                        <SelectValue placeholder="Todos os Motoristas" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">Todos os Motoristas</SelectItem>
-                                        {driversList.map((driver: any) => (
-                                            <SelectItem key={driver.id} value={driver.id}>
-                                                {driver.nome || driver.name || driver.id}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-xs font-medium text-muted-foreground">Data Inicial</label>
                                 <Input

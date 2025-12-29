@@ -19,11 +19,11 @@ const THRESHOLDS = {
     MAX_REVENUE_PER_SHIFT: 550,          // HIGH
     // Duração
     MIN_SHIFT_HOURS: 1 / 6,              // 10 min = LOW
-    MAX_SHIFT_HOURS: 14,                 // > 14h = LOW (v2)
+    MAX_SHIFT_HOURS: 16,                 // > 16h = LOW (user requested)
     // Gap KM e Baseline
     MAX_KM_GAP_NORMAL: 250,
     DEVIATION_MULTIPLIER_HIGH: 1.5,
-    DEVIATION_MULTIPLIER_CRITICAL: 2,
+    DEVIATION_MULTIPLIER_CRITICAL: 1.5,  // >= 1.5x = CRITICAL (user requested)
     SCORE: {
         LOW: 5,
         MEDIUM: 10,
