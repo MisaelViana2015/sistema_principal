@@ -26,7 +26,8 @@ export const FraudRepository = {
                 baseline: analysis.baseline // Persist baseline for PDF reports
             },
             status: existing ? existing.status : "pendente",
-            detectedAt: analysis.date ? new Date(analysis.date) : new Date(),
+            // Use shiftInicio (full timestamp) instead of date string to preserve timezone
+            detectedAt: analysis.shiftInicio || (analysis.date ? new Date(analysis.date + "T12:00:00") : new Date()),
         };
 
         if (existing) {

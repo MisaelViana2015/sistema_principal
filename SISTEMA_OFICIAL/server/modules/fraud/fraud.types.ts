@@ -50,6 +50,7 @@ export interface FraudShiftAnalysis {
     ridesPerHour: number;
     score: FraudScore;
     baseline?: DriverBaseline;
+    shiftInicio?: Date; // Full start timestamp for accurate detectedAt
 }
 
 export interface ShiftContext {

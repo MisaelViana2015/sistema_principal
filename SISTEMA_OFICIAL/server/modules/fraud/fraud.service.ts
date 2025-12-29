@@ -81,6 +81,7 @@ export const FraudService = {
             driverId: shift.driverId,
             vehicleId: shift.vehicleId,
             date: inicio.toISOString().split("T")[0],
+            shiftInicio: inicio, // Full timestamp for accurate detectedAt
             kmTotal,
             revenueTotal: totalBruto,
             revenuePerKm: kmTotal > 0 ? totalBruto / kmTotal : 0,
