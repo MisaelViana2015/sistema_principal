@@ -6,10 +6,10 @@ import { api } from '@/lib/api';
 // Cores baseadas na média de risco (avgScore)
 // Engine Scores: Low=5, Medium=10, High=20, Critical=40
 const getRiskColor = (score: number, count: number) => {
-    if (count === 0) return 'bg-gray-100 dark:bg-gray-700';
-    if (score < 6) return 'bg-emerald-200 dark:bg-emerald-900';  // Sem risco ou Baixo (5)
-    if (score < 15) return 'bg-yellow-200 dark:bg-yellow-900'; // Médio (10)
-    return 'bg-red-400 dark:bg-red-900';                         // Alto (20) ou Crítico (40)
+    if (count === 0) return 'bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700'; // Branco/Sem eventos
+    if (score < 6) return 'bg-green-300 dark:bg-green-800';  // Verde Claro (Baixo)
+    if (score < 15) return 'bg-yellow-400 dark:bg-yellow-600'; // Amarelo (Médio)
+    return 'bg-red-300 dark:bg-red-700';                         // Vermelho Claro (Alto)
 };
 
 
@@ -106,10 +106,10 @@ export const FraudHeatmap = ({ driverId }: FraudHeatmapProps) => {
 
             <div className="flex gap-4 mt-6 text-xs text-gray-500 items-center flex-wrap">
                 <span>Legenda (Score Médio):</span>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-gray-100 dark:bg-gray-700"></div> Sem eventos</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-emerald-200 dark:bg-emerald-900"></div> &lt; 6 (Baixo)</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-yellow-200 dark:bg-yellow-900"></div> 6-15 (Médio)</div>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-red-400 dark:bg-red-900"></div> &gt; 15 (Alto)</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700"></div> Sem eventos</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-green-300 dark:bg-green-800"></div> &lt; 6 (Baixo)</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-yellow-400 dark:bg-yellow-600"></div> 6-15 (Médio)</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-red-300 dark:bg-red-700"></div> &gt; 15 (Alto)</div>
             </div>
         </Card>
     );
