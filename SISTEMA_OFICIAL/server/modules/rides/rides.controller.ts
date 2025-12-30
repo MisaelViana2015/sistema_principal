@@ -39,7 +39,7 @@ export async function createRideController(req: Request, res: Response) {
     } catch (error: any) {
         console.error("Erro ao criar corrida:", error);
         if (error.issues) return res.status(400).json({ message: "Validation error", details: error.issues });
-        return res.status(500).json({ message: "Erro ao registrar corrida" });
+        return res.status(400).json({ message: error.message || "Erro ao registrar corrida" });
     }
 
 }
