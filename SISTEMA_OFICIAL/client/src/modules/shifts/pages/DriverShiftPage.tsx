@@ -67,36 +67,36 @@ export default function DriverShiftPage() {
         loadCostTypes();
     }, [user]);
 
-
-
-    // Cooldown Timer for Rides (5 min)
+    // Tab visibility state to pause timers when app is in background
+    const [isTabVisible, setIsTabVisible] = React.useState(true);
     useEffect(() => {
-        if (rideCooldown > 0) {
+        const handleVisibilityChange = () => {
+            setIsTabVisible(!document.hidden);
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, []);
+
+
+    // Cooldown Timer for Rides (5 min) - PAUSES WHEN TAB IS HIDDEN
+    useEffect(() => {
+        if (rideCooldown > 0 && isTabVisible) {
             const timer = setTimeout(() => {
                 setRideCooldown(prev => prev - 1);
             }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [rideCooldown]);
+    }, [rideCooldown, isTabVisible]);
 
-    // Cooldown Timer for Costs (separate, 5 min)
+    // Cooldown Timer for Costs (separate, 5 min) - PAUSES WHEN TAB IS HIDDEN
     useEffect(() => {
-        if (costCooldown > 0) {
+        if (costCooldown > 0 && isTabVisible) {
             const timer = setTimeout(() => {
                 setCostCooldown(prev => prev - 1);
             }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [costCooldown]);
-
-    // Refresh data when cooldown ends
-    const prevCooldownRef = React.useRef(rideCooldown);
-    useEffect(() => {
-        if (prevCooldownRef.current > 0 && rideCooldown === 0) {
-            loadData();
-        }
-        prevCooldownRef.current = rideCooldown;
-    }, [rideCooldown]);
+    }, [costCooldown, isTabVisible]);
 
 
     // Work Timer
@@ -247,7 +247,7 @@ export default function DriverShiftPage() {
 
         setIsSubmitting(true);
         try {
-            // Verificar lançamento duplicado recente (mesmo valor nos últimos 5 minutos)
+            // Verificar lançamento duplicado recente - apenas aviso em log, sem bloquear
             const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
             const recentDuplicateRide = rides.find(r =>
                 Number(r.valor) === Number(rideValue) &&
@@ -255,14 +255,7 @@ export default function DriverShiftPage() {
             );
 
             if (recentDuplicateRide) {
-                const minutesAgo = Math.round((Date.now() - new Date(recentDuplicateRide.hora).getTime()) / 60000);
-                const confirmDuplicate = window.confirm(
-                    `⚠️ Atenção: Uma corrida de R$ ${Number(rideValue).toFixed(2)} foi lançada há ${minutesAgo} minuto(s).\n\nDeseja lançar novamente?`
-                );
-                if (!confirmDuplicate) {
-                    setIsSubmitting(false);
-                    return;
-                }
+                console.log('[INFO] Corrida com valor duplicado recente - permitindo mesmo assim.');
             }
 
             await api.post("/rides", {
