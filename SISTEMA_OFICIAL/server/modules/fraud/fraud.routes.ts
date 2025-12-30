@@ -33,4 +33,8 @@ router.get("/event/:id", FraudController.getEventDetail);
 router.post("/event/:id/status", FraudController.updateEventStatus);
 router.get("/event/:id/pdf", FraudController.getEventPdf);
 
+// Phase 4 & 6: Intelligence Routes
+router.get("/behavior-change/:driverId", FraudController.checkBehaviorChange);
+router.post("/event/:id/evidence", FraudController.addExternalEvidence);
+
 export const fraudRoutes = router;

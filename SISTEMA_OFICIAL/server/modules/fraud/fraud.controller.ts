@@ -773,6 +773,92 @@ export const FraudController = {
         }
     },
 
+    // Phase 4: Behavior Change Analysis
+    async checkBehaviorChange(req: Request, res: Response) {
+        try {
+            const { driverId } = req.params;
+
+            // 1. Find First Confirmed Fraud
+            const firstFraud = await db.query.fraudEvents.findFirst({
+                where: (f, { and, eq }) => and(eq(f.driverId, driverId), eq(f.status, 'confirmado')),
+                orderBy: (f, { asc }) => asc(f.detectedAt)
+            });
+
+            if (!firstFraud || !firstFraud.detectedAt) {
+                return res.json({ hasCorrection: false, message: "Sem eventos de fraude confirmados para análise." });
+            }
+
+            const incidentDate = new Date(firstFraud.detectedAt);
+
+            // 2. Fetch Shifts Before and After
+            const shifts = await db.query.shifts.findMany({
+                where: (s, { eq }) => eq(s.driverId, driverId),
+                orderBy: (s, { asc }) => asc(s.inicio)
+            });
+
+            const beforeShifts = [];
+            const afterShifts = [];
+
+            for (const s of shifts) {
+                const sDate = new Date(s.inicio);
+                const diffDays = (sDate.getTime() - incidentDate.getTime()) / (1000 * 3600 * 24);
+
+                if (diffDays >= -30 && diffDays < 0) beforeShifts.push(s);
+                if (diffDays > 0 && diffDays <= 30) afterShifts.push(s);
+            }
+
+            // 3. Compare Metrics
+            const calcMetrics = (list: any[]) => {
+                let totalRides = 0;
+                let totalHours = 0;
+                list.forEach(s => {
+                    totalRides += Number(s.totalCorridas || 0);
+                    const dur = Math.max(0.1, (new Date(s.fim).getTime() - new Date(s.inicio).getTime()) / 3600000);
+                    totalHours += dur;
+                });
+                return totalHours > 0 ? (totalRides / totalHours) : 0;
+            };
+
+            const statsBefore = calcMetrics(beforeShifts);
+            const statsAfter = calcMetrics(afterShifts);
+
+            const improvement = statsBefore > 0 ? ((statsAfter - statsBefore) / statsBefore) * 100 : 0;
+
+            res.json({
+                hasCorrection: statsAfter > statsBefore,
+                incidentDate: incidentDate.toISOString(),
+                statsBefore: statsBefore.toFixed(2),
+                statsAfter: statsAfter.toFixed(2),
+                improvementPercent: improvement.toFixed(1),
+                shiftsInvolved: { before: beforeShifts.length, after: afterShifts.length }
+            });
+
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // Phase 6: Manual External Evidence
+    async addExternalEvidence(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const { externalEvidence, evidenceType, externalRideCount } = req.body;
+
+            await db.update(fraudEvents)
+                .set({
+                    externalEvidence: externalEvidence || null, // JSON string
+                    evidenceType: evidenceType || null,
+                    externalRideCount: externalRideCount ? Number(externalRideCount) : 0,
+                    reviewedAt: new Date(), // Mark as touched
+                })
+                .where(eq(fraudEvents.id, id));
+
+            res.json({ success: true });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
     // GET /api/fraud/reprocess-status
     async getBatchStatus(req: Request, res: Response) {
         res.json(batchStatus);

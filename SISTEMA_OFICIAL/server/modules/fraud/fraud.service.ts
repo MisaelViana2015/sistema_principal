@@ -2,9 +2,9 @@ import { db } from "../../core/db/connection.js";
 import { shifts, rides } from "../../../shared/schema.js";
 import { eq, lt, desc } from "drizzle-orm";
 import { buildDriverBaseline } from "./fraud.baseline.js";
-import { analyzeShiftRules } from "./fraud.engine.js";
+import { analyzeShiftRules, checkProductivityVsBaseline, checkDriverHistoricalDeviation, checkValueAsymmetry, checkTimeGapsWithPresence } from "./fraud.engine.js";
 import { FraudRepository } from "./fraud.repository.js";
-import { FraudShiftAnalysis, ShiftContext } from "./fraud.types.js";
+import { FraudShiftAnalysis, ShiftContext, FraudRuleHit } from "./fraud.types.js";
 
 export const FraudService = {
     /**
@@ -72,6 +72,37 @@ export const FraudService = {
             ctx,
             rideValues // NEW: Pass ride values for sequence detection
         );
+
+        // --- v2.0 INTELLIGENCE RULES (Async) ---
+        const asyncHits: FraudRuleHit[] = [];
+
+        // 1. Productivity vs Fleet Baseline
+        const prodHit = await checkProductivityVsBaseline(inicio, durationHours, shift.driverId, shiftRides);
+        if (prodHit) asyncHits.push(prodHit);
+
+        // 2. Driver vs Historical Self
+        const historyHit = await checkDriverHistoricalDeviation(shift.id, shift.driverId, durationHours, totalCorridas);
+        if (historyHit) asyncHits.push(historyHit);
+
+        // 3. Value Asymmetry (Cherry Picking)
+        const asymmetryHit = await checkValueAsymmetry(shift.id, shift.driverId, inicio, fim, shiftRides);
+        if (asymmetryHit) asyncHits.push(asymmetryHit);
+
+        // 4. Time Gaps with Presence
+        const gapHit = await checkTimeGapsWithPresence(shift, shiftRides);
+        if (gapHit) asyncHits.push(gapHit);
+
+        // Merge Scores
+        if (asyncHits.length > 0) {
+            score.reasons.push(...asyncHits);
+            score.totalScore += asyncHits.reduce((acc, h) => acc + h.score, 0);
+
+            // Re-evaluate level (Safe/Simple logic matching engine thresholds)
+            if (score.totalScore >= 70) score.level = 'critical';
+            else if (score.totalScore >= 35) score.level = 'high';
+            else if (score.totalScore >= 20) score.level = 'medium';
+            else score.level = 'low';
+        }
 
         // 5. Montar Objeto de Análise
         const kmTotal = Math.max(0, kmEnd - kmStart);

@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "node --loader ts-node/esm index.ts",
         "build": "tsc",
-        "start": "NODE_ENV=production node dist/server/index.js",
+        "start": "npx drizzle-kit push:pg && NODE_ENV=production node dist/server/index.js",
         "db:push": "drizzle-kit push:pg",
         "db:studio": "drizzle-kit studio",
         "db:bootstrap": "node --loader ts-node/esm scripts/db/bootstrap.ts",

@@ -245,6 +245,9 @@ export const fraudEvents = pgTable("fraud_events", {
     reviewedBy: varchar("reviewed_by"),
     reviewedAt: timestamp("reviewed_at"),
     reviewNotes: text("review_notes"),
+    externalEvidence: text("external_evidence"), // JSON com evidências
+    evidenceType: text("evidence_type"), // 'camera', 'city_app', 'complaint'
+    externalRideCount: integer("external_ride_count"), // Qtd corridas externas
     createdAt: timestamp("created_at").defaultNow(),
     detectedAt: timestamp("detected_at").defaultNow(),
 }, (table) => {

@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, CheckCircle, XCircle, Ban, ArrowLeft, Printer, ShieldAlert, Clock } from 'lucide-react';
 import { FraudAuditReport } from '../components/FraudAuditReport';
+import { BehaviorAnalysisWidget } from '../components/BehaviorAnalysisWidget';
+import { ExternalEvidenceForm } from '../components/ExternalEvidenceForm';
 
 interface FraudEvent {
     id: string;
@@ -154,6 +156,10 @@ const FraudEventDetail = ({ eventId: propEventId, onClose }: FraudEventDetailPro
                             <XCircle className="h-4 w-4 mr-2" /> Fechar
                         </Button>
                     )}
+
+                    {!isModal && (
+                        <ExternalEvidenceForm eventId={event.id} />
+                    )}
                 </div>
             </div>
 
@@ -176,6 +182,9 @@ const FraudEventDetail = ({ eventId: propEventId, onClose }: FraudEventDetailPro
                             </div>
                         </div>
                     )}
+
+                    {/* ANALYSIS WIDGETS */}
+                    <BehaviorAnalysisWidget driverId={shift.driverId} />
 
                     {/* THE REPORT COMPONENT */}
                     <FraudAuditReport event={event} shift={shift} />
