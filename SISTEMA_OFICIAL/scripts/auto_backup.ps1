@@ -3,6 +3,31 @@ $ErrorActionPreference = "Stop"
 # --- CONFIGURAÇÃO ---
 $SourceDir = "C:\dev\SISTEMA_OFICIAL"
 $DestDir1 = "C:\dev\Backups_Servidores\Automated"
+$LogDir = "C:\dev\SISTEMA_OFICIAL\logs"
+$LogFile = "$LogDir\backup_debug.log"
+
+# Garantir diretório de logs
+if (!(Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
+
+function Log-Message {
+    param([string]$Message, [string]$Color = "White", [string]$Type = "INFO")
+    $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $LogLine = "[$Timestamp] [$Type] $Message"
+    
+    # Write to File
+    Add-Content -Path $LogFile -Value $LogLine -Force
+    
+    # Write to Console (with mapping for simple colors)
+    $ConsoleColor = switch ($Type) {
+        "ERROR" { "Red" }
+        "WARN" { "Yellow" }
+        "SUCCESS" { "Green" }
+        Default { "Cyan" }
+    }
+    Write-Host $LogLine -ForegroundColor $ConsoleColor
+}
+
+Log-Message "=== INICIANDO PROCESSO DE BACKUP (v2 Robust) ==="
 
 # --- RESOLVING ONEDRIVE PATH ---
 $OneDriveRoot = "E:\OneDrive"
@@ -10,11 +35,11 @@ $DesktopFolder = Get-ChildItem -Path $OneDriveRoot -Directory -ErrorAction Silen
 
 if ($DesktopFolder) {
     $DestDir2 = Join-Path $DesktopFolder.FullName "Misa e Isa\Sistemas Sun Up\Backups_Servidores"
-    Write-Host ">>> OneDrive Path Resolved: $DestDir2" -ForegroundColor Cyan
+    Log-Message "OneDrive Path Resolved: $DestDir2"
 }
 else {
     $DestDir2 = "E:\OneDrive\Área de Trabalho\Misa e Isa\Sistemas Sun Up\Backups_Servidores"
-    Write-Host ">>> Used Hardcoded Path: $DestDir2" -ForegroundColor Cyan
+    Log-Message "Used Hardcoded Path: $DestDir2" "Yellow" "WARN"
 }
 
 $MaxBackups = 6
@@ -23,42 +48,67 @@ $MaxBackups = 6
 $Timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 $BackupName = "Backup_System_$Timestamp"
 
-# --- 1. DB BACKUP (SECURE MODE) ---
-Write-Host ">>> Decriptando credenciais do banco..." -ForegroundColor Cyan
+# --- 1. DB BACKUP STRATEGY ---
+Log-Message "Iniciando backup de banco de dados..."
+Set-Location "$SourceDir\server"
+$EnvFile = "$SourceDir\server\.env"
 $CredFile = "$SourceDir\server\db_prod.cred"
+$DbUrlFound = $false
 
+# Strategy A: Decrypt SecureString (Preferred)
 if (Test-Path $CredFile) {
     try {
-        # Decrypt SecureString
-        $Encrypted = Get-Content $CredFile | ConvertTo-SecureString
+        Log-Message "Tentando decriptar credencial ($CredFile)..."
+        $Encrypted = Get-Content $CredFile | ConvertTo-SecureString -ErrorAction Stop
         $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($Encrypted)
         $UnsecurePassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
-        
-        # Set Environment Variable for the backup process
         $env:DATABASE_URL = $UnsecurePassword
-        
-        Write-Host ">>> Credencial carregada com seguranca." -ForegroundColor Green
+        $DbUrlFound = $true
+        Log-Message "Credencial carregada com sucesso via Decryption." "Green" "SUCCESS"
     }
     catch {
-        Write-Error "!!! Falha ao decriptar arquivo de credencial."
+        Log-Message "Falha ao decriptar credencial (possivelmente usuário diferente): $($_.Exception.Message)" "Yellow" "WARN"
+    }
+}
+
+# Strategy B: Read .env File (Fallback for SYSTEM user)
+if (-not $DbUrlFound -and (Test-Path $EnvFile)) {
+    try {
+        Log-Message "Tentando ler DATABASE_URL direto do .env ($EnvFile)..."
+        $Content = Get-Content $EnvFile
+        foreach ($line in $Content) {
+            if ($line -match "^DATABASE_URL=(.+)$") {
+                $env:DATABASE_URL = $matches[1]
+                $DbUrlFound = $true
+                Log-Message "DATABASE_URL encontrada no .env." "Green" "SUCCESS"
+                break
+            }
+        }
+    }
+    catch {
+        Log-Message "Erro ao ler .env: $($_.Exception.Message)" "Red" "ERROR"
+    }
+}
+
+if ($DbUrlFound) {
+    try {
+        # Capture output and errors
+        $Output = npm run db:backup 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw "npm run db:backup exited with code $LASTEXITCODE. Output: $Output"
+        }
+        Log-Message "Backup de banco executado com sucesso." "Green" "SUCCESS"
+    }
+    catch {
+        Log-Message "FALHA CRÍTICA ao executar comando de backup: $_" "Red" "ERROR"
+        # Continue to file backup even if DB fails
+    }
+    finally {
+        $env:DATABASE_URL = "" # Clear from memory
     }
 }
 else {
-    Write-Warning "!!! Arquivo de credencial nao encontrado: $CredFile"
-}
-
-Write-Host ">>> Gerando backup do banco de dados..." -ForegroundColor Cyan
-Set-Location "$SourceDir\server"
-try {
-    # Notice: No need for .env.backup anymore, uses env var
-    npm run db:backup
-}
-catch {
-    Write-Warning "!!! Falha ao gerar backup do banco."
-}
-finally {
-    # Clear secret from memory/env
-    $env:DATABASE_URL = ""
+    Log-Message "NENHUMA CREDENCIAL ENCONTRADA! Backup do banco será pulado." "Red" "ERROR"
 }
 
 # --- COPY FUNCTION ---
@@ -75,7 +125,7 @@ function Perform-Backup {
         try { New-Item -ItemType Directory -Path $DestinationRoot -Force | Out-Null } catch { return }
     }
 
-    Write-Host ">>> Copiando arquivos para: $TargetFolder" -ForegroundColor Green
+    Log-Message "Copiando arquivos para: $TargetFolder"
 
     $RoboArgs = @(
         $SourceDir,
@@ -87,20 +137,25 @@ function Perform-Backup {
         "/NFL", "/NDL" 
     )
 
-    & robocopy @RoboArgs
+    $RoboOutput = & robocopy @RoboArgs
+    
+    # Robocopy exit codes: 0-7 are success/warnings. 8+ are failures.
     if ($LASTEXITCODE -ge 8) {
-        Write-Error "!!! Erro critico no Robocopy para $DestinationRoot"
+        Log-Message "Erro critico no Robocopy para $DestinationRoot (Code: $LASTEXITCODE)" "Red" "ERROR"
+    }
+    else {
+        Log-Message "Cópia finalizada com sucesso (Code: $LASTEXITCODE)." "Green" "SUCCESS"
     }
 
     # --- RETENTION ---
-    Write-Host ">>> Verificando retencao (Manter ultimos $MaxBackups)..." -ForegroundColor Yellow
+    Log-Message "Verificando retencao (Manter ultimos $MaxBackups)..."
     
     $CurrentBackups = Get-ChildItem -Path $DestinationRoot -Directory | Sort-Object CreationTimeDescending
 
     if ($CurrentBackups.Count -gt $MaxBackups) {
         $BackupsToDelete = $CurrentBackups | Select-Object -Skip $MaxBackups
         foreach ($Backup in $BackupsToDelete) {
-            Write-Host "--- Removendo backup antigo: $($Backup.FullName)" -ForegroundColor Red
+            Log-Message "Removendo backup antigo: $($Backup.FullName)" "Yellow" "WARN"
             Remove-Item -Path $Backup.FullName -Recurse -Force
         }
     }
@@ -113,7 +168,7 @@ if ($DestDir2 -and (Test-Path $OneDriveRoot)) {
     Perform-Backup -DestinationRoot $DestDir2
 }
 else {
-    Write-Warning "!!! Drive E: ou pasta do OneDrive nao encontrada."
+    Log-Message "Drive E: ou pasta do OneDrive nao encontrada." "Yellow" "WARN"
 }
 
-Write-Host ">>> Processo de backup finalizado!" -ForegroundColor Green
+Log-Message "Processo de backup finalizado!" "Green" "SUCCESS"
