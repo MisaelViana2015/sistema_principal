@@ -41,9 +41,9 @@ COPY --from=builder /app/client/dist ./client/dist
 # Copy migrations folder (essential for Drizzle)
 COPY --from=builder /app/server/scripts/db/migrations ./server/scripts/db/migrations
 
-# Copy bootstrap system
+# Copy bootstrap migrations (SQL files)
 COPY --from=builder /app/server/scripts/migrations ./server/scripts/migrations
-COPY --from=builder /app/server/dist/scripts/bootstrap.js ./server/dist/scripts/bootstrap.js
+# Note: bootstrap.js is already in server/dist (from line 38)
 
 # Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh

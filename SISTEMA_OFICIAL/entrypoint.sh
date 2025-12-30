@@ -24,8 +24,8 @@ if [ -n "$DB_BOOTSTRAP_TOKEN" ]; then
     echo "📦 [BOOTSTRAP] Token de migração detectado"
     echo "📦 [BOOTSTRAP] Executando migrações..."
     
-    # Executar bootstrap (compilado)
-    node /app/server/dist/scripts/bootstrap.js
+    # Executar bootstrap (caminho compilado real)
+    node /app/server/dist/server/src/scripts/bootstrap.js
     
     BOOTSTRAP_EXIT=$?
     
