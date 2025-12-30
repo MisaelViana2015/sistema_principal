@@ -157,9 +157,7 @@ const FraudEventDetail = ({ eventId: propEventId, onClose }: FraudEventDetailPro
                         </Button>
                     )}
 
-                    {!isModal && (
-                        <ExternalEvidenceForm eventId={event.id} />
-                    )}
+                    <ExternalEvidenceForm eventId={event.id} />
                 </div>
             </div>
 

@@ -453,7 +453,7 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                         { t: "1. KM Total", d: "Distância percorrida no turno (KM Final − KM Inicial). Base para validar coerência física.", i: "KM muito baixo com receita alta ou KM muito alto com poucas corridas pode indicar inconsistência." },
                         { t: "2. Duração Total", d: "Tempo total do turno ou duracaoMin/60. Base para métricas 'por hora'.", i: "Turnos longos demais podem indicar esquecimento ou fraude." },
                         { t: "3. Receita Total", d: "Soma do faturamento do turno. Base para receita por KM e Ticket Médio." },
-                        { t: "4. Receita por KM", d: "Receita Total ÷ KM Total. Faixa esperada: R$ 3,00 a R$ 20,00/km.", i: "Abaixo do mínimo: corridas subdeclaradas. Acima: manipulação.", curr: `${fmtBRL(recPerKm)}/km` },
+                        { t: "4. Receita por KM", d: "Receita Total ÷ KM Total. Faixa esperada: R$ 2,00 a R$ 20,00/km.", i: "Abaixo do mínimo: corridas subdeclaradas. Acima: manipulação.", curr: `${fmtBRL(recPerKm)}/km` },
                         { t: "5. Receita por Hora", d: "Receita Total ÷ Duração. Faixa esperada: máx R$ 150,00/h.", i: "Valores altos indicam concentração artificial de receita.", curr: `${fmtBRL(recPerHour)}/h` },
                         { t: "6. Corridas", d: "Quantidade de corridas registradas.", i: "Valida coerência entre receita e atividade." }
                     ].map((item, idx) => (
