@@ -191,5 +191,163 @@ export const FraudService = {
             console.error("❌ Erro na análise de turnos abertos:", error);
             return [];
         }
+    },
+
+    /**
+     * Gera uma previsão de análise de fraude baseada nos dados atuais do turno.
+     * Útil para exibir ao usuário o que seria detectado se o turno fosse encerrado agora ou reanalisado.
+     */
+    async generatePreview(shiftId: string) {
+        // 1. Buscar dados do turno
+        const shift = await db.query.shifts.findFirst({
+            where: (s, { eq }) => eq(s.id, shiftId),
+            with: {
+                driver: true,
+                vehicle: true
+            }
+        });
+
+        if (!shift) throw new Error("Turno não encontrado");
+
+        // Buscar corridas
+        const shiftRides = await db.query.rides.findMany({
+            where: (r, { eq }) => eq(r.shiftId, shiftId),
+        });
+
+        // 2. Preparar Dados
+        const inicio = new Date(shift.inicio);
+        const fim = shift.fim ? new Date(shift.fim) : new Date();
+
+        // Garantir duração mínima
+        const durationHours = Math.max(
+            0.01,
+            (fim.getTime() - inicio.getTime()) / (1000 * 60 * 60)
+        );
+
+        const kmStart = Number(shift.kmInicial || 0);
+        const kmEnd = Number(shift.kmFinal || 0);
+
+        // Tratamento de segurança para dados numéricos
+        let totalBruto = Number(shift.totalBruto || 0);
+        let totalCorridas = Number(shift.totalCorridas || 0);
+
+        // Fallback se totais estiverem zerados (mas há corridas)
+        if ((totalBruto <= 0 || totalCorridas <= 0) && shiftRides.length > 0) {
+            totalBruto = shiftRides.reduce((acc, ride) => acc + Number(ride.valor), 0);
+            totalCorridas = shiftRides.length;
+        }
+
+        // 3. Carregar Contexto - OTIMIZADO: Busca apenas o último turno do MESMO motorista
+        const ctx: ShiftContext = {
+            baseline: null,
+            prevShiftKmEnd: null,
+        };
+
+        // Baseline (pode demorar, então idealmente seria cached, mas aqui é preview)
+        const baseline = await buildDriverBaseline(shift.driverId, inicio.toISOString());
+        ctx.baseline = baseline;
+
+        // 4. Executar Engine de Regras
+        const rideValues = shiftRides.map(r => Number(r.valor));
+        const score = analyzeShiftRules(
+            kmStart,
+            kmEnd,
+            totalBruto,
+            totalCorridas,
+            durationHours,
+            ctx,
+            rideValues
+        );
+
+        // --- v2.0 INTELLIGENCE RULES (Preview) ---
+        const asyncHits: FraudRuleHit[] = [];
+
+        // 1. Productivity vs Fleet Baseline
+        const prodHit = await checkProductivityVsBaseline(inicio, durationHours, shift.driverId, shiftRides);
+        if (prodHit) asyncHits.push(prodHit);
+
+        // 2. Driver vs Historical Self
+        const historyHit = await checkDriverHistoricalDeviation(shift.id, shift.driverId, durationHours, totalCorridas);
+        if (historyHit) asyncHits.push(historyHit);
+
+        // 3. Value Asymmetry
+        const asymmetryHit = await checkValueAsymmetry(shift.id, shift.driverId, inicio, fim, shiftRides);
+        if (asymmetryHit) asyncHits.push(asymmetryHit);
+
+        // 4. Time Gaps
+        const gapHit = await checkTimeGapsWithPresence(shift, shiftRides);
+        if (gapHit) asyncHits.push(gapHit);
+
+        // Merge Scores
+        if (asyncHits.length > 0) {
+            score.reasons.push(...asyncHits);
+            score.totalScore += asyncHits.reduce((acc, h) => acc + h.score, 0);
+
+            // Re-evaluate level
+            if (score.totalScore >= 70) score.level = 'critical';
+            else if (score.totalScore >= 35) score.level = 'high';
+            else if (score.totalScore >= 20) score.level = 'medium';
+            else score.level = 'low';
+        }
+
+        // 5. Montar Objeto de Análise (Sem salvar)
+        const kmTotal = Math.max(0, kmEnd - kmStart);
+
+        return {
+            shiftId: shift.id,
+            driverId: shift.driverId,
+            driverName: shift.driver?.nome || "Desconhecido",
+            vehicleId: shift.vehicleId,
+            vehiclePlate: shift.vehicle?.plate || "N/A",
+            date: inicio.toISOString().split("T")[0],
+            kmTotal,
+            revenueTotal: totalBruto,
+            revenuePerKm: kmTotal > 0 ? totalBruto / kmTotal : 0,
+            revenuePerHour: totalBruto / durationHours,
+            ridesPerHour: totalCorridas / durationHours,
+            score,
+            baseline
+        };
+    },
+
+    /**
+     * Coleta os dados necessários para gerar o PDF detalhado de um evento de fraude.
+     */
+    async getEventPdfData(eventId: string) {
+        // 1. Buscar evento de fraude
+        const event = await FraudRepository.getFraudEventById(eventId);
+        if (!event) throw new Error("Evento não encontrado");
+        if (!event.shiftId) throw new Error("Evento sem turno associado");
+
+        // 2. Buscar turno completo
+        const shift = await db.query.shifts.findFirst({
+            where: (s, { eq }) => eq(s.id, event.shiftId!),
+            with: {
+                driver: true,
+                vehicle: true
+            }
+        });
+
+        if (!shift) throw new Error("Turno original não encontrado");
+
+        // 3. Buscar corridas
+        const ridesList = await db.query.rides.findMany({
+            where: (r, { eq }) => eq(r.shiftId, shift.id)
+        });
+
+        // 4. Buscar histórico recente de eventos para esse motorista (Contexto)
+        const recentEvents = await FraudRepository.getFraudEvents({
+            driverId: shift.driverId,
+            limit: 5 // Últimos 5 eventos
+        });
+
+        return {
+            event,
+            shift,
+            rides: ridesList,
+            driver: shift.driver,
+            vehicle: shift.vehicle,
+            recentHistory: recentEvents
+        };
     }
 };

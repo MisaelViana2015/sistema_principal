@@ -289,3 +289,35 @@ export const fraudEventsRelations = relations(fraudEvents, ({ one }) => ({
 export const driversRelations = relations(drivers, ({ many }) => ({
     fraudEvents: many(fraudEvents),
 }));
+
+export const shiftsRelations = relations(shifts, ({ one, many }) => ({
+    driver: one(drivers, {
+        fields: [shifts.driverId],
+        references: [drivers.id],
+    }),
+    vehicle: one(vehicles, {
+        fields: [shifts.vehicleId],
+        references: [vehicles.id],
+    }),
+    rides: many(rides),
+    expenses: many(expenses),
+    fraudEvents: many(fraudEvents),
+}));
+
+export const expensesRelations = relations(expenses, ({ one }) => ({
+    shift: one(shifts, {
+        fields: [expenses.shiftId],
+        references: [shifts.id],
+    }),
+    costType: one(costTypes, {
+        fields: [expenses.costTypeId],
+        references: [costTypes.id],
+    }),
+}));
+
+export const ridesRelations = relations(rides, ({ one }) => ({
+    shift: one(shifts, {
+        fields: [rides.shiftId],
+        references: [shifts.id],
+    }),
+}));

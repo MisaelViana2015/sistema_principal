@@ -291,3 +291,85 @@ export async function restoreDefaultCostTypes(req: Request, res: Response) {
     }
 }
 
+
+export async function fixLegacyShifts(req: Request, res: Response) {
+    try {
+        const dryRun = req.query.dryRun === "true";
+        const result = await service.fixLegacyShifts(dryRun);
+        res.json(result);
+    } catch (error: any) {
+        console.error("Erro ao corrigir turnos:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+export async function getDebugShifts(req: Request, res: Response) {
+    try {
+        const result = await service.getDebugShifts();
+        res.json(result);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+export async function fixSingleShift(req: Request, res: Response) {
+    try {
+        const { shiftId } = req.params;
+        const dryRun = req.query.dryRun === "true";
+        const result = await service.fixSingleShift(shiftId, dryRun);
+        res.json(result);
+    } catch (error: any) {
+        console.error("Erro ao corrigir turno:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+export async function fixRideCounts(req: Request, res: Response) {
+    try {
+        const dryRun = req.query.dryRun === "true";
+        const result = await service.fixRideCounts(dryRun);
+        res.json(result);
+    } catch (error: any) {
+        console.error("Erro ao corrigir contagem:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+export async function fixSingleRideCount(req: Request, res: Response) {
+    try {
+        const { shiftId } = req.params;
+        const result = await service.fixSingleRideCount(shiftId);
+        res.json(result);
+    } catch (error: any) {
+        console.error("Erro:", error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
+export async function getDebugData(req: Request, res: Response) {
+    try {
+        const result = await service.checkDebugData();
+        res.json(result);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+export async function fixDbEmergency(req: Request, res: Response) {
+    try {
+        const result = await service.fixDbEmergency();
+        res.send(result);
+    } catch (error: any) {
+        res.status(500).send("Error updating DB: " + error.message);
+    }
+}
+
+export async function fixLegacyVisuals(req: Request, res: Response) {
+    try {
+        const { migrateCostTypesVisuals } = await import("../../scripts/db/migrate_cost_types_visuals.js");
+        await migrateCostTypesVisuals();
+        res.json({ success: true, message: "Migração visual executada com sucesso." });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+}

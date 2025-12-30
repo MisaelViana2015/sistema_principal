@@ -6,7 +6,6 @@ import { desc, eq, sql } from "drizzle-orm";
 import { fraudEvents, shifts } from "../../../shared/schema.js";
 import { calculateAuditMetrics } from "./fraud.audit.service.js";
 // Static imports for better performance
-import { analyzeShiftRules } from "./fraud.engine.js";
 import { generateEventPdf } from "./fraud.pdf.js";
 import { randomUUID } from "node:crypto";
 
@@ -332,58 +331,11 @@ export const FraudController = {
     async previewAnalysis(req: Request, res: Response) {
         try {
             const { shiftId } = req.params;
-
-            const shift = await db.query.shifts.findFirst({
-                where: (s, { eq }) => eq(s.id, shiftId)
-            });
-
-            if (!shift) {
-                return res.status(404).json({ error: "Turno não encontrado" });
-            }
-
-            // Calculate current metrics
-            const inicio = new Date(shift.inicio);
-            const agora = new Date();
-            const durationHours = Math.max(0.01, (agora.getTime() - inicio.getTime()) / (1000 * 60 * 60));
-
-            // Fetch rides for the shift
-            const ridesResult = await db.execute(sql`SELECT valor FROM rides WHERE shift_id = ${shift.id}`);
-            const ridesData = ridesResult.rows as any[];
-
-            let totalBruto = Number(shift.totalBruto || 0);
-            let totalCorridas = Number(shift.totalCorridas || 0);
-            let rideValues: number[] = [];
-
-            if (ridesData.length > 0) {
-                totalBruto = ridesData.reduce((acc, r) => acc + Number(r.valor), 0);
-                totalCorridas = ridesData.length;
-                rideValues = ridesData.map(r => Number(r.valor));
-            }
-
-            const score = analyzeShiftRules(
-                Number(shift.kmInicial || 0),
-                Number(shift.kmFinal || shift.kmInicial || 0),
-                totalBruto,
-                totalCorridas,
-                durationHours,
-                { baseline: null, prevShiftKmEnd: null }, // Simplified context for preview
-                rideValues
-            );
-
-            res.json({
-                shiftId,
-                isPreview: true,
-                score: score.totalScore,
-                level: score.level,
-                alerts: score.reasons.map((r: any) => ({
-                    code: r.code,
-                    label: r.label,
-                    description: r.description,
-                    severity: r.severity
-                }))
-            });
+            const preview = await FraudService.generatePreview(shiftId);
+            res.json(preview);
         } catch (error: any) {
-            res.status(500).json({ error: error.message });
+            console.error("Erro ao gerar preview:", error);
+            res.status(500).json({ error: error.message || "Erro interno ao gerar preview" });
         }
     },
 
@@ -391,7 +343,7 @@ export const FraudController = {
     async getEventDetail(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const event = await FraudRepository.getEventById(id);
+            const event = await FraudRepository.getFraudEventById(id);
 
             if (!event) {
                 return res.status(404).json({ error: "Evento de fraude não encontrado" });
@@ -553,7 +505,7 @@ export const FraudController = {
                 return res.status(400).json({ error: "Status desconhecido." });
             }
 
-            const currentEvent = await FraudRepository.getEventById(id);
+            const currentEvent = await FraudRepository.getFraudEventById(id);
             if (!currentEvent) {
                 return res.status(404).json({ error: "Evento não encontrado." });
             }
@@ -658,25 +610,13 @@ export const FraudController = {
     async getEventPdf(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const event = await FraudRepository.getEventById(id);
+            const data = await FraudService.getEventPdfData(id);
 
-            if (!event) {
-                return res.status(404).json({ error: "Evento não encontrado" });
-            }
+            // Re-calculate aggregations and metrics for PDF generation (Presentation Logic remains in controler or can be moved to a helper)
+            // Ideally, the Service returns RAW data, and the Controller/PDF Generator handles formatting.
+            // For now, let's keep the heavy lifting in the service but we need to pass data to generateEventPdf
 
-            if (!event.shiftId) {
-                return res.status(404).json({ error: "Evento sem turno associado" });
-            }
-
-            const shift = await db.query.shifts.findFirst({
-                where: (s, { eq }) => eq(s.id, event.shiftId as string)
-            });
-
-            if (!shift) {
-                return res.status(404).json({ error: "Turno associado não encontrado" });
-            }
-
-            // Calculate audit metrics for PDF (same logic as getEventDetail)
+            // Calculate audit metrics for PDF
             let auditMetrics = null;
 
             // Aggregation Variables
@@ -688,12 +628,8 @@ export const FraudController = {
             let revenueUnknown = 0;
 
             try {
-                const shiftRides = await db.query.rides.findMany({
-                    where: (r, { eq }) => eq(r.shiftId, shift.id)
-                });
-
-                // Full Aggregation Logic (Mirrors getEventDetail)
-                shiftRides.forEach(ride => {
+                // Full Aggregation Logic
+                data.rides.forEach((ride: any) => {
                     const rawType = (ride.tipo || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                     const val = Number(ride.valor || 0);
 
@@ -709,40 +645,40 @@ export const FraudController = {
                     }
                 });
 
-                const shareParticular = Number(shift.totalBruto || 0) > 0
-                    ? (revenueParticular / Number(shift.totalBruto)) * 100
+                const shareParticular = Number(data.shift.totalBruto || 0) > 0
+                    ? (revenueParticular / Number(data.shift.totalBruto)) * 100
                     : 0;
 
                 auditMetrics = await calculateAuditMetrics(
-                    shift.id,
-                    shift.driverId,
+                    data.shift.id,
+                    data.shift.driverId,
                     {
-                        inicio: shift.inicio,
-                        fim: shift.fim,
-                        totalBruto: Number(shift.totalBruto || 0),
-                        totalCorridas: Number(shift.totalCorridas || 0),
-                        kmInicial: Number(shift.kmInicial || 0),
-                        kmFinal: Number(shift.kmFinal || 0),
-                        duracaoMin: Number(shift.duracaoMin || 0)
+                        inicio: data.shift.inicio,
+                        fim: data.shift.fim,
+                        totalBruto: Number(data.shift.totalBruto || 0),
+                        totalCorridas: Number(data.shift.totalCorridas || 0),
+                        kmInicial: Number(data.shift.kmInicial || 0),
+                        kmFinal: Number(data.shift.kmFinal || 0),
+                        duracaoMin: Number(data.shift.duracaoMin || 0)
                     },
-                    event.riskScore || 0,
+                    data.event.riskScore || 0,
                     shareParticular
                 );
             } catch (auditError) {
                 console.error("[FRAUD] PDF: Error calculating audit metrics:", auditError);
             }
 
-            const pdfBuffer = await generateEventPdf(event, {
-                id: shift.id,
-                driverId: shift.driverId,
-                vehicleId: shift.vehicleId,
-                inicio: shift.inicio,
-                fim: shift.fim,
-                kmInicial: Number(shift.kmInicial || 0),
-                kmFinal: Number(shift.kmFinal || 0),
-                totalBruto: Number(shift.totalBruto || 0),
-                totalCorridas: Number(shift.totalCorridas || 0),
-                duracaoMin: Number(shift.duracaoMin || 0),
+            const pdfBuffer = await generateEventPdf(data.event, {
+                id: data.shift.id,
+                driverId: data.shift.driverId,
+                vehicleId: data.shift.vehicleId,
+                inicio: data.shift.inicio,
+                fim: data.shift.fim,
+                kmInicial: Number(data.shift.kmInicial || 0),
+                kmFinal: Number(data.shift.kmFinal || 0),
+                totalBruto: Number(data.shift.totalBruto || 0),
+                totalCorridas: Number(data.shift.totalCorridas || 0),
+                duracaoMin: Number(data.shift.duracaoMin || 0),
                 // Breakdown Data
                 ridesAppCount,
                 ridesParticularCount,
@@ -755,10 +691,13 @@ export const FraudController = {
             });
 
             res.setHeader("Content-Type", "application/pdf");
-            res.setHeader("Content-Disposition", `attachment; filename=fraud-event-${event.id}.pdf`);
+            res.setHeader("Content-Disposition", `attachment; filename=fraud-event-${data.event.id}.pdf`);
             res.send(pdfBuffer);
         } catch (error: any) {
             console.error("[FRAUD] Error generating PDF:", error);
+            if (error.message === "Evento não encontrado") {
+                return res.status(404).json({ error: "Evento não encontrado" });
+            }
             res.status(500).json({ error: error.message });
         }
     },

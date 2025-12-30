@@ -154,7 +154,7 @@ export const FraudRepository = {
         return Number(result[0]?.count || 0);
     },
 
-    async getEventById(eventId: string) {
+    async getFraudEventById(eventId: string) {
         return await db.query.fraudEvents.findFirst({
             where: (f, { eq }) => eq(f.id, eventId),
         });
