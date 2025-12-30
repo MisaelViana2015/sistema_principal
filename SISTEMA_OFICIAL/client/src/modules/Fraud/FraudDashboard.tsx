@@ -382,9 +382,9 @@ const FraudDashboard = () => {
                                 filteredAlerts.map((alert, i) => (
                                     <div key={alert.id || i} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800/50">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-2 h-2 rounded-full ${alert.riskLevel === 'critical' ? 'bg-red-600' :
-                                                alert.riskLevel === 'high' ? 'bg-orange-500' :
-                                                    alert.riskLevel === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                                            <div className={`w-4 h-4 rounded-full ${alert.riskScore >= 20 ? 'bg-red-500' :
+                                                    alert.riskScore >= 6 ? 'bg-yellow-400' :
+                                                        alert.riskScore >= 1 ? 'bg-green-300' : 'bg-blue-100'
                                                 }`}></div>
                                             <div>
                                                 <div className="flex items-center gap-2">
