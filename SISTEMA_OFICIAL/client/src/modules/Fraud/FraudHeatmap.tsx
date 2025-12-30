@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 // Cores baseadas na média de risco (avgScore)
 // Engine Scores: Low=5, Medium=10, High=20, Critical=40
 const getRiskColor = (score: number, count: number) => {
-    if (count === 0 || score === 0) return 'bg-white dark:bg-slate-600 border-2 border-gray-200 dark:border-slate-500'; // Branco/Sem risco
+    if (count === 0 || score === 0) return 'bg-slate-200 dark:bg-slate-700'; // Branco/Sem risco (Sólido)
     if (score <= 5) return 'bg-green-300 dark:bg-green-700';  // Verde Claro (1 LOW)
     if (score < 20) return 'bg-yellow-400 dark:bg-yellow-500'; // Amarelo (MEDIUM ou múltiplos LOWs)
     return 'bg-red-500 dark:bg-red-600';                        // Vermelho (HIGH ou CRITICAL)
@@ -106,7 +106,7 @@ export const FraudHeatmap = ({ driverId }: FraudHeatmapProps) => {
 
             <div className="flex gap-4 mt-6 text-xs text-gray-500 items-center flex-wrap">
                 <span>Legenda (Score Médio):</span>
-                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-white dark:bg-slate-600 border-2 border-gray-200 dark:border-slate-500"></div> Sem risco (0)</div>
+                <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-slate-200 dark:bg-slate-700"></div> Sem risco (0)</div>
                 <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-green-300 dark:bg-green-700"></div> 1-5 (LOW)</div>
                 <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-yellow-400 dark:bg-yellow-500"></div> 6-19 (MEDIUM)</div>
                 <div className="flex items-center gap-1"><div className="w-3 h-3 rounded-sm bg-red-500 dark:bg-red-600"></div> ≥ 20 (HIGH+)</div>
