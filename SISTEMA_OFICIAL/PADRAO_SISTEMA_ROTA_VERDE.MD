@@ -140,20 +140,50 @@ Misturar esses dois processos é a principal causa de:
 ✅ **COMO MIGRAÇÕES DEVEM FUNCIONAR**
 *   Executadas manualmente
 *   Ou via job explícito
-*   Ou via script controlado
+*   Ou via **bootstrap controlado com token temporário** (ver 6.1)
 *   Sempre com consciência humana
 
-📌 **Nunca no boot do container**
+📌 **Nunca no boot do container SEM controle explícito**
 
-🔧 **EXEMPLO DE COMANDO (ILUSTRATIVO)**
-`npm run db:migrate`
-Ou equivalente, dependendo da stack final.
+### 6.1 BOOTSTRAP EMBARCADO (PADRÃO OFICIAL)
+
+Sistema profissional de migração embarcada no container que **requer ação humana explícita**.
+
+**ARQUIVOS:**
+*   `server/scripts/bootstrap.ts` - Executor de migrações
+*   `server/scripts/migrations/*.sql` - SQLs versionados
+*   `entrypoint.sh` - Orquestrador do container
+
+**COMO FUNCIONA:**
+1.  Admin define `DB_BOOTSTRAP_TOKEN` no Railway (igual à DATABASE_URL, mas temporário)
+2.  Container sobe e `entrypoint.sh` detecta o token
+3.  `bootstrap.ts` executa migrações pendentes
+4.  Registra na tabela `_migrations` (auditoria)
+5.  Token é removido da memória
+6.  Servidor inicia normalmente
+7.  Admin **remove** `DB_BOOTSTRAP_TOKEN` do Railway
+8.  Próximo deploy NÃO executa bootstrap (token não existe)
+
+**SEGURANÇA:**
+*   ✅ Sem endpoint HTTP exposto
+*   ✅ Sem credenciais no código
+*   ✅ Idempotente (IF NOT EXISTS em todos os SQLs)
+*   ✅ Auditável (tabela `_migrations`)
+*   ✅ Token controlado pelo admin
+
+**ADICIONAR NOVA MIGRAÇÃO:**
+1.  Criar arquivo `server/scripts/migrations/XXX_nome.sql`
+2.  Usar `IF NOT EXISTS` em todos os comandos
+3.  Testar localmente
+4.  Fazer deploy
+5.  Definir `DB_BOOTSTRAP_TOKEN` no Railway
+6.  Verificar logs de execução
+7.  Remover `DB_BOOTSTRAP_TOKEN`
 
 ❌ **PROIBIDO**
-*   rodar migration automaticamente
-*   rodar migration ao subir container
-*   rodar migration “se detectar diferença”
-*   rodar migration em produção sem validação
+*   rodar migration automaticamente SEM token
+*   deixar `DB_BOOTSTRAP_TOKEN` permanente
+*   expor SQL via endpoint HTTP
 
 ## 7️⃣ PIPELINE CORRETO DE DEPLOY (SEM DESVIO)
 
