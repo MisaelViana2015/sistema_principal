@@ -4,9 +4,6 @@ import { FraudController } from "./fraud.controller.js";
 const router = Router();
 
 // Todas as rotas de fraude exigem autenticação e nível ADMIN
-// TEMPORARY: Public migration endpoint to fix schema
-router.post("/run-migration", FraudController.runMigration);
-
 // Todas as rotas de fraude exigem autenticação e nível ADMIN
 import { requireAuth, requireAdmin } from "../../core/middlewares/authMiddleware.js";
 router.use(requireAuth, requireAdmin);
@@ -40,5 +37,6 @@ router.get("/event/:id/pdf", FraudController.getEventPdf);
 // Phase 4 & 6: Intelligence Routes
 router.get("/behavior-change/:driverId", FraudController.checkBehaviorChange);
 router.post("/event/:id/evidence", FraudController.addExternalEvidence);
+router.post("/run-migration", FraudController.runMigration);
 
 export const fraudRoutes = router;
