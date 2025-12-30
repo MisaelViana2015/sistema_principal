@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 // Cores baseadas na média de risco (avgScore)
 // Engine Scores: Low=5, Medium=10, High=20, Critical=40
 const getRiskColor = (score: number, count: number) => {
-    if (count === 0) return 'bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700'; // Branco/Sem eventos
+    if (count === 0 || score === 0) return 'bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700'; // Branco/Sem risco
     if (score <= 5) return 'bg-green-300 dark:bg-green-800';  // Verde Claro (1 LOW)
     if (score < 20) return 'bg-yellow-400 dark:bg-yellow-600'; // Amarelo (MEDIUM ou múltiplos LOWs)
     return 'bg-red-400 dark:bg-red-700';                        // Vermelho (HIGH ou CRITICAL)
