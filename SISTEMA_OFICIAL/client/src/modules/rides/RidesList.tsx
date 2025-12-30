@@ -45,7 +45,7 @@ export function RidesList({ shiftId: propShiftId }: RidesListProps) {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
-    const LIMIT = 10;
+    const LIMIT = 10000;
 
     useEffect(() => {
         loadDrivers();
