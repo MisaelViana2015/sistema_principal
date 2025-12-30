@@ -8,6 +8,7 @@ import helmet from "helmet";
 import { db } from "./core/db/connection.js";
 import { sql } from "drizzle-orm";
 import { errorHandler, notFoundHandler } from "./core/errors/errorHandler.js";
+import { requireAuth, requireAdmin } from "./core/middlewares/authMiddleware.js";
 // Importar rotas dos módulos
 import authRoutes from "./modules/auth/auth.routes.js";
 import vehiclesRoutes from "./modules/vehicles/vehicles.routes.js";
@@ -136,8 +137,8 @@ app.get("/api/health", (req, res) => {
 
 // EMERGÊNCIA: Rota Manual de Correção do Banco (Definida ANTES do frontend catch-all)
 
-// FIX ENDPOINT - NO AUTH - Direct Access
-app.get("/api/financial/fix-schema", async (req, res) => {
+// FIX ENDPOINT - Requer autenticação ADMIN
+app.get("/api/financial/fix-schema", requireAuth, requireAdmin, async (req, res) => {
     try {
         await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS total_installments integer`);
         await db.execute(sql`ALTER TABLE fixed_costs ADD COLUMN IF NOT EXISTS start_date timestamp`);

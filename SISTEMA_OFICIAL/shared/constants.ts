@@ -22,7 +22,7 @@ export const SESSION_CONFIG = {
 export const SECURITY_CONFIG = {
     BCRYPT_ROUNDS: 10,
     JWT_EXPIRES_IN: "24h",
-    PASSWORD_MIN_LENGTH: 5,
+    PASSWORD_MIN_LENGTH: 8,
 } as const;
 
 // ============================================

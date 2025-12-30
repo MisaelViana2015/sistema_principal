@@ -42,6 +42,8 @@ shared/*.d.ts
 
 # Backups and Local Ops
 *.cred
+db_prod.cred
+debug_*.json
 server/backups/
 migration_data.json
 run_migration.ps1

@@ -63,8 +63,16 @@ export const FraudRepository = {
 
         if (status && status !== 'all') {
             if (status.includes(',')) {
-                const statuses = status.split(',').map(s => `'${s.trim()}'`).join(',');
-                whereClause = sql`${whereClause} AND fe.status IN (${sql.raw(statuses)})`;
+                // FIXED: Validate status against allowed values to prevent SQL Injection
+                const allowed = ['pendente', 'em_analise', 'confirmado', 'arquivado', 'falso_positivo'];
+                const statusList = status.split(',')
+                    .map(s => s.trim())
+                    .filter(s => allowed.includes(s));
+
+                if (statusList.length > 0) {
+                    const safeStatuses = statusList.map(s => `'${s}'`).join(',');
+                    whereClause = sql`${whereClause} AND fe.status IN (${sql.raw(safeStatuses)})`;
+                }
             } else {
                 whereClause = sql`${whereClause} AND fe.status = ${status}`;
             }
@@ -106,8 +114,16 @@ export const FraudRepository = {
 
         if (status && status !== 'all') {
             if (status.includes(',')) {
-                const statuses = status.split(',').map(s => `'${s.trim()}'`).join(',');
-                whereClause = sql`${whereClause} AND status IN (${sql.raw(statuses)})`;
+                // FIXED: Validate status against allowed values to prevent SQL Injection
+                const allowed = ['pendente', 'em_analise', 'confirmado', 'arquivado', 'falso_positivo'];
+                const statusList = status.split(',')
+                    .map(s => s.trim())
+                    .filter(s => allowed.includes(s));
+
+                if (statusList.length > 0) {
+                    const safeStatuses = statusList.map(s => `'${s}'`).join(',');
+                    whereClause = sql`${whereClause} AND status IN (${sql.raw(safeStatuses)})`;
+                }
             } else {
                 whereClause = sql`${whereClause} AND status = ${status}`;
             }
