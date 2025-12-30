@@ -20,9 +20,8 @@ router.get("/:id", shiftsController.getById);
 router.post("/", shiftsController.start);
 router.post("/:id/finish", shiftsController.finish);
 
-// Edição -> Qualquer logado (ownership check no controller)
-router.patch("/:id", shiftsController.update);
-// Exclusão -> APENAS ADMIN
+// Apenas ADMIN pode editar ou excluir turnos
+router.patch("/:id", requireAdmin, shiftsController.update);
 router.delete("/:id", requireAdmin, shiftsController.delete);
 
 export default router;

@@ -22,8 +22,9 @@ router.get("/tires", requireAdmin, controller.getTires);
 router.post("/tires", requireAdmin, controller.createTire);
 router.delete("/tires/:id", requireAdmin, controller.deleteTire);
 router.post("/expenses", controller.createExpense);
-router.put("/expenses/:id", controller.updateExpenseController);
-router.delete("/expenses/:id", controller.deleteExpenseController);
+// Apenas ADMIN pode editar ou excluir despesas
+router.put("/expenses/:id", requireAdmin, controller.updateExpenseController);
+router.delete("/expenses/:id", requireAdmin, controller.deleteExpenseController);
 
 // Cost Types
 router.post("/cost-types/restore-defaults", requireAdmin, controller.restoreDefaultCostTypes);
