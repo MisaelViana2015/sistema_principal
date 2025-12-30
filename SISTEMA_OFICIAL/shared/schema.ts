@@ -84,6 +84,13 @@ export const shifts = pgTable("shifts", {
     valorKm: real("valor_km").default(0),
     discountCompany: real("discount_company").default(0),
     discountDriver: real("discount_driver").default(0),
+}, (table) => {
+    return {
+        driverIdIndex: index("idx_shifts_driver_id").on(table.driverId),
+        vehicleIdIndex: index("idx_shifts_vehicle_id").on(table.vehicleId),
+        statusIndex: index("idx_shifts_status").on(table.status),
+        inicioIndex: index("idx_shifts_inicio").on(table.inicio),
+    }
 });
 
 export const rides = pgTable("rides", {
@@ -92,6 +99,11 @@ export const rides = pgTable("rides", {
     tipo: text("tipo").notNull(),
     valor: numeric("valor", { precision: 12, scale: 2 }).notNull(),
     hora: timestamp("hora").notNull(),
+}, (table) => {
+    return {
+        shiftIdIndex: index("idx_rides_shift_id").on(table.shiftId),
+        horaIndex: index("idx_rides_hora").on(table.hora),
+    }
 });
 
 export type Shift = typeof shifts.$inferSelect;
@@ -135,6 +147,12 @@ export const fixedCostInstallments = pgTable("fixed_cost_installments", {
     paidAmount: numeric("paid_amount", { precision: 12, scale: 2 }),
     paidDate: timestamp("paid_date"),
     notes: text("notes"),
+}, (table) => {
+    return {
+        fixedCostIdIndex: index("idx_fixed_cost_inst_id").on(table.fixedCostId),
+        dueDateIndex: index("idx_fixed_cost_inst_due").on(table.dueDate),
+        statusIndex: index("idx_fixed_cost_inst_status").on(table.status),
+    }
 });
 
 export const tires = pgTable("tires", {
@@ -165,6 +183,12 @@ export const expenses = pgTable("expenses", {
     notes: text("notes"),
     isParticular: boolean("is_particular").default(false), // Legacy/Particular Cost
     isSplitCost: boolean("is_split_cost").default(false), // 50/50 Split
+}, (table) => {
+    return {
+        driverIdIndex: index("idx_expenses_driver_id").on(table.driverId),
+        shiftIdIndex: index("idx_expenses_shift_id").on(table.shiftId),
+        dateIndex: index("idx_expenses_date").on(table.date),
+    }
 });
 
 // Tabela Legacy recuperada do backup

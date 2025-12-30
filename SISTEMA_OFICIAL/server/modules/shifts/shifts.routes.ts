@@ -19,7 +19,9 @@ router.get("/:id", shiftsController.getById);
 // Ações operacionais -> Qualquer logado
 router.post("/", shiftsController.start);
 router.post("/:id/finish", shiftsController.finish);
-router.patch("/:id", shiftsController.update);
+
+// Edição e Exclusão -> APENAS ADMIN
+router.patch("/:id", requireAdmin, shiftsController.update);
 router.delete("/:id", requireAdmin, shiftsController.delete);
 
 export default router;
