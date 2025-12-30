@@ -67,14 +67,13 @@ export const FraudRepository = {
                 const allowed = ['pendente', 'em_analise', 'confirmado', 'arquivado', 'falso_positivo'];
                 const statusList = status.split(',')
                     .map(s => s.trim())
-                    .filter(s => allowed.includes(s));
+                    .filter(s => allowed.includes(s)) as any[];
 
                 if (statusList.length > 0) {
-                    const safeStatuses = statusList.map(s => `'${s}'`).join(',');
-                    whereClause = sql`${whereClause} AND fe.status IN (${sql.raw(safeStatuses)})`;
+                    whereClause = sql`${whereClause} AND ${inArray(fraudEvents.status, statusList)}`;
                 }
             } else {
-                whereClause = sql`${whereClause} AND fe.status = ${status}`;
+                whereClause = sql`${whereClause} AND ${eq(fraudEvents.status, status as any)}`;
             }
         }
 
@@ -118,14 +117,13 @@ export const FraudRepository = {
                 const allowed = ['pendente', 'em_analise', 'confirmado', 'arquivado', 'falso_positivo'];
                 const statusList = status.split(',')
                     .map(s => s.trim())
-                    .filter(s => allowed.includes(s));
+                    .filter(s => allowed.includes(s)) as any[];
 
                 if (statusList.length > 0) {
-                    const safeStatuses = statusList.map(s => `'${s}'`).join(',');
-                    whereClause = sql`${whereClause} AND status IN (${sql.raw(safeStatuses)})`;
+                    whereClause = sql`${whereClause} AND ${inArray(fraudEvents.status, statusList)}`;
                 }
             } else {
-                whereClause = sql`${whereClause} AND status = ${status}`;
+                whereClause = sql`${whereClause} AND ${eq(fraudEvents.status, status as any)}`;
             }
         }
 
@@ -187,6 +185,27 @@ export const FraudRepository = {
             .returning();
 
         return updated;
+    },
+
+    async getDashboardStats() {
+        // Optimization: Use direct SQL aggregation for performance
+        const statsResult = await db.execute(sql`
+            SELECT 
+                AVG(risk_score) as avg_score,
+                COUNT(*) FILTER (WHERE status = 'pendente' OR status = 'em_analise') as active_alerts,
+                COUNT(*) FILTER (WHERE risk_level = 'high' OR risk_level = 'critical') as high_risk_count,
+                COUNT(*) as processed_shifts
+            FROM fraud_events
+        `);
+
+        const row = statsResult.rows[0] as any;
+
+        return {
+            riskScore: Number(Number(row.avg_score || 0).toFixed(1)),
+            activeAlerts: Number(row.active_alerts || 0),
+            processedShifts: Number(row.processed_shifts || 0),
+            highRiskDrivers: Number(row.high_risk_count || 0)
+        };
     },
 
     async getTopRiskyDrivers(limit: number = 5) {

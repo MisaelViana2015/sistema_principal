@@ -42,24 +42,8 @@ export const FraudController = {
     // GET /api/fraud/dashboard-stats
     async getDashboardStats(req: Request, res: Response) {
         try {
-            // Optimization: Use direct SQL aggregation for performance
-            const statsResult = await db.execute(sql`
-                SELECT 
-                    AVG(risk_score) as avg_score,
-                    COUNT(*) FILTER (WHERE status = 'pendente' OR status = 'em_analise') as active_alerts,
-                    COUNT(*) FILTER (WHERE risk_level = 'high' OR risk_level = 'critical') as high_risk_count,
-                    COUNT(*) as processed_shifts
-                FROM fraud_events
-            `);
-
-            const row = statsResult.rows[0] as any;
-
-            res.json({
-                riskScore: Number(Number(row.avg_score || 0).toFixed(1)),
-                activeAlerts: Number(row.active_alerts || 0),
-                processedShifts: Number(row.processed_shifts || 0),
-                highRiskDrivers: Number(row.high_risk_count || 0)
-            });
+            const stats = await FraudRepository.getDashboardStats();
+            res.json(stats);
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
@@ -405,18 +389,16 @@ export const FraudController = {
             let revenueUnknown = 0;
 
             ridesList.forEach(r => {
-                const rawType = r.tipo?.toLowerCase(); // Strict check, no 'includes' fallback to partial matches
+                const rawType = (r.tipo || '').toUpperCase();
                 const val = Number(r.valor || 0);
 
-                // STRICT ENUM CHECK (MANDATORY ADJUSTMENT)
-                if (rawType === 'app') {
+                if (['APP', 'APLICATIVO'].includes(rawType)) {
                     ridesAppCount++;
                     revenueApp += val;
-                } else if (rawType === 'particular') {
+                } else if (rawType === 'PARTICULAR') {
                     ridesParticularCount++;
                     revenueParticular += val;
                 } else {
-                    // Explicitly handle unknown/other types
                     ridesUnknownCount++;
                     revenueUnknown += val;
                 }
