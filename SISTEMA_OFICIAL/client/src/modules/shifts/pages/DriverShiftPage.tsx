@@ -271,8 +271,21 @@ export default function DriverShiftPage() {
             loadData();
         } catch (err: any) {
             console.error(err);
-            // Show specific error from backend (like duplication error) or generic fallback
-            setError(err.response?.data?.message || "Erro ao salvar corrida.");
+            const errMsg = err.response?.data?.message || "Erro ao salvar corrida.";
+
+            // Tentar extrair o tempo de espera da mensagem de erro backend
+            // Formato esperado: "Aguarde Xm Ys para..." ou "Aguarde Ys para..."
+            const match = errMsg.match(/Aguarde (?:(\d+)m )?(\d+)s/);
+            if (match) {
+                const minutes = parseInt(match[1] || '0');
+                const seconds = parseInt(match[2]);
+                const totalSeconds = (minutes * 60) + seconds;
+                setRideCooldown(totalSeconds);
+                // Não precisa setar erro pois o cooldown UI vai aparecer
+                setError("");
+            } else {
+                setError(errMsg);
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -726,6 +739,21 @@ export default function DriverShiftPage() {
                                     />
                                 </div>
                             </div>
+
+                            {/* Error Message */}
+                            <AnimatePresence>
+                                {error && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0 }}
+                                        className="mb-6 bg-red-900/20 border border-red-500/50 rounded-lg p-4 flex items-center gap-3 text-red-200 text-sm font-bold"
+                                    >
+                                        <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                                        <span>{error}</span>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
 
                             {/* Cooldown Warning */}
                             {rideCooldown > 0 && (
