@@ -159,6 +159,10 @@ const FraudDashboard = () => {
     });
 
     const recentAlerts = alertsResponse?.data || [];
+    // Filter out Score 0 from 'Ativos' view (nothing to validate)
+    const filteredAlerts = statusFilter === 'all'
+        ? recentAlerts.filter((a: any) => a.riskScore > 0)
+        : recentAlerts;
     const meta = alertsResponse?.meta || { total: 0, totalPages: 1, page: 1 };
 
     // Fetch Drivers for Select Filter
@@ -180,8 +184,7 @@ const FraudDashboard = () => {
         highRiskDrivers: 0
     };
 
-    // Filtered Alerts are now handled by Backend via useEffect/Query on statusFilter change
-    const filteredAlerts = recentAlerts; // Direct assignment as backend already filtered
+    // Filter out Score 0 from 'Ativos' view - handled above in filteredAlerts
 
     const getStatusBadge = (status: string) => {
         const styles = {
@@ -359,7 +362,7 @@ const FraudDashboard = () => {
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold">🚨 Alertas Recentes</h3>
                             <div className="flex gap-2">
-                                {['all', 'pendente', 'em_analise', 'confirmado'].map(status => (
+                                {['all', 'pendente', 'em_analise', 'confirmado', 'descartado'].map(status => (
                                     <button
                                         key={status}
                                         onClick={() => {
@@ -383,8 +386,8 @@ const FraudDashboard = () => {
                                     <div key={alert.id || i} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800/50">
                                         <div className="flex items-center gap-3">
                                             <div className={`w-4 h-4 rounded-full ${alert.riskScore >= 20 ? 'bg-red-500' :
-                                                    alert.riskScore >= 6 ? 'bg-yellow-400' :
-                                                        alert.riskScore >= 1 ? 'bg-green-300' : 'bg-blue-100'
+                                                alert.riskScore >= 6 ? 'bg-yellow-400' :
+                                                    alert.riskScore >= 1 ? 'bg-green-300' : 'bg-blue-100'
                                                 }`}></div>
                                             <div>
                                                 <div className="flex items-center gap-2">
