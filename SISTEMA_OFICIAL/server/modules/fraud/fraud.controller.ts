@@ -955,5 +955,38 @@ export const FraudController = {
             console.error("[FRAUD BATCH] Erro ao iniciar:", error);
             res.status(500).json({ error: error.message });
         }
+    },
+
+    // POST /api/fraud/run-migration - Protected migration endpoint
+    async runMigration(req: Request, res: Response) {
+        try {
+            console.log("[MIGRATION] Starting fraud_events schema migration...");
+
+            // Add the 3 new columns for external evidence (IF NOT EXISTS for safety)
+            await db.execute(sql`
+                ALTER TABLE fraud_events ADD COLUMN IF NOT EXISTS external_evidence TEXT;
+            `);
+            await db.execute(sql`
+                ALTER TABLE fraud_events ADD COLUMN IF NOT EXISTS evidence_type TEXT;
+            `);
+            await db.execute(sql`
+                ALTER TABLE fraud_events ADD COLUMN IF NOT EXISTS external_ride_count INTEGER;
+            `);
+
+            console.log("[MIGRATION] ✅ Migration completed successfully!");
+
+            res.json({
+                success: true,
+                message: "Migration completed. Added columns: external_evidence, evidence_type, external_ride_count",
+                timestamp: new Date().toISOString()
+            });
+        } catch (error: any) {
+            console.error("[MIGRATION] ❌ Migration failed:", error);
+            res.status(500).json({
+                success: false,
+                error: error.message,
+                hint: "Check if columns already exist or database connection is valid"
+            });
+        }
     }
 };

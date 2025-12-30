@@ -36,5 +36,6 @@ router.get("/event/:id/pdf", FraudController.getEventPdf);
 // Phase 4 & 6: Intelligence Routes
 router.get("/behavior-change/:driverId", FraudController.checkBehaviorChange);
 router.post("/event/:id/evidence", FraudController.addExternalEvidence);
+router.post("/run-migration", FraudController.runMigration);
 
 export const fraudRoutes = router;
