@@ -269,9 +269,10 @@ export default function DriverShiftPage() {
             setRideValue("");
             setViewMode("dashboard");
             loadData();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError("Erro ao salvar corrida.");
+            // Show specific error from backend (like duplication error) or generic fallback
+            setError(err.response?.data?.message || "Erro ao salvar corrida.");
         } finally {
             setIsSubmitting(false);
         }

@@ -24,7 +24,23 @@ import { eq, sql } from "drizzle-orm";
 import { recalculateShiftTotals } from "../shifts/shifts.service.js";
 
 export async function createRide(data: typeof rides.$inferInsert) {
-    // 1. Create the ride
+    // 1. Check for cooldown (5 minutes between any rides for this shift)
+    const lastRide = await ridesRepository.getLastRideByShiftId(data.shiftId);
+    if (lastRide) {
+        const timeDiff = Math.abs(new Date(data.hora).getTime() - new Date(lastRide.hora).getTime());
+
+        // 300000 ms = 5 minutes
+        if (timeDiff < 300000) {
+            const secondsRemaining = Math.ceil((300000 - timeDiff) / 1000);
+            const minutes = Math.floor(secondsRemaining / 60);
+            const seconds = secondsRemaining % 60;
+            const timeString = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+
+            throw new Error(`Aguarde ${timeString} para lançar uma nova corrida.`);
+        }
+    }
+
+    // 2. Create the ride
     const newRide = await ridesRepository.create(data);
 
     // 2. Recalculate shift totals

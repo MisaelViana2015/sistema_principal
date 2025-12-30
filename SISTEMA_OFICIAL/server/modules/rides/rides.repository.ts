@@ -104,3 +104,13 @@ export async function deleteRide(id: string) {
         .returning();
     return deleted;
 }
+
+export async function getLastRideByShiftId(shiftId: string) {
+    const [ride] = await db
+        .select()
+        .from(rides)
+        .where(eq(rides.shiftId, shiftId))
+        .orderBy(desc(rides.hora))
+        .limit(1);
+    return ride;
+}
