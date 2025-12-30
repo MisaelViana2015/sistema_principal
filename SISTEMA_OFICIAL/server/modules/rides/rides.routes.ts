@@ -10,10 +10,7 @@ router.use(requireAuth);
 
 router.get("/", getAllRidesController);
 router.post("/", rideCreationLimiter, createRideController);
-
-// Edição e Exclusão -> APENAS ADMIN
-import { requireAdmin } from "../../core/middlewares/authMiddleware.js";
-router.put("/:id", requireAdmin, updateRideController);
-router.delete("/:id", requireAdmin, deleteRideController);
+router.put("/:id", updateRideController);
+router.delete("/:id", deleteRideController);
 
 export default router;
