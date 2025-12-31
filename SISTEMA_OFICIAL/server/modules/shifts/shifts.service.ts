@@ -223,40 +223,31 @@ export async function recalculateShiftTotals(shiftId: string) {
     // 6. Calcular Líquido e Repasses (Via Calculadora Centralizada)
     const totalCorridas = ridesData.length;
 
-    const {
-        totalBruto,
-        liquido,
-        repasseEmpresa: repasseEmpresaFinal,
-        repasseMotorista: repasseMotoristaFinal,
-        discountCompany,
-        discountDriver
-    } = FinancialCalculator.calculateShiftResult({
+    console.log(`   🧮 Chamando FinancialCalculator para: shiftId=${shiftId}, totalApp=${totalApp}`);
+    const result = FinancialCalculator.calculateShiftResult({
         totalApp,
         totalParticular,
         totalCustosNormais,
         totalCustosDivididos,
         shiftDate: shift.inicio || new Date()
     });
+    console.log(`   🎯 Resultado Calculator: Empresa=${result.repasseEmpresa}, Motorista=${result.repasseMotorista}, Rule=${result.ruleUsed}`);
 
     // 7. Atualizar Turno
     const updatedShift = await shiftsRepository.updateShift(shiftId, {
         totalApp,
         totalParticular,
-        totalBruto,
+        totalBruto: result.totalBruto,
         totalCorridas,
         totalCorridasApp,
         totalCorridasParticular,
         totalCustos, // Mantém o total geral para histórico
         totalCustosParticular,
-        liquido, // Mostra o líquido base ou final? O dashboard calcula via Bruto - Custos. 
-        // Se salvarmos 'liquido' diferente de (Bruto - TotalCustos), pode confundir o front existente.
-        // Mas a regra mudou. Vamos salvar o Líquido Base (que gerou o 60/40) para coerência matemática interna?
-        // Ou o Líquido Real (o que sobrou no final)? 
-        // Vamos salvar o Líquido usado para a base 60/40 para que os percentuais façam sentido se alguém conferir.
-        repasseEmpresa: repasseEmpresaFinal,
-        repasseMotorista: repasseMotoristaFinal,
-        discountCompany,
-        discountDriver
+        liquido: result.liquido,
+        repasseEmpresa: result.repasseEmpresa,
+        repasseMotorista: result.repasseMotorista,
+        discountCompany: result.discountCompany,
+        discountDriver: result.discountDriver
     });
 
     console.log("✅ Turno atualizado com sucesso.");
