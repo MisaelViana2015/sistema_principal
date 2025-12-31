@@ -135,7 +135,12 @@ export function MaintenanceDashboard() {
                                     <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded border ${getStatusColor(m.status)}`}>
                                         {getStatusIcon(m.status)}
                                         <span className="font-bold">
-                                            {m.status === 'overdue' ? 'VENCIDO' : m.status === 'warning' ? 'ATENÇÃO' : 'OK'}
+                                            {m.status === 'overdue'
+                                                ? `VENCIDO (${(item.vehicle.currentKm - m.nextKm).toLocaleString()} km atrás)`
+                                                : m.status === 'warning'
+                                                    ? `ATENÇÃO (faltam ${(m.nextKm - item.vehicle.currentKm).toLocaleString()} km)`
+                                                    : `OK (faltam ${(m.nextKm - item.vehicle.currentKm).toLocaleString()} km)`
+                                            }
                                         </span>
                                     </div>
                                 </div>

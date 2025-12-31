@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "../components/ui/card";
 import { Shield } from "lucide-react";
 import HeaderNew from "../components/layout/HeaderNew";
@@ -10,10 +10,7 @@ import ImportTab from "./admin/tabs/ImportTab";
 import PerformanceContent from "../modules/performance/components/PerformanceContent";
 import FraudDashboard from "../modules/Fraud/FraudDashboard";
 import { useTheme } from "../contexts/ThemeContext";
-
-/**
- * ADMIN DASHBOARD - DARK MODE CORRIGIDO
- */
+import { api } from "../lib/api";
 
 type TabValue =
     | "motoristas" | "veiculos" | "turnos" | "corridas"
@@ -25,21 +22,35 @@ interface TabItem {
     badge?: number;
 }
 
-const tabs: TabItem[] = [
-    { value: "fraude", label: "Fraude" },
-    { value: "motoristas", label: "Motoristas" },
-    { value: "veiculos", label: "Veículos", badge: 3 },
-    { value: "turnos", label: "Turnos" },
-    { value: "corridas", label: "Corridas" },
-    { value: "analise", label: "Análise" },
-    { value: "importar", label: "Importar" }
-];
-
-
 export default function Admin() {
     const [activeTab, setActiveTab] = useState<TabValue>("fraude");
+    const [alertCount, setAlertCount] = useState<number>(0);
     const { theme } = useTheme();
     const isDark = theme === 'dark';
+
+    useEffect(() => {
+        async function fetchAlertCount() {
+            try {
+                const res = await api.get("/maintenance/alert-count");
+                if (res.data.success) {
+                    setAlertCount(res.data.data.total);
+                }
+            } catch (error) {
+                console.error("Failed to fetch maintenance alerts:", error);
+            }
+        }
+        fetchAlertCount();
+    }, []);
+
+    const tabs: TabItem[] = [
+        { value: "fraude", label: "Fraude" },
+        { value: "motoristas", label: "Motoristas" },
+        { value: "veiculos", label: "Veículos", badge: alertCount > 0 ? alertCount : undefined },
+        { value: "turnos", label: "Turnos" },
+        { value: "corridas", label: "Corridas" },
+        { value: "analise", label: "Análise" },
+        { value: "importar", label: "Importar" }
+    ];
 
     const styles = {
         mainContainer: {

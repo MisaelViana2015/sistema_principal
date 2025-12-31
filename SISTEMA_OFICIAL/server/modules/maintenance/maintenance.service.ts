@@ -58,6 +58,21 @@ export const maintenanceService = {
         });
     },
 
+    // Contar alertas ativos (overdue + warning)
+    async getAlertCount() {
+        // Usa o dashboard já calculado para não duplicar lógica
+        const dashboard = await this.getFleetDashboard();
+
+        const overdueCount = dashboard.filter(d => d.status === 'overdue').length;
+        const warningCount = dashboard.filter(d => d.status === 'warning').length;
+
+        return {
+            total: overdueCount + warningCount,
+            overdue: overdueCount,
+            warning: warningCount
+        };
+    },
+
     // Registrar que uma manutenção foi feita
     async performMaintenance(vehicleId: string, configId: string, currentKm: number, date: Date) {
         // 1. Busca config para saber intervalo
