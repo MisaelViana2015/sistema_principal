@@ -45,18 +45,32 @@ export async function login(credentials: LoginInput, userAgent?: string, ipAddre
     let isPasswordValid = await verifyPassword(senha, driver.senha);
     let usedTempPassword = false;
 
+    console.log('[LOGIN DEBUG] Email:', email);
+    console.log('[LOGIN DEBUG] Regular password valid:', isPasswordValid);
+    console.log('[LOGIN DEBUG] Has temp_password_hash:', !!driver.temp_password_hash);
+    console.log('[LOGIN DEBUG] Has temp_password_expires_at:', !!driver.temp_password_expires_at);
+
     // Se senha principal falhou, tenta a temporária (se existir e não expirou)
     if (!isPasswordValid && driver.temp_password_hash && driver.temp_password_expires_at) {
         const now = new Date();
         const expires = new Date(driver.temp_password_expires_at);
 
+        console.log('[LOGIN DEBUG] Now:', now.toISOString());
+        console.log('[LOGIN DEBUG] Expires:', expires.toISOString());
+        console.log('[LOGIN DEBUG] Is not expired:', now < expires);
+
         if (now < expires) {
-            isPasswordValid = await verifyPassword(senha, driver.temp_password_hash);
-            usedTempPassword = true;
+            const tempPasswordValid = await verifyPassword(senha, driver.temp_password_hash);
+            console.log('[LOGIN DEBUG] Temp password valid:', tempPasswordValid);
+            if (tempPasswordValid) {
+                isPasswordValid = true;
+                usedTempPassword = true;
+            }
         }
     }
 
     if (!isPasswordValid) {
+        console.log('[LOGIN DEBUG] FAILED - Invalid credentials');
         throw new UnauthorizedError(ERROR_MESSAGES.INVALID_CREDENTIALS);
     }
 
