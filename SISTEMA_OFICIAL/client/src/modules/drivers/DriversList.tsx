@@ -62,14 +62,24 @@ export default function DriversList() {
         }
     }
 
+    const [tempPasswordData, setTempPasswordData] = useState<{ password: string, driverName: string } | null>(null);
+
     async function handleResetPassword(driver: Driver) {
         if (!confirm(`Resetar senha de ${driver.nome}? Uma senha temporária será gerada.`)) return;
         try {
             const result = await driversService.resetPassword(driver.id);
-            alert(`Senha temporária: ${result.temp_password}\n\nVálida por 10 minutos.\nEnvie para o motorista via WhatsApp.`);
+            setTempPasswordData({ password: result.temp_password, driverName: driver.nome });
         } catch (err) {
             console.error(err);
             alert("Erro ao resetar senha");
+        }
+    }
+
+    function handleCopyPassword() {
+        if (tempPasswordData) {
+            navigator.clipboard.writeText(tempPasswordData.password);
+            // Optional: show toast or brief feedback
+            alert("Senha copiada! Envie para o motorista.");
         }
     }
 
@@ -206,6 +216,49 @@ export default function DriversList() {
                 onSave={handleSave}
                 driver={selectedDriver}
             />
+
+            {/* Temp Password Modal */}
+            {tempPasswordData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-2xl max-w-md w-full border border-green-500/50">
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <KeyRound className="w-6 h-6 text-green-600 dark:text-green-400" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                                Senha Gerada com Sucesso!
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Para o motorista <strong>{tempPasswordData.driverName}</strong>
+                            </p>
+                        </div>
+
+                        <div className="bg-gray-100 dark:bg-gray-900 p-4 rounded-lg mb-6 text-center border border-gray-200 dark:border-gray-700">
+                            <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">Senha Temporária</div>
+                            <div className="text-2xl font-mono font-bold text-green-600 dark:text-green-400 tracking-wider">
+                                {tempPasswordData.password}
+                            </div>
+                            <div className="text-xs text-gray-400 mt-2">Válida por 10 minutos</div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setTempPasswordData(null)}
+                                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                            >
+                                Fechar
+                            </button>
+                            <button
+                                onClick={handleCopyPassword}
+                                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+                                Copiar Senha
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
