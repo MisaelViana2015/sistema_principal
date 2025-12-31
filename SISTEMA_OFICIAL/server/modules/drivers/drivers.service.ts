@@ -44,8 +44,8 @@ export async function deleteDriver(id: string) {
 }
 
 export async function resetDriverPassword(driverId: string): Promise<{ tempPassword: string; expiresAt: Date }> {
-    // 1. Gerar senha temporária: "RV-" + 4 dígitos
-    const tempPassword = `RV-${Math.floor(1000 + Math.random() * 9000)}`;
+    // 1. Gerar senha temporária: "RV-" + 5 dígitos = 8 caracteres
+    const tempPassword = `RV-${Math.floor(10000 + Math.random() * 90000)}`;
 
     // 2. Hash da senha (bcrypt)
     const tempHash = await bcrypt.hash(tempPassword, 10);
