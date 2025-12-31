@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Card } from "../components/ui/card";
-import { Shield } from "lucide-react";
+import {
+    Shield, Users, Car, Calendar, MapPin,
+    TrendingUp, AlertTriangle, Upload, ChevronRight
+} from "lucide-react";
 import HeaderNew from "../components/layout/HeaderNew";
 import DriversList from "../modules/drivers/DriversList";
 import VehiclesList from "../modules/vehicles/VehiclesList";
@@ -19,7 +22,9 @@ type TabValue =
 interface TabItem {
     value: TabValue;
     label: string;
+    icon: React.ComponentType<{ className?: string }>;
     badge?: number;
+    color: string;
 }
 
 export default function Admin() {
@@ -56,191 +61,121 @@ export default function Admin() {
     };
 
     const tabs: TabItem[] = [
-        { value: "fraude", label: "Fraude" },
-        { value: "motoristas", label: "Motoristas" },
-        { value: "veiculos", label: "Veículos", badge: alertCount > 0 ? alertCount : undefined },
-        { value: "turnos", label: "Turnos" },
-        { value: "corridas", label: "Corridas" },
-        { value: "analise", label: "Análise" },
-        { value: "importar", label: "Importar" }
+        { value: "fraude", label: "Fraude", icon: AlertTriangle, color: "from-red-500 to-orange-500" },
+        { value: "motoristas", label: "Motoristas", icon: Users, color: "from-blue-500 to-cyan-500" },
+        { value: "veiculos", label: "Veículos", icon: Car, badge: alertCount > 0 ? alertCount : undefined, color: "from-green-500 to-emerald-500" },
+        { value: "turnos", label: "Turnos", icon: Calendar, color: "from-purple-500 to-violet-500" },
+        { value: "corridas", label: "Corridas", icon: MapPin, color: "from-pink-500 to-rose-500" },
+        { value: "analise", label: "Análise", icon: TrendingUp, color: "from-amber-500 to-yellow-500" },
+        { value: "importar", label: "Importar", icon: Upload, color: "from-slate-500 to-gray-500" }
     ];
 
-    const styles = {
-        mainContainer: {
-            backgroundColor: isDark ? '#111827' : '#f9fafb',
-            minHeight: '100vh',
-            display: 'flex',
-            flexDirection: 'column' as const
-        },
-        contentWrapper: {
-            flex: 1,
-            overflowY: 'auto' as const,
-            paddingBottom: '2rem'
-        },
-        tabsContainer: {
-            backgroundColor: isDark ? '#1f2937' : '#ffffff',
-            borderRadius: '0.75rem',
-            padding: '1.5rem',
-            border: `1px solid ${isDark ? '#374151' : '#e2e8f0'}`,
-            boxShadow: isDark
-                ? '0 4px 6px rgba(0, 0, 0, 0.3)'
-                : '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }
-    };
-
-    const tabButtonStyle = (isActive: boolean) => ({
-        padding: '0.625rem 1.25rem',
-        fontSize: '0.875rem',
-        fontWeight: isActive ? '600' : '500',
-        borderRadius: '0.5rem',
-        border: `1px solid ${isActive
-            ? (isDark ? '#6366f1' : '#4f46e5')
-            : (isDark ? '#475569' : '#cbd5e1')
-            }`,
-        cursor: 'pointer',
-        transition: 'all 0.2s ease',
-        backgroundColor: isActive
-            ? (isDark ? '#4f46e5' : '#eef2ff')
-            : (isDark ? '#334155' : '#ffffff'),
-        color: isActive
-            ? '#ffffff'
-            : (isDark ? '#cbd5e1' : '#64748b'),
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.5rem',
-        boxShadow: isActive
-            ? (isDark ? '0 2px 8px rgba(99, 102, 241, 0.4)' : '0 2px 8px rgba(79, 70, 229, 0.15)')
-            : 'none'
-    } as React.CSSProperties);
-
-    const badgeStyle = {
-        minWidth: '1.25rem',
-        height: '1.25rem',
-        padding: '0 0.375rem',
-        borderRadius: '9999px',
-        fontSize: '0.75rem',
-        fontWeight: '600',
-        backgroundColor: '#ef4444',
-        color: '#ffffff',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-    };
-
-    const separatorStyle = {
-        height: '1px',
-        backgroundColor: isDark ? '#334155' : '#e2e8f0',
-        margin: '1rem 0'
-    };
-
     return (
-        <div style={styles.mainContainer}>
+        <div className={`min-h-screen ${isDark ? 'bg-gray-950' : 'bg-slate-100'}`}>
             <HeaderNew showDesktopNav={false} />
 
-            <main style={styles.contentWrapper}>
-                <div className="max-w-7xl mx-auto p-6 space-y-8">
-                    {/* Card Header */}
-                    <Card className="overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-700 to-purple-800 dark:from-indigo-700 dark:via-purple-800 dark:to-indigo-950 border-0 shadow-2xl">
-                        <div className="p-8">
-                            <div className="flex items-center gap-5">
-                                <div className="p-4 rounded-2xl bg-white/30 dark:bg-white/20 backdrop-blur-md shadow-lg">
-                                    <Shield className="w-10 h-10 text-white" strokeWidth={2.5} />
+            <main className="flex-1 overflow-y-auto pb-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+                    {/* Header Card - Hero Style */}
+                    <Card className="relative overflow-hidden border-0 shadow-2xl">
+                        {/* Gradient Background */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700" />
+
+                        {/* Animated Pattern Overlay */}
+                        <div className="absolute inset-0 opacity-10">
+                            <div className="absolute inset-0" style={{
+                                backgroundImage: `radial-gradient(circle at 25% 25%, white 2px, transparent 2px),
+                                                  radial-gradient(circle at 75% 75%, white 1px, transparent 1px)`,
+                                backgroundSize: '50px 50px'
+                            }} />
+                        </div>
+
+                        {/* Content */}
+                        <div className="relative p-6 sm:p-8">
+                            <div className="flex items-center gap-4">
+                                <div className="p-4 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 shadow-xl">
+                                    <Shield className="w-10 h-10 text-white" strokeWidth={2} />
                                 </div>
                                 <div>
-                                    <h1 className="text-4xl font-bold text-white drop-shadow-lg tracking-tight">
+                                    <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                                         Área Administrativa
                                     </h1>
-                                    <p className="text-base text-white/95 mt-2 font-medium">
-                                        Gestão completa do sistema Rota Verde
+                                    <p className="text-white/80 mt-1 text-sm sm:text-base flex items-center gap-2">
+                                        <span>Gestão completa do sistema Rota Verde</span>
+                                        <ChevronRight className="w-4 h-4" />
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </Card>
 
-                    {/* Tabs Container */}
-                    <div style={styles.tabsContainer}>
-                        <div className="space-y-6">
-                            {/* Tabs - DUAS LINHAS */}
-                            <div className="flex flex-col gap-3">
-                                {/* LINHA 1 */}
-                                <div className="flex flex-wrap gap-2">
-                                    {tabs.slice(0, 7).map(tab => (
-                                        <button
-                                            key={tab.value}
-                                            style={tabButtonStyle(activeTab === tab.value)}
-                                            onClick={() => setActiveTab(tab.value)}
-                                            onMouseEnter={(e) => {
-                                                if (activeTab !== tab.value) {
-                                                    e.currentTarget.style.backgroundColor = isDark ? '#475569' : '#f1f5f9';
-                                                    e.currentTarget.style.transform = 'translateY(-1px)';
-                                                }
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                if (activeTab !== tab.value) {
-                                                    e.currentTarget.style.backgroundColor = isDark ? '#334155' : '#ffffff';
-                                                    e.currentTarget.style.transform = 'translateY(0)';
-                                                }
-                                            }}
-                                        >
-                                            {tab.label}
-                                            {tab.badge && (
-                                                <span style={badgeStyle}>{tab.badge}</span>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
+                    {/* Tabs Navigation - Modern Pills */}
+                    <div className={`rounded-2xl p-4 sm:p-5 ${isDark ? 'bg-gray-900/80 border border-gray-800' : 'bg-white border border-gray-200'} shadow-xl backdrop-blur-sm`}>
+                        <div className="flex flex-wrap gap-2 sm:gap-3">
+                            {tabs.map(tab => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.value;
 
-                                {/* LINHA 2 */}
-                                <div className="flex flex-wrap gap-2">
-                                    {tabs.slice(7).map(tab => (
-                                        <button
-                                            key={tab.value}
-                                            style={tabButtonStyle(activeTab === tab.value)}
-                                            onClick={() => setActiveTab(tab.value)}
-                                            onMouseEnter={(e) => {
-                                                if (activeTab !== tab.value) {
-                                                    e.currentTarget.style.backgroundColor = isDark ? '#475569' : '#f1f5f9';
-                                                    e.currentTarget.style.transform = 'translateY(-1px)';
-                                                }
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                if (activeTab !== tab.value) {
-                                                    e.currentTarget.style.backgroundColor = isDark ? '#334155' : '#ffffff';
-                                                    e.currentTarget.style.transform = 'translateY(0)';
-                                                }
-                                            }}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                                return (
+                                    <button
+                                        key={tab.value}
+                                        onClick={() => setActiveTab(tab.value)}
+                                        className={`
+                                            relative flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm
+                                            transition-all duration-300 ease-out
+                                            ${isActive
+                                                ? `bg-gradient-to-r ${tab.color} text-white shadow-lg scale-105`
+                                                : isDark
+                                                    ? 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                                            }
+                                        `}
+                                    >
+                                        <Icon className={`w-4 h-4 ${isActive ? 'animate-pulse' : ''}`} />
+                                        <span>{tab.label}</span>
 
-                            {/* Separador */}
-                            <div style={separatorStyle} />
+                                        {/* Badge */}
+                                        {tab.badge && (
+                                            <span className="ml-1 px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-bounce">
+                                                {tab.badge}
+                                            </span>
+                                        )}
 
-                            {/* CONTEÚDO */}
-                            <div>
-                                {activeTab === "motoristas" && <DriversList />}
-                                {activeTab === "veiculos" && (
-                                    <>
-                                        <VehiclesList />
-                                        <button
-                                            onClick={handleFixDB}
-                                            className="fixed bottom-4 right-4 z-50 bg-red-600 text-white px-2 py-1 rounded shadow-lg text-xs opacity-50 hover:opacity-100"
-                                            title="Corrigir Nomes DB e Diagnosticar"
-                                        >
-                                            Fix DB
-                                        </button>
-                                    </>
-                                )}
-                                {activeTab === "turnos" && <ShiftsList />}
-                                {activeTab === "corridas" && <RidesList />}
-                                {activeTab === "analise" && <PerformanceContent />}
-                                {activeTab === "fraude" && <FraudDashboard />}
-                                {activeTab === "importar" && <ImportTab />}
-                            </div>
+                                        {/* Active Indicator Glow */}
+                                        {isActive && (
+                                            <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${tab.color} opacity-20 blur-lg -z-10`} />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Content Area */}
+                    <div className={`rounded-2xl p-4 sm:p-6 ${isDark ? 'bg-gray-900/50 border border-gray-800' : 'bg-white border border-gray-200'} shadow-lg`}>
+
+
+                        {/* CONTEÚDO */}
+                        <div>
+                            {activeTab === "motoristas" && <DriversList />}
+                            {activeTab === "veiculos" && (
+                                <>
+                                    <VehiclesList />
+                                    <button
+                                        onClick={handleFixDB}
+                                        className="fixed bottom-4 right-4 z-50 bg-red-600 text-white px-2 py-1 rounded shadow-lg text-xs opacity-50 hover:opacity-100"
+                                        title="Corrigir Nomes DB e Diagnosticar"
+                                    >
+                                        Fix DB
+                                    </button>
+                                </>
+                            )}
+                            {activeTab === "turnos" && <ShiftsList />}
+                            {activeTab === "corridas" && <RidesList />}
+                            {activeTab === "analise" && <PerformanceContent />}
+                            {activeTab === "fraude" && <FraudDashboard />}
+                            {activeTab === "importar" && <ImportTab />}
                         </div>
                     </div>
                 </div>
@@ -248,3 +183,4 @@ export default function Admin() {
         </div>
     );
 }
+
