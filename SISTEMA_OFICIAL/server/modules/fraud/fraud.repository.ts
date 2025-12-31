@@ -26,10 +26,15 @@ export const FraudRepository = {
                 baseline: analysis.baseline, // Persist baseline for PDF reports
                 isPartialAnalysis: analysis.isPartialAnalysis || false
             },
-            status: existing ? existing.status : "pendente",
+            status: (existing ? existing.status : "pendente"),
             // Use shiftInicio (full timestamp) instead of date string to preserve timezone
             detectedAt: analysis.shiftInicio || (analysis.date ? new Date(analysis.date + "T12:00:00") : new Date()),
         };
+
+        // AUTO-DISCARD: If Score is 0, status must be 'descartado' (unless already confirmed/archived)
+        if (payload.riskScore === 0 && (!existing || existing.status === 'pendente' || existing.status === 'em_analise')) {
+            payload.status = 'descartado';
+        }
 
         if (existing) {
             // 🔴 NOVA VERIFICAÇÃO: Só atualiza se houver mudança relevante
