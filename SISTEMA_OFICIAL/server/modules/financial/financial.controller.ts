@@ -1,6 +1,9 @@
-
 import { Request, Response } from "express";
 import * as service from "./financial.service.js";
+import { db } from "../../core/db/connection.js";
+import { shifts } from "../../../shared/schema.js";
+import { and, eq } from "drizzle-orm";
+import * as shiftsService from "../shifts/shifts.service.js";
 import {
     createFixedCostSchema, updateFixedCostSchema,
     createExpenseSchema, updateExpenseSchema,
@@ -140,10 +143,22 @@ export async function updateFixedCostInstallment(req: Request, res: Response) {
 
 export async function createExpense(req: Request, res: Response) {
     try {
-        const driverId = req.body.driverId || (req as any).user?.userId;
-        const data = { ...req.body, driverId };
+        const user = (req as any).user;
+        const driverId = user.role === 'admin' ? (req.body.driverId || user.userId) : user.userId;
 
+        const data = { ...req.body, driverId };
         const validatedData = createExpenseSchema.parse(data);
+
+        // Se houver shiftId, verificar se o turno pertence a este motorista (Segurança Adicional)
+        if (validatedData.shiftId) {
+            const shift = await db.select().from(shifts)
+                .where(and(eq(shifts.id, validatedData.shiftId), eq(shifts.driverId, String(driverId))))
+                .limit(1);
+
+            if (shift.length === 0 && user.role !== 'admin') {
+                return res.status(403).json({ error: "Este turno não pertence a você." });
+            }
+        }
 
         const newExpense = await service.createExpense({
             driverId: validatedData.driverId,
@@ -153,7 +168,7 @@ export async function createExpense(req: Request, res: Response) {
             date: validatedData.date,
             notes: validatedData.notes,
             isParticular: validatedData.isParticular,
-            isSplitCost: (validatedData as any).isSplitCost, // Validated via passed through data
+            isSplitCost: (validatedData as any).isSplitCost,
         });
 
         res.status(201).json(newExpense);

@@ -53,7 +53,7 @@ router.post("/logout", requireAuth, authController.logoutController);
  * GET /api/auth/drivers
  * Lista todos os motoristas (apenas admin/auth)
  */
-router.get("/drivers", requireAuth, authController.getAllDriversController);
+router.get("/drivers", requireAuth, requireAdmin, authController.getAllDriversController);
 
 /**
  * POST /api/auth/change-password-required

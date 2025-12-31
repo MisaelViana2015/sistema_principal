@@ -1,6 +1,8 @@
 
 import { Request, Response } from "express";
 import * as ridesService from "./rides.service.js";
+import * as shiftsService from "../shifts/shifts.service.js";
+
 import { createRideSchema, updateRideSchema } from "./rides.validators.js";
 
 export async function getAllRidesController(req: Request, res: Response) {
@@ -26,7 +28,16 @@ export async function getAllRidesController(req: Request, res: Response) {
 
 export async function createRideController(req: Request, res: Response) {
     try {
+        const user = (req as any).user;
         const validatedData = createRideSchema.parse(req.body);
+
+        // Security: Check if shift belongs to the user
+        const shift = await shiftsService.getShiftById(validatedData.shiftId);
+        if (!shift) return res.status(404).json({ message: "Turno não encontrado" });
+
+        if (user.role !== 'admin' && shift.driverId !== user.userId) {
+            return res.status(403).json({ message: "Este turno não pertence a você." });
+        }
 
         const newRide = await ridesService.createRide({
             shiftId: validatedData.shiftId,
@@ -41,7 +52,6 @@ export async function createRideController(req: Request, res: Response) {
         if (error.issues) return res.status(400).json({ message: "Validation error", details: error.issues });
         return res.status(400).json({ message: error.message || "Erro ao registrar corrida" });
     }
-
 }
 
 export async function updateRideController(req: Request, res: Response) {

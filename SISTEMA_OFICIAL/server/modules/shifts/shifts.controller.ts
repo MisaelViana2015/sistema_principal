@@ -49,7 +49,8 @@ export async function getShiftByIdController(req: Request, res: Response) {
 
 export async function startShiftController(req: Request, res: Response) {
     try {
-        const driverId = req.body.driverId || (req as any).user?.userId;
+        const user = (req as any).user;
+        const driverId = user.role === 'admin' ? (req.body.driverId || user.userId) : user.userId;
         const data = { ...req.body, driverId }; // Merge driverId
 
         const validatedData = startShiftSchema.parse(data);
@@ -65,7 +66,16 @@ export async function startShiftController(req: Request, res: Response) {
 export async function finishShiftController(req: Request, res: Response) {
     try {
         const { id } = req.params;
+        const user = (req as any).user;
         const validatedData = finishShiftSchema.parse(req.body);
+
+        // Security: Ensure the shift belongs to the driver
+        if (user.role !== 'admin') {
+            const shift = await shiftsService.getShiftById(id);
+            if (!shift || shift.driverId !== user.userId) {
+                return res.status(403).json({ message: "Você não tem permissão para finalizar este turno." });
+            }
+        }
 
         const shift = await shiftsService.finishShift(id, validatedData.kmFinal);
 

@@ -10,40 +10,47 @@ export async function getAllShifts(page: number, limit: number, filters: any) {
 }
 
 export async function startShift(driverId: string, vehicleId: string, kmInicial: number) {
-    // Check if driver already has open shift
-    const openShift = await shiftsRepository.findOpenShiftByDriver(driverId);
-    if (openShift) {
-        throw new Error("Motorista já possui um turno aberto.");
-    }
+    return await db.transaction(async (tx) => {
+        // Check if driver already has open shift
+        const openShift = await shiftsRepository.findOpenShiftByDriver(driverId); // Repository uses db, might need tx version
+        // Ideally pass tx to repo, but for now re-implementing check or hoping repo check is fast.
+        // Better: Re-query inside tx for "FOR UPDATE"?
+        // Simpler for now: Check logic inside transaction.
 
-    // Validação de KM Progressivo
+        // RE-CHECK Driver status inside TX
+        const currentOpenShift = await tx.query.shifts.findFirst({
+            where: (s, { and, eq }) => and(eq(s.driverId, driverId), eq(s.status, 'em_andamento'))
+        });
+        if (currentOpenShift) throw new Error("Motorista já possui um turno aberto.");
 
-    const vehicle = await db.query.vehicles.findFirst({
-        where: eq(vehicles.id, vehicleId)
+        // Validação de KM Progressivo
+        const vehicle = await tx.query.vehicles.findFirst({
+            where: eq(vehicles.id, vehicleId)
+        });
+
+        if (vehicle && kmInicial < vehicle.kmInicial) {
+            throw new Error(`KM inválido! O veículo está com ${vehicle.kmInicial} Km. Você informou ${kmInicial} Km.`);
+        }
+
+        // REGRA: Veículo não pode estar em uso por outro motorista (Check Inside TX)
+        const vehicleInUse = await tx.query.shifts.findFirst({
+            where: (s, { and, eq }) => and(eq(s.vehicleId, vehicleId), eq(s.status, 'em_andamento'))
+        });
+
+        if (vehicleInUse) {
+            throw new Error(`Este veículo já está em uso em outro turno.`);
+        }
+
+        const newShift = await shiftsRepository.createShift({
+            driverId,
+            vehicleId,
+            kmInicial,
+            inicio: new Date(),
+            status: 'em_andamento'
+        });
+
+        return newShift;
     });
-
-    if (vehicle && kmInicial < vehicle.kmInicial) {
-        throw new Error(`KM inválido! O veículo está com ${vehicle.kmInicial} Km. Você informou ${kmInicial} Km.`);
-    }
-
-    // REGRA: Veículo não pode estar em uso por outro motorista
-    const vehicleInUse = await db.query.shifts.findFirst({
-        where: (s, { and, eq }) => and(eq(s.vehicleId, vehicleId), eq(s.status, 'em_andamento'))
-    });
-
-    if (vehicleInUse) {
-        throw new Error(`Este veículo já está em uso em outro turno. Finalize o turno anterior antes de iniciar um novo.`);
-    }
-
-    const newShift = await shiftsRepository.createShift({
-        driverId,
-        vehicleId,
-        kmInicial,
-        inicio: new Date(),
-        status: 'em_andamento'
-    });
-
-    return newShift;
 }
 
 export async function finishShift(shiftId: string, kmFinal: number) {

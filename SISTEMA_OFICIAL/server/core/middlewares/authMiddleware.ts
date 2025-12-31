@@ -58,12 +58,25 @@ export async function requireAuth(
         const isPasswordChangeRoute = req.path.includes("change-password-required");
 
         if (!isPasswordChangeRoute) {
-            const driver = await db.select({ must_reset_password: drivers.must_reset_password })
+            const result = await db.select({
+                isActive: drivers.isActive,
+                must_reset_password: drivers.must_reset_password
+            })
                 .from(drivers)
                 .where(eq(drivers.id, payload.userId))
                 .limit(1);
 
-            if (driver[0]?.must_reset_password) {
+            const driver = result[0];
+
+            if (!driver) {
+                throw new UnauthorizedError("Usuário não encontrado.");
+            }
+
+            if (driver.isActive === false) {
+                throw new UnauthorizedError("Usuário desativado.");
+            }
+
+            if (driver.must_reset_password) {
                 return res.status(403).json({
                     error: "Troca de senha obrigatória",
                     code: "PASSWORD_RESET_REQUIRED"

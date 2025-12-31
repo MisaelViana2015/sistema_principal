@@ -62,7 +62,7 @@ app.use(
 app.use(cors(corsOptions));
 
 // Parse JSON (Limite aumentado para Restore de grandes arquivos)
-app.use(express.json({ limit: "50mb" }));
+app.use(express.json({ limit: "10kb" }));
 
 // Parse URL-encoded
 app.use(express.urlencoded({ extended: true }));

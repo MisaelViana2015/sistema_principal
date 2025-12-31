@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { shiftsController } from "./shifts.controller.js";
 import { requireAuth, requireAdmin } from "../../core/middlewares/authMiddleware.js";
+import { auditLog } from "../../core/middlewares/auditLogger.js";
+import { requireShiftOwner } from "../../core/middlewares/ownershipMiddleware.js";
+
 
 const router = Router();
 
@@ -14,14 +17,14 @@ router.get("/", shiftsController.getAll);
 router.get("/current", shiftsController.getOpen);
 
 // Get by ID
-router.get("/:id", shiftsController.getById);
+router.get("/:id", requireShiftOwner, shiftsController.getById);
 
 // Ações operacionais -> Qualquer logado
-router.post("/", shiftsController.start);
-router.post("/:id/finish", shiftsController.finish);
+router.post("/", auditLog('START_SHIFT'), shiftsController.start);
+router.post("/:id/finish", auditLog('FINISH_SHIFT'), shiftsController.finish);
 
 // Apenas ADMIN pode editar ou excluir turnos
-router.patch("/:id", requireAdmin, shiftsController.update);
+router.patch("/:id", requireAdmin, auditLog('UPDATE_SHIFT'), shiftsController.update);
 router.delete("/:id", requireAdmin, shiftsController.delete);
 
 export default router;

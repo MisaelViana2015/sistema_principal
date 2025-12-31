@@ -2,6 +2,10 @@
 import { Router } from "express";
 import * as controller from "./financial.controller.js";
 import { requireAuth, requireAdmin } from "../../core/middlewares/authMiddleware.js";
+import { auditLog } from "../../core/middlewares/auditLogger.js";
+import { preventReplay } from "../../core/middlewares/idempotencyMiddleware.js";
+
+
 
 const router = Router();
 
@@ -14,23 +18,21 @@ router.get("/debug", requireAdmin, controller.getDebugData);
 
 router.get("/expenses", requireAdmin, controller.getExpenses);
 router.get("/legacy-maintenances", requireAdmin, controller.getLegacyMaintenances);
-router.delete("/legacy-maintenances/:id", requireAdmin, controller.deleteLegacyMaintenance);
-router.post("/legacy-maintenances", requireAdmin, controller.createLegacyMaintenance);
+router.delete("/legacy-maintenances/:id", requireAdmin, auditLog('DELETE_LEGACY_MAINTENANCE'), controller.deleteLegacyMaintenance);
+router.post("/legacy-maintenances", requireAdmin, auditLog('CREATE_LEGACY_MAINTENANCE'), controller.createLegacyMaintenance);
 
 // Tires
 router.get("/tires", requireAdmin, controller.getTires);
-router.post("/tires", requireAdmin, controller.createTire);
-router.delete("/tires/:id", requireAdmin, controller.deleteTire);
-router.post("/expenses", controller.createExpense);
+router.post("/tires", requireAdmin, auditLog('CREATE_TIRE'), controller.createTire);
+router.delete("/tires/:id", requireAdmin, auditLog('DELETE_TIRE'), controller.deleteTire);
+router.post("/expenses", auditLog('CREATE_EXPENSE'), preventReplay, controller.createExpense);
 // Apenas ADMIN pode editar ou excluir despesas
-router.put("/expenses/:id", requireAdmin, controller.updateExpenseController);
-router.delete("/expenses/:id", requireAdmin, controller.deleteExpenseController);
+router.put("/expenses/:id", requireAdmin, auditLog('UPDATE_EXPENSE'), controller.updateExpenseController);
+router.delete("/expenses/:id", requireAdmin, auditLog('DELETE_EXPENSE'), controller.deleteExpenseController);
 
 // Cost Types
-router.post("/cost-types/restore-defaults", requireAdmin, controller.restoreDefaultCostTypes);
+router.post("/cost-types/restore-defaults", requireAdmin, auditLog('RESTORE_COST_TYPES'), controller.restoreDefaultCostTypes);
 router.get("/cost-types", controller.getCostTypes);
-router.post("/cost-types", requireAdmin, controller.createCostType);
-router.put("/cost-types/:id", requireAdmin, controller.updateCostType);
 router.delete("/cost-types/:id", requireAdmin, controller.deleteCostType);
 
 // Installments (Must be before /:id)
