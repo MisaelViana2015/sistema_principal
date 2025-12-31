@@ -12,5 +12,6 @@ router.get("/", requireAdmin, driversController.getAll);
 router.post("/", requireAdmin, driversController.create);
 router.put("/:id", requireAdmin, driversController.update);
 router.delete("/:id", requireAdmin, driversController.delete);
+router.post("/:id/reset-password", requireAdmin, driversController.resetPassword);
 
 export default router;

@@ -2,6 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import { verifyToken, JwtPayload } from "../security/jwt.js";
 import { UnauthorizedError, ForbiddenError } from "../errors/AppError.js";
 import { UserRole } from "../../../shared/types.js";
+import { db } from "../db/connection.js";
+import { drivers } from "../../../shared/schema.js";
+import { eq } from "drizzle-orm";
 
 /**
  * MIDDLEWARES DE AUTENTICAÇÃO E AUTORIZAÇÃO
@@ -23,7 +26,7 @@ declare global {
  * Middleware que exige autenticação
  * Verifica se o token JWT é válido
  */
-export function requireAuth(
+export async function requireAuth(
     req: Request,
     res: Response,
     next: NextFunction
@@ -51,12 +54,30 @@ export function requireAuth(
         // Adiciona dados do usuário na request
         req.user = payload;
 
+        // Verifica se precisa trocar senha (bloqueia todas rotas exceto change-password-required)
+        const isPasswordChangeRoute = req.path.includes("change-password-required");
+
+        if (!isPasswordChangeRoute) {
+            const driver = await db.select({ must_reset_password: drivers.must_reset_password })
+                .from(drivers)
+                .where(eq(drivers.id, payload.userId))
+                .limit(1);
+
+            if (driver[0]?.must_reset_password) {
+                return res.status(403).json({
+                    error: "Troca de senha obrigatória",
+                    code: "PASSWORD_RESET_REQUIRED"
+                });
+            }
+        }
+
         next();
     } catch (error: any) {
         console.error(`[AuthMiddleware] Erro capturado: ${error.message}`, error);
         next(error);
     }
 }
+
 
 /**
  * Middleware que exige role de ADMIN

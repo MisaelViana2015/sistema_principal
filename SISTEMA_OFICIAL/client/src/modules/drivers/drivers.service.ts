@@ -17,5 +17,9 @@ export const driversService = {
     },
     async delete(id: string) {
         await api.delete(`/drivers/${id}`);
+    },
+    async resetPassword(id: string): Promise<{ temp_password: string; expires_at: string; message: string }> {
+        const response = await api.post(`/drivers/${id}/reset-password`);
+        return response.data;
     }
 };

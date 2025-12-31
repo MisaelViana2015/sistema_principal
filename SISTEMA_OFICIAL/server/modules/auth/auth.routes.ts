@@ -55,4 +55,10 @@ router.post("/logout", requireAuth, authController.logoutController);
  */
 router.get("/drivers", requireAuth, authController.getAllDriversController);
 
+/**
+ * POST /api/auth/change-password-required
+ * Troca de senha obrigatória
+ */
+router.post("/change-password-required", authController.changePasswordRequiredController);
+
 export default router;

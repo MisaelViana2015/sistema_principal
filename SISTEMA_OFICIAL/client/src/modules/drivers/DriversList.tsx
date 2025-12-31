@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { driversService } from "./drivers.service";
 import { Driver } from "../../../../shared/schema";
-import { Plus } from "lucide-react";
+import { Plus, KeyRound } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { DriverModal } from "./DriverModal";
 
@@ -59,6 +59,17 @@ export default function DriversList() {
         } catch (err) {
             console.error(err);
             alert("Erro ao alterar status do motorista");
+        }
+    }
+
+    async function handleResetPassword(driver: Driver) {
+        if (!confirm(`Resetar senha de ${driver.nome}? Uma senha temporária será gerada.`)) return;
+        try {
+            const result = await driversService.resetPassword(driver.id);
+            alert(`Senha temporária: ${result.temp_password}\n\nVálida por 10 minutos.\nEnvie para o motorista via WhatsApp.`);
+        } catch (err) {
+            console.error(err);
+            alert("Erro ao resetar senha");
         }
     }
 
@@ -126,7 +137,20 @@ export default function DriversList() {
             fontSize: '0.75rem',
             fontWeight: '600',
             cursor: 'pointer'
-        })
+        }),
+        resetBtn: {
+            padding: '0.25rem 0.75rem',
+            backgroundColor: isDark ? '#1e3a5f' : '#dbeafe',
+            border: '1px solid #3b82f6',
+            borderRadius: '0.375rem',
+            color: '#3b82f6',
+            fontSize: '0.75rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.25rem'
+        }
     };
 
     return (
@@ -165,6 +189,10 @@ export default function DriversList() {
                                 </button>
                                 <button style={s.editBtn} onClick={() => handleEdit(driver)}>
                                     Editar
+                                </button>
+                                <button style={s.resetBtn} onClick={() => handleResetPassword(driver)}>
+                                    <KeyRound size={12} />
+                                    Resetar Senha
                                 </button>
                             </div>
                         </div>

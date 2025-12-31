@@ -10,7 +10,7 @@ export const createDriverSchema = z.object({
     role: z.enum(["admin", "driver"]).default("driver").optional()
 });
 
-export const updateDriverSchema = createDriverSchema.partial().omit({ email: true }); // Prevent email update for now or allow it carefully
+export const updateDriverSchema = createDriverSchema.partial(); // Email can be updated
 
 export type CreateDriverInput = z.infer<typeof createDriverSchema>;
 export type UpdateDriverInput = z.infer<typeof updateDriverSchema>;

@@ -12,6 +12,9 @@ export const drivers = pgTable("drivers", {
     senha: text("senha").notNull(),
     role: varchar("role", { length: 20 }).default('driver').notNull(),
     isActive: boolean("is_active").default(true).notNull(),
+    temp_password_hash: text("temp_password_hash"),
+    temp_password_expires_at: timestamp("temp_password_expires_at", { withTimezone: true, mode: 'string' }),
+    must_reset_password: boolean("must_reset_password").default(false).notNull(),
 },
     (table) => {
         return {

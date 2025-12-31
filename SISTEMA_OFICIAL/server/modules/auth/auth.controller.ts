@@ -204,3 +204,40 @@ export async function getAllDriversController(
         next(error);
     }
 }
+
+/**
+ * POST /api/auth/change-password-required
+ * Troca de senha obrigatória
+ */
+export async function changePasswordRequiredController(
+    req: Request,
+    res: Response,
+    next: NextFunction
+) {
+    try {
+        const userAgent = req.headers["user-agent"] || "";
+        const ipAddress = req.ip || "";
+
+        const result = await authService.changePasswordRequired(req.body);
+
+        // Define Cookie HttpOnly Seguro para o Refresh Token
+        res.cookie("refreshToken", result.refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            path: "/api/auth",
+            maxAge: 14 * 24 * 60 * 60 * 1000
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Senha alterada com sucesso.",
+            data: {
+                user: result.user,
+                token: result.accessToken
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+}

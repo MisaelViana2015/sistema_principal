@@ -42,10 +42,35 @@ export async function login(credentials: LoginInput, userAgent?: string, ipAddre
     }
 
     // Verifica senha
-    const isPasswordValid = await verifyPassword(senha, driver.senha);
+    let isPasswordValid = await verifyPassword(senha, driver.senha);
+    let usedTempPassword = false;
+
+    // Se senha principal falhou, tenta a temporária (se existir e não expirou)
+    if (!isPasswordValid && driver.temp_password_hash && driver.temp_password_expires_at) {
+        const now = new Date();
+        const expires = new Date(driver.temp_password_expires_at);
+
+        if (now < expires) {
+            isPasswordValid = await verifyPassword(senha, driver.temp_password_hash);
+            usedTempPassword = true;
+        }
+    }
 
     if (!isPasswordValid) {
         throw new UnauthorizedError(ERROR_MESSAGES.INVALID_CREDENTIALS);
+    }
+
+    // Se usou senha temporária OU flag must_reset_password está ativa
+    if (usedTempPassword || driver.must_reset_password) {
+        return {
+            requirePasswordReset: true,
+            user: {
+                id: driver.id,
+                nome: driver.nome,
+                email: driver.email,
+                role: driver.role as UserRole,
+            }
+        };
     }
 
     // Gera token JWT de acesso (Curta duração: 2h -> 30m)
@@ -70,6 +95,7 @@ export async function login(credentials: LoginInput, userAgent?: string, ipAddre
     });
 
     return {
+        requirePasswordReset: false,
         user: {
             id: driver.id,
             nome: driver.nome,
@@ -196,6 +222,7 @@ export async function getDriverById(id: string) {
     };
 }
 
+
 /**
  * Busca todos os motoristas (apenas dados seguros)
  */
@@ -210,4 +237,73 @@ export async function getAllDrivers() {
         isActive: d.isActive,
         telefone: d.telefone
     }));
+}
+
+/**
+ * Realiza a troca obrigatória de senha
+ */
+export async function changePasswordRequired(input: any) {
+    const { email, current_password, new_password } = input;
+
+    // Busca usuário
+    const driver = await authRepository.findDriverByEmail(email);
+
+    if (!driver) {
+        throw new UnauthorizedError(ERROR_MESSAGES.INVALID_CREDENTIALS);
+    }
+
+    // Verifica senha ATUAL (pode ser a temporária ou a antiga)
+    let isPasswordValid = await verifyPassword(current_password, driver.senha);
+
+    if (!isPasswordValid && driver.temp_password_hash && driver.temp_password_expires_at) {
+        const now = new Date();
+        const expires = new Date(driver.temp_password_expires_at);
+
+        if (now < expires) {
+            isPasswordValid = await verifyPassword(current_password, driver.temp_password_hash);
+        }
+    }
+
+    if (!isPasswordValid) {
+        throw new UnauthorizedError("Senha atual incorreta.");
+    }
+
+    // Hash da nova senha
+    const newPasswordHash = await hashPassword(new_password);
+
+    // Atualiza senha e limpa flags
+    await authRepository.updateDriver(driver.id, {
+        senha: newPasswordHash,
+        must_reset_password: false,
+        temp_password_hash: null,
+        temp_password_expires_at: null
+    } as any);
+
+    // Gera tokens para login automático
+    const accessToken = generateToken({
+        userId: driver.id,
+        email: driver.email,
+        role: driver.role as UserRole,
+    });
+
+    const refreshToken = crypto.randomBytes(40).toString("hex");
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 14);
+
+    await authRepository.createSession({
+        driverId: driver.id,
+        token: refreshToken,
+        expiresAt: expiresAt.toISOString(),
+    });
+
+    return {
+        accessToken,
+        refreshToken,
+        user: {
+            id: driver.id,
+            nome: driver.nome,
+            email: driver.email,
+            role: driver.role as UserRole,
+        }
+    };
 }
