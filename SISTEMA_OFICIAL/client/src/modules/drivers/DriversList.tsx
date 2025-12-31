@@ -163,25 +163,43 @@ export default function DriversList() {
         }
     };
 
+    const [showInactive, setShowInactive] = useState(false);
+
+    // Filter drivers based on showInactive state
+    const filteredDrivers = drivers.filter(d => showInactive || d.isActive);
+
     return (
         <>
             <div style={s.container}>
                 <div style={s.header}>
                     <h2 style={s.title}>Gestão de Motoristas</h2>
-                    <button style={s.addButton} onClick={handleNew}>
-                        <Plus size={16} />
-                        Novo Motorista
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setShowInactive(!showInactive)}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors border ${showInactive
+                                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600'
+                                    : 'bg-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border-transparent hover:border-gray-200 dark:hover:border-gray-700'
+                                }`}
+                        >
+                            {showInactive ? 'Ocultar Inativos' : 'Mostrar Inativos'}
+                        </button>
+                        <button style={s.addButton} onClick={handleNew}>
+                            <Plus size={16} />
+                            Novo Motorista
+                        </button>
+                    </div>
                 </div>
 
                 <div style={s.list}>
-                    {drivers.length === 0 && (
+                    {filteredDrivers.length === 0 && (
                         <div className="text-center text-gray-500 py-8">
-                            Nenhum motorista encontrado.
+                            {drivers.length > 0 && !showInactive
+                                ? "Nenhum motorista ativo encontrado. Clique em 'Mostrar Inativos' para ver todos."
+                                : "Nenhum motorista encontrado."}
                         </div>
                     )}
 
-                    {drivers.map((driver, index) => (
+                    {filteredDrivers.map((driver, index) => (
                         <div key={driver.id} style={s.card(index, driver.isActive ?? true)}>
                             <div>
                                 <div style={s.name}>
