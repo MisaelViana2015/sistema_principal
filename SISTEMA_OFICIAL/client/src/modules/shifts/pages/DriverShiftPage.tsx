@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
+import MaintenanceAlertPopup from "../../../components/MaintenanceAlertPopup";
 
 type ViewMode = "dashboard" | "add_ride" | "add_cost" | "finish_shift";
 
@@ -401,6 +402,7 @@ export default function DriverShiftPage() {
     if (!activeShift) {
         return (
             <MainLayout>
+                <MaintenanceAlertPopup />
                 <div className="p-4 flex flex-col items-center justify-center min-h-[50vh] text-center">
                     <div className="w-24 h-24 bg-gray-900 rounded-full flex items-center justify-center mb-6 border border-gray-800">
                         <Clock className="w-10 h-10 text-gray-500" />
@@ -427,6 +429,7 @@ export default function DriverShiftPage() {
     if (viewMode === "dashboard") {
         return (
             <MainLayout>
+                <MaintenanceAlertPopup />
                 <div className="max-w-4xl mx-auto px-4 py-6 pb-32">
 
 

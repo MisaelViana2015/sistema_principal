@@ -122,6 +122,18 @@ export const maintenanceRepository = {
             WHERE vm.config_id = mc.id
         `);
 
+        // 4. Recalcular status de TODAS as manutenções
+        await db.execute(sql`
+            UPDATE vehicle_maintenances vm
+            SET status = CASE
+                WHEN v.current_km >= vm.next_due_km THEN 'overdue'
+                WHEN v.current_km >= vm.next_due_km - 1000 THEN 'warning'
+                ELSE 'ok'
+            END
+            FROM vehicles v
+            WHERE vm.vehicle_id = v.id
+        `);
+
         // 2. Retornar diagnóstico TQU0H17
         const result = await db.execute(sql`
             SELECT v.plate, v.current_km, mc.name, vm.next_due_km, vm.status, vm.last_performed_km
