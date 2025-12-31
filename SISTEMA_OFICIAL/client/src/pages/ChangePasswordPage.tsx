@@ -35,6 +35,16 @@ export default function ChangePasswordPage() {
             return;
         }
 
+        if (!/[A-Z]/.test(newPassword)) {
+            setError("Nova senha deve ter pelo menos uma letra maiúscula");
+            return;
+        }
+
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+            setError("Nova senha deve ter pelo menos um caractere especial");
+            return;
+        }
+
         if (newPassword !== confirmPassword) {
             setError("As senhas não conferem");
             return;
@@ -166,12 +176,11 @@ export default function ChangePasswordPage() {
                                 <Input
                                     id="new"
                                     type={showNewPassword ? "text" : "password"}
-                                    placeholder="Mínimo 8 caracteres"
+                                    placeholder="Senha forte"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
                                     className="bg-background/50 border-white/10 focus:border-blue-500/50 h-12 pl-4 pr-12 text-white placeholder:text-muted-foreground/50"
                                     required
-                                    minLength={8}
                                 />
                                 <button
                                     type="button"
@@ -180,6 +189,24 @@ export default function ChangePasswordPage() {
                                 >
                                     {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                 </button>
+                            </div>
+
+                            {/* Password Requirements Checklist */}
+                            <div className="grid grid-cols-1 gap-1.5 pt-1 pl-1">
+                                {[
+                                    { label: "Mínimo 8 caracteres", met: newPassword.length >= 8 },
+                                    { label: "Uma letra maiúscula", met: /[A-Z]/.test(newPassword) },
+                                    { label: "Um caractere especial (!@#$)", met: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword) }
+                                ].map((req, i) => (
+                                    <div key={i} className={`flex items-center text-xs transition-colors duration-200 ${req.met ? "text-green-400 font-medium" : "text-muted-foreground"}`}>
+                                        {req.met ? (
+                                            <CheckCircle className="w-3.5 h-3.5 mr-2" />
+                                        ) : (
+                                            <div className="w-3.5 h-3.5 mr-2 rounded-full border border-muted-foreground/50" />
+                                        )}
+                                        {req.label}
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
@@ -223,8 +250,8 @@ export default function ChangePasswordPage() {
                             </Button>
                         </motion.div>
                     </form>
-                </motion.div>
-            </div>
-        </div>
+                </motion.div >
+            </div >
+        </div >
     );
 }
