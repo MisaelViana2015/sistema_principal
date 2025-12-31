@@ -77,6 +77,9 @@ export default function LoginPage() {
             if (result.success && result.user) {
                 setUser(result.user as any);
                 navigate("/turno");
+            } else if (result.requirePasswordReset && result.user) {
+                // Redirect to password change page with email
+                navigate("/change-password", { state: { email } });
             } else {
                 setError(result.error || "Erro ao fazer login");
             }

@@ -134,12 +134,23 @@ export const authService = {
                 role: any;
             };
             token: string;
+            requirePasswordReset?: boolean;
         };
 
         const response = await api.post<ApiResponse<LoginApiData>>(
             "/auth/login",
             { email, senha }
         );
+
+        // Check for password reset required
+        if (response.data.data?.requirePasswordReset) {
+            return {
+                success: false,
+                requirePasswordReset: true,
+                user: response.data.data.user,
+                error: "Troca de senha obrigatória"
+            };
+        }
 
         if (response.data.success && response.data.data) {
             // Salva token e dados do usuário

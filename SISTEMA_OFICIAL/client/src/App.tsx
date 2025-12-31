@@ -5,6 +5,7 @@ import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import LoginPage from "./pages/LoginPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 // import DashboardPage from "./pages/DashboardPage"; // Unused
 import { lazy, Suspense } from "react";
 
@@ -45,6 +46,7 @@ function App() {
                         <Routes>
                             {/* Public Routes */}
                             <Route path="/login" element={<LoginPage />} />
+                            <Route path="/change-password" element={<ChangePasswordPage />} />
 
                             {/* Protected Routes (Authenticated Users) */}
                             <Route element={<ProtectedRoute />}>
