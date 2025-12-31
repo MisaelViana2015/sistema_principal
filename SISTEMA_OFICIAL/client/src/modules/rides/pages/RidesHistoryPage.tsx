@@ -287,10 +287,12 @@ export default function RidesHistoryPage() {
                                     <div className="bg-gray-800 px-3 py-2 rounded-lg border border-gray-700 text-center">
                                         <div className="text-[10px] text-gray-400 mb-1">App (Per)</div>
                                         <div className="text-sm md:text-lg font-bold text-blue-500">{formatCurrency(periodTotals.totalApp)}</div>
+                                        <div className="text-[9px] text-blue-400 opacity-70">{((periodTotals.totalApp / (periodTotals.totalApp + periodTotals.totalPrivate)) * 100 || 0).toFixed(1)}%</div>
                                     </div>
                                     <div className="bg-gray-800 px-3 py-2 rounded-lg border border-gray-700 text-center">
                                         <div className="text-[10px] text-gray-400 mb-1">Part. (Per)</div>
                                         <div className="text-sm md:text-lg font-bold text-green-500">{formatCurrency(periodTotals.totalPrivate)}</div>
+                                        <div className="text-[9px] text-green-400 opacity-70">{((periodTotals.totalPrivate / (periodTotals.totalApp + periodTotals.totalPrivate)) * 100 || 0).toFixed(1)}%</div>
                                     </div>
                                     <div className="bg-gray-800 px-3 py-2 rounded-lg border border-gray-700 text-center">
                                         <div className="text-[10px] text-gray-400 mb-1">Total (Per)</div>
