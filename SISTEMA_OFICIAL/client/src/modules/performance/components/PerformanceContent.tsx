@@ -408,7 +408,7 @@ export default function PerformanceContent() {
                     <div style={styles.gridKPI}>
                         <KPICard
                             title="Lucro Líquido"
-                            value={`R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            value={`R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                             sublabel="Receita Empresa (60%) - Custos"
                             icon={TrendingUp}
                             gradient={lucroLiquido >= 0 ? "green" : "red"}
@@ -422,14 +422,14 @@ export default function PerformanceContent() {
                         />
                         <KPICard
                             title="Receita Empresa"
-                            value={`R$ ${totalRepasseEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            value={`R$ ${totalRepasseEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                             sublabel={`60% de R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                             icon={DollarSign}
                             gradient="blue"
                         />
                         <KPICard
                             title="Repasse Motoristas"
-                            value={`R$ ${totalRepasseMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            value={`R$ ${totalRepasseMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                             sublabel={`40% de R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                             icon={Users}
                             gradient="purple"
@@ -443,7 +443,7 @@ export default function PerformanceContent() {
                         />
                         <KPICard
                             title="Custo Total"
-                            value={`R$ ${totalCustos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                            value={`R$ ${totalCustos.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                             sublabel={`Fixos: ${appliedFixedCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + Var: ${totalCustosVariaveis.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
                             icon={TrendingDown}
                             gradient="red" // Or Orange
