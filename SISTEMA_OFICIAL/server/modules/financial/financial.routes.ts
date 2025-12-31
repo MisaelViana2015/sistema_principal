@@ -42,20 +42,23 @@ router.post("/fixed-costs", requireAdmin, controller.createFixedCost);
 router.put("/fixed-costs/:id", requireAdmin, controller.updateFixedCost);
 router.delete("/fixed-costs/:id", requireAdmin, controller.deleteFixedCost);
 
-// Rota de Emergência para corrigir Schema (executar uma vez e remover depois)
-router.get("/fix-db-emergency", requireAdmin, controller.fixDbEmergency);
+// ⚠️ ROTAS DE MANUTENÇÃO / FIX (Desabilitadas em prod por padrão)
+if (process.env.ENABLE_FIX_ROUTES === 'true') {
+    // Rota de Emergência para corrigir Schema (executar uma vez e remover depois)
+    router.get("/fix-db-emergency", requireAdmin, controller.fixDbEmergency);
 
-// Rota de Migração de Dados Legados (Preencher ícones/cores faltantes)
-router.post("/fix-legacy-visuals", requireAdmin, controller.fixLegacyVisuals);
+    // Rota de Migração de Dados Legados (Preencher ícones/cores faltantes)
+    router.post("/fix-legacy-visuals", requireAdmin, controller.fixLegacyVisuals);
 
-// DEBUG: Ver turnos no banco (temporário)
-router.get("/debug-shifts", requireAdmin, controller.getDebugShifts);
+    // DEBUG: Ver turnos no banco (temporário)
+    router.get("/debug-shifts", requireAdmin, controller.getDebugShifts);
 
-// Rota para corrigir cálculos 60/40 de TODOS os turnos
-router.post("/fix-legacy-shifts", requireAdmin, controller.fixLegacyShifts);
+    // Rota para corrigir cálculos 60/40 de TODOS os turnos
+    router.post("/fix-legacy-shifts", requireAdmin, controller.fixLegacyShifts);
 
-// Rota para corrigir UM ÚNICO turno (para teste)
-router.post("/fix-single-shift/:shiftId", requireAdmin, controller.fixSingleShift);
+    // Rota para corrigir UM ÚNICO turno (para teste)
+    router.post("/fix-single-shift/:shiftId", requireAdmin, controller.fixSingleShift);
+}
 
 // ============================================================
 // ENDPOINT ISOLADO: Corrigir APENAS contagem de corridas

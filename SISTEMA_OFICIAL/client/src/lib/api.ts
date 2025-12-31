@@ -127,14 +127,16 @@ export const authService = {
     async login(email: string, senha: string): Promise<LoginResponse> {
         // Tipo esperado no data da resposta da API
         type LoginApiData = {
-            user: {
+            user?: {
                 id: string;
                 nome: string;
                 email: string;
                 role: any;
             };
-            token: string;
-            requirePasswordReset?: boolean;
+            token?: string;
+            ok?: boolean;
+            next_action?: string;
+            password_change_token?: string;
         };
 
         const response = await api.post<ApiResponse<LoginApiData>>(
@@ -142,30 +144,32 @@ export const authService = {
             { email, senha }
         );
 
-        // Check for password reset required
-        if (response.data.data?.requirePasswordReset) {
+        const data = response.data.data;
+
+        // Check for password reset required (novo contrato)
+        if (data?.next_action === "RESET_PASSWORD_REQUIRED" && data?.password_change_token) {
             return {
-                success: false,
-                requirePasswordReset: true,
-                user: response.data.data.user,
+                ok: false,
+                next_action: "RESET_PASSWORD_REQUIRED",
+                password_change_token: data.password_change_token,
                 error: "Troca de senha obrigatória"
             };
         }
 
-        if (response.data.success && response.data.data) {
+        if (response.data.success && data?.user && data?.token) {
             // Salva token e dados do usuário
-            localStorage.setItem("token", response.data.data.token);
-            localStorage.setItem("user", JSON.stringify(response.data.data.user));
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
 
             return {
-                success: true,
-                user: response.data.data.user,
-                token: response.data.data.token,
+                ok: true,
+                user: data.user,
+                token: data.token,
             };
         }
 
         return {
-            success: false,
+            ok: false,
             error: response.data.error || "Erro ao fazer login",
         };
     },

@@ -1,17 +1,18 @@
 import { db } from "../core/db/connection.js";
-import { shifts, rides } from "../../shared/schema.js";
-import { eq } from "drizzle-orm";
+import { shifts, rides, expenses } from "../../shared/schema.js";
+import { eq, inArray } from "drizzle-orm";
 import { fileURLToPath } from 'url';
+import { FinancialCalculator } from "../modules/financial/FinancialCalculator.js";
 
 /**
  * Script para recalcular totais de turnos
- * CORREÇÃO SEGURA:
- * 1. Removemos a associação mágica de corridas (perigoso)
- * 2. Aplicamos regra de data para split 60/40 vs 50/50
- * 3. Preservamos o totalCustos original do banco
+ * OTIMIZAÇÃO DE PERFORMANCE (BATCH PROCESSING):
+ * 1. Processa em lotes de 50 turnos para não estourar memória
+ * 2. Faz fetch de corridas e despesas em BULK para evitar N+1
+ * 3. Usa FinancialCalculator para garantir consistência
  */
 export async function recalculateAllShifts() {
-    console.log("🔄 Iniciando recálculo seguro de turnos...");
+    console.log("🔄 Iniciando recálculo OTIMIZADO de turnos...");
 
     // Buscar todos os turnos finalizados
     const allShifts = await db
@@ -23,100 +24,103 @@ export async function recalculateAllShifts() {
 
     let updated = 0;
     let errors = 0;
-    let ridesAssociated = 0; // Mantido nos retornos por compatibilidade, mas será sempre 0
+    const BATCH_SIZE = 50;
 
-    // Data de corte para mudança de regra (15/12/2024)
-    // Antes dessa data: 60% Empresa / 40% Motorista
-    // Depois dessa data: 50% Empresa / 50% Motorista
-    const CUTOFF_DATE = new Date('2024-12-15T00:00:00');
+    // Processar em Lotes
+    for (let i = 0; i < allShifts.length; i += BATCH_SIZE) {
+        const batch = allShifts.slice(i, i + BATCH_SIZE);
+        const batchIds = batch.map(s => s.id);
 
-    for (const shift of allShifts) {
         try {
-            // PASSO 1: Buscar APENAS corridas JÁ associadas ao turno
-            // Não tentamos associar nada magicamente para evitar duplicidade ou erros
-            const ridesData = await db
-                .select()
-                .from(rides)
-                .where(eq(rides.shiftId, shift.id));
+            // 1. Fetch de DADOS em Lote (Evita N+1 queries)
+            // Buscamos todas as corridas e despesas de todos os turnos do lote de uma vez
+            const ridesData = await db.select().from(rides).where(inArray(rides.shiftId, batchIds));
+            const expensesData = await db.select().from(expenses).where(inArray(expenses.shiftId, batchIds));
 
-            // Calcular totais brutos
-            const totalApp = ridesData
-                .filter(r => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || ''))
-                .reduce((sum, r) => sum + Number(r.valor || 0), 0);
+            // Agrupar em Mapas por ShiftID para acesso O(1)
+            const ridesMap = new Map<string, typeof ridesData>();
+            const expensesMap = new Map<string, typeof expensesData>();
 
-            const totalParticular = ridesData
-                .filter(r => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || ''))
-                .reduce((sum, r) => sum + Number(r.valor || 0), 0);
-
-            const totalCorridasApp = ridesData.filter(r => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length;
-            const totalCorridasParticular = ridesData.filter(r => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length;
-            const totalCorridas = ridesData.length;
-
-            const totalBruto = totalApp + totalParticular;
-
-            // PRESERVAR CUSTOS DO BANCO
-            // Não zeramos custos!! Usamos o que já está lá salvo.
-            const totalCustos = Number(shift.totalCustos || 0);
-
-            // Calcular líquido
-            const liquido = totalBruto - totalCustos;
-
-            // DEFINIR REPASSE BASEADO NA DATA
-            let repasseEmpresa = 0;
-            let repasseMotorista = 0;
-
-            const dataInicio = new Date(shift.inicio);
-
-            // Regra Híbrida
-            if (dataInicio < CUTOFF_DATE) {
-                // ANTES DE 15/12: 60% Empresa / 40% Motorista
-                repasseEmpresa = liquido * 0.60;
-                repasseMotorista = liquido * 0.40;
-                // Ajuste fino para centavos
-                repasseMotorista = liquido - Number(repasseEmpresa.toFixed(2));
-            } else {
-                // DEPOIS DE 15/12: 50% / 50%
-                repasseEmpresa = liquido * 0.50;
-                repasseMotorista = liquido * 0.50;
+            for (const r of ridesData) {
+                if (!r.shiftId) continue;
+                if (!ridesMap.has(r.shiftId)) ridesMap.set(r.shiftId, []);
+                ridesMap.get(r.shiftId)?.push(r);
             }
 
-            // Atualizar turno com valores corrigidos
-            // Convertendo para fixed(2) e depois Number para garantir formato monetário
-            await db
-                .update(shifts)
-                .set({
+            for (const e of expensesData) {
+                if (!e.shiftId) continue;
+                if (!expensesMap.has(e.shiftId)) expensesMap.set(e.shiftId, []);
+                expensesMap.get(e.shiftId)?.push(e);
+            }
+
+            // 2. Processar cada turno do lote (Cálculo em memória)
+            const updates = batch.map(async (shift) => {
+                const shiftRides = ridesMap.get(shift.id) || [];
+                const shiftExpenses = expensesMap.get(shift.id) || [];
+
+                // Validar dados
+                const totalApp = shiftRides
+                    .filter(r => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || ''))
+                    .reduce((sum, r) => sum + Number(r.valor || 0), 0);
+
+                const totalParticular = shiftRides
+                    .filter(r => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || ''))
+                    .reduce((sum, r) => sum + Number(r.valor || 0), 0);
+
+                // Preparar despesas
+                const normalExpenses = shiftExpenses.filter(e => !e.isSplitCost);
+                const splitExpenses = shiftExpenses.filter(e => e.isSplitCost);
+
+                const totalCustosNormais = normalExpenses.reduce((sum, e) => sum + Number(e.value || 0), 0);
+                const totalCustosDivididos = splitExpenses.reduce((sum, e) => sum + Number(e.value || 0), 0);
+                const totalCustosParticular = shiftExpenses.filter(e => e.isParticular).reduce((sum, e) => sum + Number(e.value || 0), 0); // Aproximação, schema expenses pode variar
+
+                // Usar Calculadora Central
+                const result = FinancialCalculator.calculateShiftResult({
                     totalApp,
                     totalParticular,
-                    totalBruto,
-                    totalCorridas,
-                    totalCorridasApp,
-                    totalCorridasParticular,
-                    // totalCustos, // Não atualizamos custos, pois já lemos eles
-                    liquido,
-                    repasseEmpresa: Number(repasseEmpresa.toFixed(2)),
-                    repasseMotorista: Number(repasseMotorista.toFixed(2))
-                })
-                .where(eq(shifts.id, shift.id));
+                    totalCustosNormais,
+                    totalCustosDivididos,
+                    shiftDate: shift.inicio || new Date() // Fallback
+                });
 
-            updated++;
+                // Executar Update
+                await db.update(shifts)
+                    .set({
+                        totalApp,
+                        totalParticular,
+                        totalBruto: result.totalBruto,
+                        totalCorridas: shiftRides.length,
+                        totalCorridasApp: shiftRides.filter(r => ['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length,
+                        totalCorridasParticular: shiftRides.filter(r => !['APP', 'APLICATIVO'].includes(r.tipo?.toUpperCase() || '')).length,
+                        totalCustos: result.totalCustos,
+                        totalCustosParticular, // Mantemos o cálculo local se a calculator não retornar detalhado
+                        liquido: result.liquido,
+                        repasseEmpresa: result.repasseEmpresa,
+                        repasseMotorista: result.repasseMotorista,
+                        discountCompany: result.discountCompany,
+                        discountDriver: result.discountDriver
+                    })
+                    .where(eq(shifts.id, shift.id));
 
-            // Log discreto a cada 50 updates para não poluir terminal
-            if (updated % 50 === 0) {
-                console.log(`✅ Processados ${updated}/${allShifts.length}...`);
-            }
+                updated++;
+            });
 
-        } catch (error) {
-            errors++;
-            console.error(`❌ Erro ao recalcular turno ${shift.id}:`, error);
+            await Promise.all(updates);
+
+            console.log(`✅ Lote ${Math.floor(i / BATCH_SIZE) + 1} processado (${batch.length} turnos)`);
+
+        } catch (err) {
+            console.error(`❌ Erro no lote ${i}:`, err);
+            errors += batch.length; // Assume erro no lote todo
         }
     }
 
     console.log(`\n✨ Recálculo concluído!`);
     console.log(`   ✅ Turnos atualizados: ${updated}`);
-    console.log(`   🔗 Corridas associadas: ${ridesAssociated}`);
     console.log(`   ❌ Erros: ${errors}`);
 
-    return { updated, errors, total: allShifts.length, ridesAssociated };
+    return { updated, errors, total: allShifts.length };
 }
 
 // Auto-run se executado via CLI

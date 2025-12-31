@@ -14,13 +14,11 @@ export default function ChangePasswordPage() {
     const location = useLocation();
     const { setUser } = useAuth();
 
-    // Get email from navigation state
-    const email = location.state?.email || "";
+    // Get token from navigation state (sent by LoginPage after password reset detection)
+    const passwordChangeToken = location.state?.passwordChangeToken || "";
 
-    const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -54,8 +52,7 @@ export default function ChangePasswordPage() {
 
         try {
             const response = await api.post("/auth/change-password-required", {
-                email,
-                current_password: currentPassword,
+                password_change_token: passwordChangeToken,
                 new_password: newPassword
             });
 
@@ -141,31 +138,6 @@ export default function ChangePasswordPage() {
                                 <span>{error}</span>
                             </motion.div>
                         )}
-
-                        {/* Current Password */}
-                        <div className="space-y-2">
-                            <Label htmlFor="current" className="text-xs text-muted-foreground uppercase tracking-wider font-bold">
-                                Senha Atual (temporária)
-                            </Label>
-                            <div className="relative group">
-                                <Input
-                                    id="current"
-                                    type={showCurrentPassword ? "text" : "password"}
-                                    placeholder="RV-XXXX"
-                                    value={currentPassword}
-                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                    className="bg-background/50 border-white/10 focus:border-blue-500/50 h-12 pl-4 pr-12 text-white placeholder:text-muted-foreground/50"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-blue-400 p-1"
-                                >
-                                    {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
-                            </div>
-                        </div>
 
                         {/* New Password */}
                         <div className="space-y-2">

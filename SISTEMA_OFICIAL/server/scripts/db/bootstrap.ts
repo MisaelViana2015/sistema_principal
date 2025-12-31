@@ -134,14 +134,21 @@ export async function bootstrapDatabase() {
         if (Number(count) === 0) {
             console.log("🌱 Seed: Criando Usuário Admin...");
             const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash("senha123", salt);
+            const adminPassword = process.env.ADMIN_PASSWORD || 'admin_dev_password'; // Em produção, SEMPRE use a variável de ambiente
+
+            if (process.env.NODE_ENV === "production" && adminPassword === 'admin_dev_password') {
+                console.error("❌ ERRO: Em ambiente de PRODUÇÃO, a senha do admin deve ser definida via ADMIN_PASSWORD.");
+                process.exit(1);
+            }
+
+            const hashedPassword = await bcrypt.hash(adminPassword, salt);
             const adminId = randomUUID();
 
             await db.execute(sql`
                 INSERT INTO drivers (id, nome, email, senha, role, is_active)
                 VALUES (${adminId}, 'Administrador', 'programacao1215@hotmail.com', ${hashedPassword}, 'admin', true)
             `);
-            console.log("✅ Admin criado: programacao1215@hotmail.com / senha123");
+            console.log(`✅ Admin criado: programacao1215@hotmail.com / ${adminPassword === 'admin_dev_password' ? 'admin_dev_password (APENAS PARA DESENVOLVIMENTO)' : 'senha definida via ADMIN_PASSWORD'}`);
         }
 
         console.log("✅ BOOTSTRAP FINALIZADO COM SUCESSO!");

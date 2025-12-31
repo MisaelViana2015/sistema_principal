@@ -6150,15 +6150,7 @@ apenas 1x por dia
 .env:
 
 DATABASE_URL_PROD="postgresql://…/rota_verde_prod"
-DATABASE_URL_REPLICA="postgresql://…/rota_verde_replica"
-
-
-Switch automático:
-
-export const DB = new Pool({
-  connectionString: process.env.DB_FAILSAFE === "on"
-    ? process.env.DATABASE_URL_REPLICA
-    : process.env.DATABASE_URL_PROD
+DATABASE_URL_REPLICA="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
 })
 
 
@@ -11723,12 +11715,12 @@ Database: railway
 
 ### DATABASE_URL (Interna)
 ```
-postgresql://postgres:BDnSvDzpOoQcJsRPSvkZnoDfFOCCwbKR@postgres.railway.internal:5432/railway
+postgresql://USER:PASSWORD@postgres.railway.internal:5432/DATABASE
 ```
 
 ### DATABASE_PUBLIC_URL (Externa)
 ```
-postgresql://postgres:BDnSvDzpOoQcJsRPSvkZnoDfFOCCwbKR@turntable.proxy.rlwy.net:21162/railway
+postgresql://USER:PASSWORD@HOST:PORT/DATABASE
 ```
 
 ---
@@ -11753,7 +11745,7 @@ postgresql://postgres:BDnSvDzpOoQcJsRPSvkZnoDfFOCCwbKR@turntable.proxy.rlwy.net:
 Vá em **Variables** e adicione:
 
 ```env
-DATABASE_URL=postgresql://postgres:BDnSvDzpOoQcJsRPSvkZnoDfFOCCwbKR@postgres.railway.internal:5432/railway
+DATABASE_URL=postgresql://USER:PASSWORD@postgres.railway.internal:5432/DATABASE
 
 JWT_SECRET=HML_JWT_SECRET_2025_HOMOLOGACAO_ROTA_VERDE_TESTE
 
@@ -11880,7 +11872,7 @@ npx tsx server/scripts/db/create-admin-simple.ts
 
 No `.env.hml`:
 ```env
-DATABASE_URL=postgresql://postgres:BDnSvDzpOoQcJsRPSvkZnoDfFOCCwbKR@turntable.proxy.rlwy.net:21162/railway
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
 JWT_SECRET=HML_JWT_SECRET_2025
 SESSION_SECRET=HML_SESSION_SECRET_2025
 NODE_ENV=development
@@ -12024,7 +12016,7 @@ Acessar: `https://rota-verde-hml.up.railway.app`
 - **Database:** `railway`
 - **Connection String:** 
   ```
-  postgresql://postgres:hkNUwGMmREdjqCDOmHkalRELQAgJPyWv@yamanote.proxy.rlwy.net:33836/railway
+  postgresql://USER:PASSWORD@HOST:PORT/DATABASE
   ```
 
 ---
@@ -12055,7 +12047,7 @@ Railway Project: DB-RotaVerde06-12-2025
 
 ### Variáveis de Ambiente (rota-verde)
 ```bash
-DATABASE_URL=postgresql://postgres:hkNUwGMmREdjqCDOmHkalRELQAgJPyWv@yamanote.proxy.rlwy.net:33836/railway
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
 JWT_SECRET=SUAE8V4966CMWrXygWqF+K0ZQL2N1q7vh4vtQPXGJ7/4klbJEm2RbVw7ycSZzR2WyEJbZdVCk6mdf6rcLBsy2A==
 NODE_ENV=production
 PORT=10000

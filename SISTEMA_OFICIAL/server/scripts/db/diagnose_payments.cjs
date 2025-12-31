@@ -10,7 +10,7 @@
 const { Pool } = require('pg');
 
 // Usa a mesma configuração do sistema
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/rotas';
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://USER:PASSWORD@localhost:5432/DATABASE';
 
 async function runDiagnostics() {
     console.log('🔍 DIAGNÓSTICO DE PAGAMENTO DE CUSTOS FIXOS\n');

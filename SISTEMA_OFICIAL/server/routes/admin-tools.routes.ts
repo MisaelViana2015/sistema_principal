@@ -3,7 +3,12 @@ import { recalculateAllShifts } from "../scripts/recalculate-shifts.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
+import { requireAuth, requireAdmin } from "../core/middlewares/authMiddleware.js";
+
 const router = Router();
+
+// 🔒 PROTEGER TODAS AS ROTAS DE FERRAMENTAS ADMINISTRATIVAS
+router.use(requireAuth, requireAdmin);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

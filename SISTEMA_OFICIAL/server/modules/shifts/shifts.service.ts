@@ -1,6 +1,9 @@
-
 import * as shiftsRepository from "./shifts.repository.js";
 import { FraudService } from "../fraud/fraud.service.js";
+import { FinancialCalculator } from "../financial/FinancialCalculator.js";
+import { db } from "../../core/db/connection.js";
+import { shifts, vehicles, rides, expenses } from "../../../shared/schema.js";
+import { eq, sql } from "drizzle-orm";
 
 export async function getAllShifts(page: number, limit: number, filters: any) {
     return await shiftsRepository.findAllShifts(page, limit, filters);
@@ -14,9 +17,6 @@ export async function startShift(driverId: string, vehicleId: string, kmInicial:
     }
 
     // Validação de KM Progressivo
-    const { db } = await import("../../core/db/connection.js");
-    const { vehicles } = await import("../../../shared/schema.js");
-    const { eq } = await import("drizzle-orm");
 
     const vehicle = await db.query.vehicles.findFirst({
         where: eq(vehicles.id, vehicleId)
@@ -56,10 +56,6 @@ export async function finishShift(shiftId: string, kmFinal: number) {
         throw new Error(`KM Final (${kmFinal}) não pode ser menor que o KM Inicial do turno (${shift.kmInicial}).`);
     }
 
-    const { db } = await import("../../core/db/connection.js");
-    const { shifts, vehicles, rides, expenses } = await import("../../../shared/schema.js");
-    const { eq } = await import("drizzle-orm");
-
     // TRANSAÇÃO ATÔMICA COMPLETA: Tudo ou Nada
     const updatedShift = await db.transaction(async (tx) => {
         // 1. Buscar Corridas e Despesas para Cálculo Financeiro
@@ -86,19 +82,23 @@ export async function finishShift(shiftId: string, kmFinal: number) {
         const totalCustosDivididos = splitExpenses.reduce((sum, e) => sum + Number(e.value || 0), 0);
         const totalCustos = totalCustosNormais + totalCustosDivididos;
 
-        // 4. Calcular Líquido e Repasses
-        const totalBruto = totalApp + totalParticular;
+        // 4. Calcular Líquido e Repasses (Via Calculadora Centralizada)
         const totalCorridas = ridesData.length;
-        const liquido = totalBruto;
 
-        let repasseEmpresaFinal = liquido * 0.60;
-        let repasseMotoristaFinal = liquido * 0.40;
-        repasseEmpresaFinal -= totalCustosNormais;
-
-        const discountCompany = totalCustosDivididos * 0.50;
-        const discountDriver = totalCustosDivididos * 0.50;
-        repasseEmpresaFinal -= discountCompany;
-        repasseMotoristaFinal -= discountDriver;
+        const {
+            totalBruto,
+            liquido,
+            repasseEmpresa: repasseEmpresaFinal,
+            repasseMotorista: repasseMotoristaFinal,
+            discountCompany,
+            discountDriver
+        } = FinancialCalculator.calculateShiftResult({
+            totalApp,
+            totalParticular,
+            totalCustosNormais,
+            totalCustosDivididos,
+            shiftDate: shift.inicio || new Date()
+        });
 
         // 5. Atualizar Turno com TODOS os dados (básicos + financeiros)
         const [updated] = await tx.update(shifts)
@@ -125,7 +125,10 @@ export async function finishShift(shiftId: string, kmFinal: number) {
 
         // 6. Atualizar KM do Veículo
         await tx.update(vehicles)
-            .set({ kmInicial: kmFinal })
+            .set({
+                kmInicial: kmFinal,
+                currentKm: kmFinal // Also update currentKm
+            })
             .where(eq(vehicles.id, shift.vehicleId));
 
         console.log(`✅ Transação completa: Turno finalizado, Veículo atualizado para ${kmFinal} km, Totais calculados.`);
@@ -139,6 +142,13 @@ export async function finishShift(shiftId: string, kmFinal: number) {
         console.error(`[FRAUD] Erro ao analisar turno finalizado ${shiftId}:`, err);
     });
 
+    // Atualizar Status das Manutenções (Fire-and-forget)
+    import("../maintenance/maintenance.service.js").then(({ maintenanceService }) => {
+        maintenanceService.checkStatus(shift.vehicleId, kmFinal).catch(err => {
+            console.error(`[MAINTENANCE] Erro ao atualizar status ${shift.vehicleId}:`, err);
+        });
+    });
+
     return updatedShift;
 
 }
@@ -146,9 +156,6 @@ export async function finishShift(shiftId: string, kmFinal: number) {
 
 
 export async function recalculateShiftTotals(shiftId: string) {
-    const { db } = await import("../../core/db/connection.js");
-    const { rides, shifts, expenses } = await import("../../../shared/schema.js");
-    const { eq } = await import("drizzle-orm");
 
     console.log(`🔄 Recalculando turno ${shiftId}...`);
 
@@ -213,28 +220,23 @@ export async function recalculateShiftTotals(shiftId: string) {
 
     console.log(`   💰 Totais Calculados: CustosNormais=${totalCustosNormais}, Divididos=${totalCustosDivididos}, Part=${totalParticular}, App=${totalApp}`);
 
-    const totalBruto = totalApp + totalParticular;
+    // 6. Calcular Líquido e Repasses (Via Calculadora Centralizada)
     const totalCorridas = ridesData.length;
 
-    // 6. Calcular Líquido e Repasses
-    // LÓGICA CORRIGIDA (26/12)
-    // 1. O Líquido base para divisão é o BRUTO (custos normais não abatem antes da partilha)
-    const liquido = totalBruto;
-
-    // 2. Cálculo Base 60/40 sobre o Bruto
-    let repasseEmpresaFinal = liquido * 0.60;
-    let repasseMotoristaFinal = liquido * 0.40;
-
-    // 3. Custos Normais: Descontados 100% da parte da Empresa
-    repasseEmpresaFinal -= totalCustosNormais;
-
-    // Calcular Descontos do Split (50/50)
-    const discountCompany = totalCustosDivididos * 0.50;
-    const discountDriver = totalCustosDivididos * 0.50;
-
-    // Aplicar Descontos
-    repasseEmpresaFinal -= discountCompany;
-    repasseMotoristaFinal -= discountDriver;
+    const {
+        totalBruto,
+        liquido,
+        repasseEmpresa: repasseEmpresaFinal,
+        repasseMotorista: repasseMotoristaFinal,
+        discountCompany,
+        discountDriver
+    } = FinancialCalculator.calculateShiftResult({
+        totalApp,
+        totalParticular,
+        totalCustosNormais,
+        totalCustosDivididos,
+        shiftDate: shift.inicio || new Date()
+    });
 
     // 7. Atualizar Turno
     const updatedShift = await shiftsRepository.updateShift(shiftId, {
@@ -276,15 +278,8 @@ export async function getShiftById(id: string) {
 
 export async function getOpenShift(driverId: string) {
     const shift = await shiftsRepository.findOpenShiftByDriver(driverId);
-    // Auto-heal: Recalcula totais ao carregar para garantir consistência
-    if (shift) {
-        // executa em background para não travar a resposta? Não, melhor esperar para garantir dados frescos.
-        try {
-            return await recalculateShiftTotals(shift.id);
-        } catch (e) {
-            console.error("Erro no auto-recalc:", e);
-        }
-    }
+    // REMOVIDO: Auto-heal (Recálculo automático) em load. 
+    // Motivo: Performance. O recálculo já ocorre em ações de escrita (start/finish/add ride).
     return shift;
 }
 
@@ -314,9 +309,6 @@ export async function updateShift(id: string, data: any) {
 
             // Se houver diferença de tempo, atualizar todas as corridas
             if (timeDiffMs !== 0) {
-                const { db } = await import('../../core/db/connection.js');
-                const { rides } = await import('../../../shared/schema.js');
-                const { eq, sql } = await import('drizzle-orm');
 
                 // Atualiza todas as corridas do turno, aplicando o mesmo deslocamento
                 await db.update(rides)

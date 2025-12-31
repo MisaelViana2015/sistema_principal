@@ -18,6 +18,7 @@ import ridesRoutes from "./modules/rides/rides.routes.js";
 import financialRoutes from "./modules/financial/financial.routes.js";
 import featuresRoutes from "./modules/config/features.routes.js";
 import { fraudRoutes } from "./modules/fraud/fraud.routes.js";
+import maintenanceRoutes from "./modules/maintenance/maintenance.routes.js"; // NEW
 import { apiLimiter } from "./core/middlewares/rateLimit.js";
 
 /**
@@ -160,6 +161,7 @@ app.use("/api/rides", ridesRoutes);
 app.use("/api/financial", financialRoutes);
 app.use("/api/config/features", featuresRoutes);
 app.use("/api/fraud", fraudRoutes);
+app.use("/api/maintenance", maintenanceRoutes); // NEW
 
 import adminRoutes from "./modules/admin/admin.routes.js";
 import tiresRoutes from "./modules/tires/tires.routes.js";

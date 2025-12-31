@@ -74,12 +74,12 @@ export default function LoginPage() {
         try {
             const result = await authService.login(email, password);
 
-            if (result.success && result.user) {
+            if (result.ok && result.user) {
                 setUser(result.user as any);
                 navigate("/turno");
-            } else if (result.requirePasswordReset && result.user) {
-                // Redirect to password change page with email
-                navigate("/change-password", { state: { email } });
+            } else if (result.next_action === "RESET_PASSWORD_REQUIRED" && result.password_change_token) {
+                // Redirect to password change page with token
+                navigate("/change-password", { state: { passwordChangeToken: result.password_change_token } });
             } else {
                 setError(result.error || "Erro ao fazer login");
             }

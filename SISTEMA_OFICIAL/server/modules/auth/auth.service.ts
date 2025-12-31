@@ -1,6 +1,7 @@
 import * as authRepository from "./auth.repository.js";
 import { hashPassword, verifyPassword } from "../../core/security/hash.js";
 import { generateToken } from "../../core/security/jwt.js";
+import jwt from "jsonwebtoken";
 import {
     UnauthorizedError,
     ConflictError,
@@ -76,14 +77,21 @@ export async function login(credentials: LoginInput, userAgent?: string, ipAddre
 
     // Se usou senha temporária OU flag must_reset_password está ativa
     if (usedTempPassword || driver.must_reset_password) {
+        // Gerar JWT curto (10 min) com propósito específico
+        const passwordChangeToken = jwt.sign(
+            {
+                purpose: "PASSWORD_RESET",
+                userId: driver.id,
+                email: driver.email
+            },
+            process.env.JWT_SECRET!,
+            { expiresIn: "10m" }
+        );
+
         return {
-            requirePasswordReset: true,
-            user: {
-                id: driver.id,
-                nome: driver.nome,
-                email: driver.email,
-                role: driver.role as UserRole,
-            }
+            ok: false,
+            next_action: "RESET_PASSWORD_REQUIRED",
+            password_change_token: passwordChangeToken
         };
     }
 
@@ -254,46 +262,48 @@ export async function getAllDrivers() {
 }
 
 /**
- * Realiza a troca obrigatória de senha
+ * Realiza a troca obrigatória de senha (via JWT token)
  */
-export async function changePasswordRequired(input: any) {
-    const { email, current_password, new_password } = input;
+export async function changePasswordRequired(input: { password_change_token: string; new_password: string }) {
+    const { password_change_token, new_password } = input;
 
-    // Busca usuário
-    const driver = await authRepository.findDriverByEmail(email);
+    // 1. Validar JWT
+    let payload: any;
+    try {
+        payload = jwt.verify(password_change_token, process.env.JWT_SECRET!);
+    } catch (error) {
+        throw new UnauthorizedError("Token inválido ou expirado. Faça login novamente.");
+    }
 
+    // 2. Verificar propósito do token
+    if (payload.purpose !== "PASSWORD_RESET") {
+        throw new UnauthorizedError("Token inválido para esta operação.");
+    }
+
+    // 3. Buscar usuário
+    const driver = await authRepository.findDriverById(payload.userId);
     if (!driver) {
-        throw new UnauthorizedError(ERROR_MESSAGES.INVALID_CREDENTIALS);
+        throw new UnauthorizedError(ERROR_MESSAGES.USER_NOT_FOUND);
     }
 
-    // Verifica senha ATUAL (pode ser a temporária ou a antiga)
-    let isPasswordValid = await verifyPassword(current_password, driver.senha);
-
-    if (!isPasswordValid && driver.temp_password_hash && driver.temp_password_expires_at) {
-        const now = new Date();
-        const expires = new Date(driver.temp_password_expires_at);
-
-        if (now < expires) {
-            isPasswordValid = await verifyPassword(current_password, driver.temp_password_hash);
-        }
+    // 4. Verificar se ainda precisa trocar senha
+    if (!driver.must_reset_password && !driver.temp_password_hash) {
+        throw new ValidationError("Senha já foi trocada. Faça login normalmente.");
     }
 
-    if (!isPasswordValid) {
-        throw new UnauthorizedError("Senha atual incorreta.");
-    }
-
-    // Hash da nova senha
+    // 5. Hash da nova senha
     const newPasswordHash = await hashPassword(new_password);
 
-    // Atualiza senha e limpa flags
+    // 6. Atualiza senha e limpa flags
     await authRepository.updateDriver(driver.id, {
         senha: newPasswordHash,
         must_reset_password: false,
         temp_password_hash: null,
-        temp_password_expires_at: null
+        temp_password_expires_at: null,
+        password_changed_at: new Date()
     } as any);
 
-    // Gera tokens para login automático
+    // 7. Gera tokens para login automático
     const accessToken = generateToken({
         userId: driver.id,
         email: driver.email,
@@ -311,6 +321,7 @@ export async function changePasswordRequired(input: any) {
     });
 
     return {
+        ok: true,
         accessToken,
         refreshToken,
         user: {

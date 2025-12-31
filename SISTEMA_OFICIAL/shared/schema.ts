@@ -48,6 +48,7 @@ export const vehicles = pgTable("vehicles", {
     color: text("color"),
     imageUrl: text("image_url"),
     status: text("status").default('ativo'), // 'ativo' | 'manutencao' | 'indisponivel'
+    currentKm: real("current_km").default(0),
 },
     (table) => {
         return {
@@ -348,3 +349,40 @@ export const ridesRelations = relations(rides, ({ one }) => ({
         references: [shifts.id],
     }),
 }));
+
+// MAINTENANCE SYSTEM
+export const maintenanceConfigs = pgTable("maintenance_configs", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey(),
+    name: text("name").notNull(), // "Troca de Óleo", "Rodízio"
+    intervalKm: integer("interval_km").notNull(), // 10000, 5000
+    isActive: boolean("is_active").default(true),
+});
+
+export const vehicleMaintenances = pgTable("vehicle_maintenances", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey(),
+    vehicleId: varchar("vehicle_id").references(() => vehicles.id).notNull(),
+    configId: varchar("config_id").references(() => maintenanceConfigs.id).notNull(),
+    lastPerformedAt: timestamp("last_performed_at"),
+    lastPerformedKm: real("last_performed_km").default(0),
+    nextDueKm: real("next_due_km").notNull(),
+    status: text("status").default('ok'), // 'ok', 'warning', 'overdue'
+});
+
+export const maintenanceConfigsRelations = relations(maintenanceConfigs, ({ many }) => ({
+    vehicleMaintenances: many(vehicleMaintenances),
+}));
+
+export const vehicleMaintenancesRelations = relations(vehicleMaintenances, ({ one }) => ({
+    vehicle: one(vehicles, {
+        fields: [vehicleMaintenances.vehicleId],
+        references: [vehicles.id],
+    }),
+    config: one(maintenanceConfigs, {
+        fields: [vehicleMaintenances.configId],
+        references: [maintenanceConfigs.id],
+    }),
+}));
+
+export type MaintenanceConfig = typeof maintenanceConfigs.$inferSelect;
+export type VehicleMaintenance = typeof vehicleMaintenances.$inferSelect;
+

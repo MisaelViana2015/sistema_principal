@@ -27,7 +27,7 @@ export interface ApiResponse<T = any> {
 }
 
 export interface LoginResponse {
-    success: boolean;
+    ok: boolean;
     user?: {
         id: string;
         nome: string;
@@ -36,7 +36,8 @@ export interface LoginResponse {
     };
     token?: string;
     error?: string;
-    requirePasswordReset?: boolean;
+    next_action?: "RESET_PASSWORD_REQUIRED";
+    password_change_token?: string;
 }
 
 // ============================================

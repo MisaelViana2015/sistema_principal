@@ -1,10 +1,20 @@
-
 import "dotenv/config";
 import app from "./app.js";
 import { testConnection, closeConnection, db } from "./core/db/connection.js";
 import { runMigrations } from "./core/db/migrator.js";
 import { sql } from "drizzle-orm";
 import { FraudService } from "./modules/fraud/fraud.service.js";
+
+// Routes Imports
+import authRoutes from "./modules/auth/auth.routes.js";
+import driversRoutes from "./modules/drivers/drivers.routes.js";
+import vehiclesRoutes from "./modules/vehicles/vehicles.routes.js";
+import shiftsRoutes from "./modules/shifts/shifts.routes.js";
+import tripsRoutes from "./modules/rides/rides.routes.js";
+import expensesRoutes from "./modules/financial/financial.routes.js";
+import tireRoutes from "./modules/tires/tires.routes.js";
+import maintenanceRoutes from "./modules/maintenance/maintenance.routes.js"; // NEW
+import adminToolsRoutes from "./routes/admin-tools.routes.js";
 
 /**
  * BOOT DO SERVIDOR (GERENTE GERAL)
@@ -59,6 +69,43 @@ async function ensureSchemaIntegrity() {
         await db.execute(sql`ALTER TABLE shifts ADD COLUMN IF NOT EXISTS discount_company real DEFAULT 0`);
         await db.execute(sql`ALTER TABLE shifts ADD COLUMN IF NOT EXISTS discount_driver real DEFAULT 0`);
         await db.execute(sql`ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS status text DEFAULT 'ativo'`);
+
+        // MAINTENANCE SYSTEM (NEW)
+        await db.execute(sql`ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS current_km real DEFAULT 0`);
+
+        await db.execute(sql`
+            CREATE TABLE IF NOT EXISTS maintenance_configs (
+                id varchar(255) PRIMARY KEY,
+                name text NOT NULL,
+                interval_km integer NOT NULL,
+                is_active boolean DEFAULT true
+            )
+        `);
+
+        await db.execute(sql`
+            CREATE TABLE IF NOT EXISTS vehicle_maintenances (
+                id varchar(255) PRIMARY KEY,
+                vehicle_id varchar(255) NOT NULL REFERENCES vehicles(id),
+                config_id varchar(255) NOT NULL REFERENCES maintenance_configs(id),
+                last_performed_at timestamp,
+                last_performed_km real DEFAULT 0,
+                next_due_km real NOT NULL,
+                status text DEFAULT 'ok'
+            )
+        `);
+
+        // Insert Default Configs if empty
+        await db.execute(sql`
+            INSERT INTO maintenance_configs (id, name, interval_km) 
+            SELECT 'conf_oil', 'Revisão Periódica (Óleo/Filtros)', 20000
+            WHERE NOT EXISTS (SELECT 1 FROM maintenance_configs WHERE id = 'conf_oil');
+        `);
+
+        await db.execute(sql`
+            INSERT INTO maintenance_configs (id, name, interval_km) 
+            SELECT 'conf_tires', 'Rodízio de Pneus', 10000
+            WHERE NOT EXISTS (SELECT 1 FROM maintenance_configs WHERE id = 'conf_tires');
+        `);
 
         // Fix Cost Types (CRITICAL if missing)
         await db.execute(sql`
