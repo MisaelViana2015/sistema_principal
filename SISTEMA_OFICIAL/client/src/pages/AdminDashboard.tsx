@@ -42,6 +42,19 @@ export default function Admin() {
         fetchAlertCount();
     }, []);
 
+    const handleFixDB = async () => {
+        if (!confirm("Isso vai forçar a atualização dos nomes no banco de dados PRODUÇÃO. Continuar?")) return;
+        try {
+            const res = await api.post("/maintenance/fix-db-data");
+            console.log("DB Fix Result:", res.data);
+            alert("Banco Atualizado! \n\nDiagnóstico TQU0H17:\n" + JSON.stringify(res.data.data, null, 2));
+            window.location.reload();
+        } catch (err: any) {
+            console.error(err);
+            alert("Erro: " + (err.response?.data?.error || err.message));
+        }
+    };
+
     const tabs: TabItem[] = [
         { value: "fraude", label: "Fraude" },
         { value: "motoristas", label: "Motoristas" },
@@ -210,7 +223,18 @@ export default function Admin() {
                             {/* CONTEÚDO */}
                             <div>
                                 {activeTab === "motoristas" && <DriversList />}
-                                {activeTab === "veiculos" && <VehiclesList />}
+                                {activeTab === "veiculos" && (
+                                    <>
+                                        <VehiclesList />
+                                        <button
+                                            onClick={handleFixDB}
+                                            className="fixed bottom-4 right-4 z-50 bg-red-600 text-white px-2 py-1 rounded shadow-lg text-xs opacity-50 hover:opacity-100"
+                                            title="Corrigir Nomes DB e Diagnosticar"
+                                        >
+                                            Fix DB
+                                        </button>
+                                    </>
+                                )}
                                 {activeTab === "turnos" && <ShiftsList />}
                                 {activeTab === "corridas" && <RidesList />}
                                 {activeTab === "analise" && <PerformanceContent />}

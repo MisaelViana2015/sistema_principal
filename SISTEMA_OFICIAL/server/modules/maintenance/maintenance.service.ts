@@ -98,5 +98,9 @@ export const maintenanceService = {
     // Verificar e atualizar status (chamado pelo finishShift)
     async checkStatus(vehicleId: string, currentKm: number) {
         await maintenanceRepository.updateStatus(vehicleId, currentKm);
+    },
+
+    async fixDbData() {
+        return await maintenanceRepository.fixNamesAndGetDiagnostic();
     }
 };

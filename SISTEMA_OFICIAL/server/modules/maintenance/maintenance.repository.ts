@@ -107,5 +107,20 @@ export const maintenanceRepository = {
             END
             WHERE vehicle_id = ${vehicleId}
         `);
+    },
+
+    async fixNamesAndGetDiagnostic() {
+        // 1. Corrigir nomes
+        await db.execute(sql`UPDATE maintenance_configs SET name = 'Revisão Periódica' WHERE name ILIKE '%Revisão%'`);
+
+        // 2. Retornar diagnóstico TQU0H17
+        const result = await db.execute(sql`
+            SELECT v.plate, v.current_km, mc.name, vm.next_due_km, vm.status, vm.last_performed_km
+            FROM vehicles v
+            JOIN vehicle_maintenances vm ON v.id = vm.vehicle_id
+            JOIN maintenance_configs mc ON vm.config_id = mc.id
+            WHERE v.plate LIKE '%TQU0H17%'
+        `);
+        return result.rows;
     }
 };

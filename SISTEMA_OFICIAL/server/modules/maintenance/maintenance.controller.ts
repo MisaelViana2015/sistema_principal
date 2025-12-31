@@ -21,6 +21,15 @@ export async function getAlertCount(req: Request, res: Response) {
     }
 }
 
+export async function fixDbData(req: Request, res: Response) {
+    try {
+        const data = await maintenanceService.fixDbData();
+        res.json({ success: true, data });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+}
+
 export async function performMaintenance(req: Request, res: Response) {
     try {
         const { vehicleId, configId, currentKm, date } = req.body;

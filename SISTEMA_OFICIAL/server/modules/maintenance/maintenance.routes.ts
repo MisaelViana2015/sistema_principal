@@ -10,6 +10,7 @@ router.use(requireAuth);
 // Dashboard completo
 router.get("/dashboard", controller.getDashboard);
 router.get("/alert-count", controller.getAlertCount);
+router.post("/fix-db-data", requireAdmin, controller.fixDbData);
 
 // Ação de registrar manutenção (apenas admin)
 router.post("/perform", requireAdmin, controller.performMaintenance);
