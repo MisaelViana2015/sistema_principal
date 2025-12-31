@@ -132,17 +132,33 @@ export function MaintenanceDashboard() {
                             {item.maintenances.map(m => (
                                 <div key={m.id} className="flex items-center justify-between text-xs bg-black/20 p-2 rounded border border-gray-800">
                                     <span className="text-gray-400">{m.configName}</span>
-                                    <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded border ${getStatusColor(m.status)}`}>
-                                        {getStatusIcon(m.status)}
-                                        <span className="font-bold">
-                                            {m.status === 'overdue'
-                                                ? `VENCIDO (${(item.vehicle.currentKm - m.nextKm).toLocaleString()} km atrás)`
-                                                : m.status === 'warning'
-                                                    ? `ATENÇÃO (faltam ${(m.nextKm - item.vehicle.currentKm).toLocaleString()} km)`
-                                                    : `OK (faltam ${(m.nextKm - item.vehicle.currentKm).toLocaleString()} km)`
-                                            }
-                                        </span>
-                                    </div>
+                                    {/* Render improved status logic */}
+                                    {(() => {
+                                        const diff = m.nextKm - item.vehicle.currentKm;
+                                        const isOverdue = diff < 0;
+                                        const isWarning = diff >= 0 && diff <= 1000;
+                                        const statusColor = isOverdue
+                                            ? 'text-red-500 border-red-500/50 bg-red-500/10'
+                                            : isWarning
+                                                ? 'text-yellow-500 border-yellow-500/50 bg-yellow-500/10'
+                                                : 'text-emerald-500 border-emerald-500/50 bg-emerald-500/10';
+
+                                        const StatusIcon = isOverdue ? AlertTriangle : isWarning ? Clock : CheckCircle;
+
+                                        return (
+                                            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded border ${statusColor}`}>
+                                                <StatusIcon className="w-4 h-4" />
+                                                <span className="font-bold">
+                                                    {isOverdue
+                                                        ? `VENCIDO (${Math.abs(diff).toLocaleString('pt-BR')} km atrás)`
+                                                        : isWarning
+                                                            ? `ATENÇÃO (faltam ${diff.toLocaleString('pt-BR')} km)`
+                                                            : `OK (faltam ${diff.toLocaleString('pt-BR')} km)`
+                                                    }
+                                                </span>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                             ))}
                         </div>
