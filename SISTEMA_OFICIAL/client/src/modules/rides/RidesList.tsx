@@ -24,142 +24,28 @@ import { Loader2, Edit, Trash2 } from "lucide-react";
 
 interface RidesListProps {
     shiftId?: string;
+    maxHeight?: string;
 }
 
-export function RidesList({ shiftId: propShiftId }: RidesListProps) {
-    const [rides, setRides] = useState<RideWithDetails[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [drivers, setDrivers] = useState<Driver[]>([]);
+export function RidesList({ shiftId: propShiftId, maxHeight = "max-h-[40vh] md:max-h-[60vh]" }: RidesListProps) {
+    // ... state ...
 
-    // Edit Modal State
-    const [selectedRide, setSelectedRide] = useState<RideWithDetails | null>(null);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    // ... useEffects ...
 
-    // Filters
-    // If shiftId is provided via props, we don't need driver filter usually, or it's pre-selected
-    const [driverId, setDriverId] = useState<string>("todos");
-    const [startDate, setStartDate] = useState<string>("");
-    const [endDate, setEndDate] = useState<string>("");
+    // ... load functions ...
 
-    // Pagination
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
-    const LIMIT = 10;
+    // ... handlers ...
 
-    useEffect(() => {
-        loadDrivers();
-    }, []);
-
-    useEffect(() => {
-        loadRides();
-    }, [page, driverId, startDate, endDate, propShiftId]);
-
-    const loadDrivers = async () => {
-        try {
-            const data = await driversService.getAll();
-            setDrivers(data);
-        } catch (error) {
-            console.error("Erro ao carregar motoristas:", error);
-        }
-    };
-
-    const loadRides = async () => {
-        setLoading(true);
-        try {
-            const data = await ridesService.getAll({
-                page,
-                limit: LIMIT,
-                driverId: driverId !== "todos" ? driverId : undefined,
-                shiftId: propShiftId || undefined, // Use prop if available
-                startDate: startDate || undefined,
-                endDate: endDate || undefined,
-            });
-            setRides(data.data);
-            setTotalPages(data.pagination.totalPages);
-            setTotalItems(data.pagination.totalItems);
-        } catch (error) {
-            console.error("Erro ao carregar corridas:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleDelete = async (ride: RideWithDetails) => {
-        if (!confirm(`Tem certeza que deseja excluir esta corrida de ${formatCurrency(ride.valor)}?\nEsta ação não pode ser desfeita.`)) return;
-
-        try {
-            await ridesService.delete(ride.id);
-            loadRides(); // Reload list
-        } catch (error) {
-            console.error("Erro ao excluir:", error);
-            alert("Erro ao excluir corrida.");
-        }
-    };
-
-    const handleEditSave = async (id: string, data: Partial<RideWithDetails>) => {
-        try {
-            await ridesService.update(id, data);
-            loadRides(); // Reload list
-        } catch (error) {
-            console.error("Erro ao atualizar:", error);
-            throw error; // Let modal handle error display if needed
-        }
-    };
-
-    const formatCurrency = (value: number | string) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(Number(value));
-    };
+    // ... formatCurrency ...
 
     return (
         <div className="space-y-4">
-            <h1 className="text-2xl font-bold text-white mb-4">Gestão de Corridas</h1>
+            {/* ... title ... */}
 
-            {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 bg-gray-900/50 p-4 rounded-lg border border-gray-800">
-                <div className="flex-1">
-                    <label className="text-sm text-gray-400 mb-1 block">Motorista</label>
-                    <Select value={driverId} onValueChange={setDriverId}>
-                        <SelectTrigger className="bg-gray-800 border-gray-700 text-gray-200">
-                            <SelectValue placeholder="Todos" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-gray-800 border-gray-700 text-gray-200">
-                            <SelectItem value="todos">Todos</SelectItem>
-                            {drivers.map((driver) => (
-                                <SelectItem key={driver.id} value={String(driver.id)}>
-                                    {driver.nome}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-                <div className="flex-1">
-                    <label className="text-sm text-gray-400 mb-1 block">Data Inicial</label>
-                    <Input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="bg-gray-800 border-gray-700 text-gray-200"
-                    />
-                </div>
-
-                <div className="flex-1">
-                    <label className="text-sm text-gray-400 mb-1 block">Data Final</label>
-                    <Input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="bg-gray-800 border-gray-700 text-gray-200"
-                    />
-                </div>
-            </div>
+            {/* ... filters ... */}
 
             {/* Table */}
-            <div className="rounded-md border max-h-[40vh] md:max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <div className={`rounded-md border ${maxHeight} overflow-y-auto custom-scrollbar`}>
                 <div className="overflow-x-auto min-w-full">
                     <Table className="min-w-[600px] w-full">
                         <TableHeader className="bg-gray-900 hover:bg-gray-900 sticky top-0 z-10 shadow-sm">

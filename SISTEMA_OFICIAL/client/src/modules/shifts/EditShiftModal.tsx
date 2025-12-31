@@ -153,7 +153,7 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
                     <TabsContent value="corridas" className="flex-1 border border-gray-800 rounded-md mt-2 overflow-y-auto p-4 bg-gray-900/50">
                         <div className="min-h-full pb-4">
                             <p className="mb-2 text-sm text-gray-400">Gerencie as corridas deste turno. O total será recalculado automaticamente.</p>
-                            {shiftId && <RidesList shiftId={shiftId} />}
+                            {shiftId && <RidesList shiftId={shiftId} maxHeight="max-h-[40vh]" />}
                             {!shiftId && <p className="text-center p-10 text-gray-500">Selecione um turno para ver as corridas.</p>}
                         </div>
                     </TabsContent>
