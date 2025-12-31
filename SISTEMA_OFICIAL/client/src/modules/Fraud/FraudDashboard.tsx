@@ -160,9 +160,7 @@ const FraudDashboard = () => {
 
     const recentAlerts = alertsResponse?.data || [];
     // Filter out Score 0 from 'Ativos' view (nothing to validate)
-    const filteredAlerts = statusFilter === 'all'
-        ? recentAlerts.filter((a: any) => a.riskScore > 0)
-        : recentAlerts;
+    const filteredAlerts = recentAlerts;
     const meta = alertsResponse?.meta || { total: 0, totalPages: 1, page: 1 };
 
     // Fetch Drivers for Select Filter
@@ -382,7 +380,7 @@ const FraudDashboard = () => {
 
                         <div className="space-y-4">
                             {filteredAlerts && filteredAlerts.length > 0 ? (
-                                filteredAlerts.map((alert, i) => (
+                                filteredAlerts.map((alert: any, i: number) => (
                                     <div key={alert.id || i} className="flex items-center justify-between p-4 border rounded-lg bg-gray-50 dark:bg-gray-800/50">
                                         <div className="flex items-center gap-3">
                                             <div className={`w-4 h-4 rounded-full ${alert.riskScore >= 20 ? 'bg-red-500' :
