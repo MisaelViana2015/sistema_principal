@@ -83,8 +83,8 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-3xl w-[95vw] max-h-[85vh] bg-gray-900 border-gray-800 text-white flex flex-col p-4 sm:p-6 overflow-hidden rounded-xl">
-                <DialogHeader>
+            <DialogContent className="max-w-2xl w-[95vw] max-h-[75vh] bg-gray-900 border-gray-800 text-white flex flex-col p-4 overflow-hidden rounded-xl">
+                <DialogHeader className="mb-2">
                     <DialogTitle>Editar Turno</DialogTitle>
                 </DialogHeader>
 
