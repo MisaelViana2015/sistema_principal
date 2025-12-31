@@ -112,6 +112,15 @@ export const maintenanceRepository = {
     async fixNamesAndGetDiagnostic() {
         // 1. Corrigir nomes
         await db.execute(sql`UPDATE maintenance_configs SET name = 'Revisão Periódica' WHERE name ILIKE '%Revisão%'`);
+        await db.execute(sql`UPDATE maintenance_configs SET interval_km = 5000 WHERE name ILIKE '%Pneu%' OR name ILIKE '%Rodízio%'`);
+
+        // 3. Recalcular next_due
+        await db.execute(sql`
+            UPDATE vehicle_maintenances vm
+            SET next_due_km = vm.last_performed_km + mc.interval_km
+            FROM maintenance_configs mc
+            WHERE vm.config_id = mc.id
+        `);
 
         // 2. Retornar diagnóstico TQU0H17
         const result = await db.execute(sql`
