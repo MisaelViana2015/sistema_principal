@@ -23,8 +23,8 @@ export const FinancialCalculator = {
      * Calcula a divisão do repasse baseado na data do turno
      */
     calculateSplit(shiftDate: Date | string, liquidoBase: number) {
-        const date = new Date(shiftDate);
-        const split = date < this.CUTOFF_DATE ? this.SPLIT_OLD : this.SPLIT_NEW;
+        // REGRA FIXA: Sempre 60/40 (Empresa/Motorista)
+        const split = this.SPLIT_OLD;
 
         // Calcula repasse base
         const repasseEmpresa = liquidoBase * split.company;
@@ -33,7 +33,7 @@ export const FinancialCalculator = {
         return {
             repasseEmpresa,
             repasseMotorista,
-            ruleUsed: date < this.CUTOFF_DATE ? '60/40 (Antiga)' : '50/50 (Nova)'
+            ruleUsed: '60/40 (Padrão)'
         };
     },
 

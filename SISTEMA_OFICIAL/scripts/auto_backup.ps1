@@ -92,10 +92,12 @@ if (-not $DbUrlFound -and (Test-Path $EnvFile)) {
 
 if ($DbUrlFound) {
     try {
-        # Capture output and errors
+        # Capture output
         $Output = npm run db:backup 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            throw "npm run db:backup exited with code $LASTEXITCODE. Output: $Output"
+        $ExitCode = $LASTEXITCODE
+        
+        if ($ExitCode -ne 0) {
+            throw "npm run db:backup exited with code $ExitCode. Output: $Output"
         }
         Log-Message "Backup de banco executado com sucesso." "Green" "SUCCESS"
     }
