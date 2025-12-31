@@ -406,9 +406,9 @@ const FraudDashboard = () => {
                                         <div className="flex gap-2">
                                             {(alert.status === 'pendente' || alert.status === 'em_analise') && (
                                                 <Button
-                                                    variant="ghost"
+                                                    variant="outline"
                                                     size="sm"
-                                                    className="text-gray-500 hover:text-red-600 hover:bg-red-50"
+                                                    className="border-green-600 text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
                                                     onClick={async () => {
                                                         if (window.confirm('Marcar este alerta como Descartado (Falso Positivo)?')) {
                                                             try {
@@ -425,8 +425,8 @@ const FraudDashboard = () => {
                                                         }
                                                     }}
                                                 >
-                                                    <span className="sr-only">Descartar</span>
-                                                    <CheckCircle2 className="w-4 h-4" />
+                                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                                    Descartar
                                                 </Button>
                                             )}
                                             <Button variant="outline" size="sm" onClick={() => setSelectedAlertId(alert.id)}>
