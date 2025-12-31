@@ -83,7 +83,7 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] bg-gray-900 border-gray-800 text-white flex flex-col p-6 overflow-hidden">
+            <DialogContent className="max-w-3xl w-[95vw] max-h-[85vh] bg-gray-900 border-gray-800 text-white flex flex-col p-4 sm:p-6 overflow-hidden rounded-xl">
                 <DialogHeader>
                     <DialogTitle>Editar Turno</DialogTitle>
                 </DialogHeader>
@@ -95,7 +95,7 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
                         <TabsTrigger value="custos">Custos & Despesas</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="dados" className="flex-1 p-4 border border-gray-800 rounded-md mt-2">
+                    <TabsContent value="dados" className="flex-1 p-3 sm:p-4 border border-gray-800 rounded-md mt-2 overflow-y-auto">
                         <div className="space-y-4">
                             <p className="text-gray-400 mb-4">Edite os dados principais do turno.</p>
 
