@@ -83,7 +83,7 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl bg-gray-900 border-gray-800 text-white h-[80vh] flex flex-col">
+            <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] bg-gray-900 border-gray-800 text-white flex flex-col p-6 overflow-hidden">
                 <DialogHeader>
                     <DialogTitle>Editar Turno</DialogTitle>
                 </DialogHeader>
@@ -150,7 +150,7 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="corridas" className="flex-1 p-4 border border-gray-800 rounded-md mt-2 overflow-auto">
+                    <TabsContent value="corridas" className="flex-1 border border-gray-800 rounded-md mt-2 overflow-y-auto p-4 bg-gray-900/50">
                         <div className="min-h-full pb-4">
                             <p className="mb-2 text-sm text-gray-400">Gerencie as corridas deste turno. O total será recalculado automaticamente.</p>
                             {shiftId && <RidesList shiftId={shiftId} />}
@@ -158,7 +158,7 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="custos" className="flex-1 p-4 border border-gray-800 rounded-md mt-2 overflow-auto">
+                    <TabsContent value="custos" className="flex-1 border border-gray-800 rounded-md mt-2 overflow-y-auto p-4 bg-gray-900/50">
                         <div className="min-h-full pb-4">
                             <p className="mb-2 text-sm text-gray-400">Lançamentos de despesas e custos.</p>
                             {shiftId && <CostsList shiftId={shiftId} />}

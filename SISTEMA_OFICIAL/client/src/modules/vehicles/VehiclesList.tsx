@@ -161,24 +161,8 @@ export default function VehiclesList() {
             alignItems: 'center',
             gap: '0.5rem'
         },
-        stats: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' },
-        statCard: (color: string) => ({
-            padding: '1rem',
-            borderRadius: '0.75rem',
-            backgroundColor: isDark ? '#1f2937' : '#fff',
-            border: `2px solid ${color}`,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem'
-        }),
-        vehicleCard: {
-            backgroundColor: isDark ? '#1f2937' : '#fff',
-            borderRadius: '12px',
-            padding: '1.5rem',
-            marginBottom: '1rem',
-            border: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        },
+
+
         badge: (status: string) => {
             let color = { bg: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7', text: '#16a34a', border: '#22c55e' }; // Default Active
             if (status === 'manutencao') color = { bg: isDark ? 'rgba(234, 179, 8, 0.2)' : '#fef9c3', text: '#ca8a04', border: '#eab308' };
@@ -474,26 +458,34 @@ export default function VehiclesList() {
 
             {activeTab === 'frota' && (
                 <>
-                    <div style={s.stats}>
-                        <div style={s.statCard('#22c55e')}>
-                            <CheckCircle style={{ width: '32px', height: '32px', color: '#22c55e' }} />
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                        <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-green-500/30 shadow-sm">
+                            <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-full">
+                                <CheckCircle className="w-5 h-5 text-green-500" />
+                            </div>
                             <div>
-                                <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>Ativos</p>
-                                <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: isDark ? '#fff' : '#111827' }}>{stats.ativos}</p>
+                                <p className="text-xs text-gray-500 uppercase font-semibold">Ativos</p>
+                                <p className="text-lg font-bold text-gray-900 dark:text-white leading-none">{stats.ativos}</p>
                             </div>
                         </div>
-                        <div style={s.statCard('#eab308')}>
-                            <Wrench style={{ width: '32px', height: '32px', color: '#eab308' }} />
+
+                        <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-yellow-500/30 shadow-sm">
+                            <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-full">
+                                <Wrench className="w-5 h-5 text-yellow-500" />
+                            </div>
                             <div>
-                                <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>Manutenção</p>
-                                <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: isDark ? '#fff' : '#111827' }}>{stats.manutencao}</p>
+                                <p className="text-xs text-gray-500 uppercase font-semibold">Manutenção</p>
+                                <p className="text-lg font-bold text-gray-900 dark:text-white leading-none">{stats.manutencao}</p>
                             </div>
                         </div>
-                        <div style={s.statCard('#ef4444')}>
-                            <Ban style={{ width: '32px', height: '32px', color: '#ef4444' }} />
+
+                        <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-red-500/30 shadow-sm">
+                            <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-full">
+                                <Ban className="w-5 h-5 text-red-500" />
+                            </div>
                             <div>
-                                <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>Indisponível</p>
-                                <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: isDark ? '#fff' : '#111827' }}>{stats.indisponivel}</p>
+                                <p className="text-xs text-gray-500 uppercase font-semibold">Indisponível</p>
+                                <p className="text-lg font-bold text-gray-900 dark:text-white leading-none">{stats.indisponivel}</p>
                             </div>
                         </div>
                     </div>
@@ -504,71 +496,73 @@ export default function VehiclesList() {
                         </div>
                     )}
 
-                    {vehicles.map((veiculo) => (
-                        <div key={veiculo.id} style={s.vehicleCard}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-                                <div className="flex items-center gap-4">
-                                    {/* Imagem do Veículo no Card */}
-                                    {veiculo.imageUrl ? (
-                                        <div className="w-16 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                            <img src={veiculo.imageUrl} alt={veiculo.plate} className="w-full h-full object-cover" />
-                                        </div>
-                                    ) : (
-                                        <div className="w-16 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                                            <Car className="text-gray-400" />
-                                        </div>
-                                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {vehicles.map((veiculo) => (
+                            <div key={veiculo.id} className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex items-center gap-4">
+                                        {/* Imagem do Veículo no Card */}
+                                        {veiculo.imageUrl ? (
+                                            <div className="w-16 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                                <img src={veiculo.imageUrl} alt={veiculo.plate} className="w-full h-full object-cover" />
+                                            </div>
+                                        ) : (
+                                            <div className="w-16 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                                <Car className="text-gray-400" />
+                                            </div>
+                                        )}
 
-                                    <div>
-                                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: isDark ? '#fff' : '#111827', fontFamily: 'monospace' }}>
-                                            {veiculo.plate}
-                                        </h3>
-                                        <div className="flex items-center gap-2">
-                                            <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>{veiculo.modelo}</p>
-                                            {veiculo.color && (
-                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-                                                    {veiculo.color}
-                                                </span>
-                                            )}
+                                        <div>
+                                            <h3 className="text-xl font-bold text-gray-900 dark:text-white font-mono">
+                                                {veiculo.plate}
+                                            </h3>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-gray-500">{veiculo.modelo}</p>
+                                                {veiculo.color && (
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                                                        {veiculo.color}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span style={s.badge(veiculo.status || 'ativo')}>
+                                        {veiculo.status || 'Ativo'}
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4 mb-4 flex-grow">
+                                    <div className="flex items-center gap-2">
+                                        <Gauge className="w-5 h-5 text-gray-500" />
+                                        <div>
+                                            <p className="text-xs text-gray-500">Quilometragem Inicial</p>
+                                            <p className="font-semibold text-gray-900 dark:text-white font-mono">
+                                                {veiculo.kmInicial.toLocaleString()} km
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
-                                <span style={s.badge(veiculo.status || 'ativo')}>
-                                    {veiculo.status || 'Ativo'}
-                                </span>
-                            </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Gauge style={{ width: '20px', height: '20px', color: '#6b7280' }} />
-                                    <div>
-                                        <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>Quilometragem Inicial</p>
-                                        <p style={{ fontWeight: '600', color: isDark ? '#fff' : '#111827', fontFamily: 'monospace' }}>
-                                            {veiculo.kmInicial.toLocaleString()} km
-                                        </p>
-                                    </div>
+                                {/* Actions Buttons */}
+                                <div className="flex gap-2 pt-4 mt-auto border-t border-gray-200 dark:border-gray-700">
+                                    <button
+                                        onClick={() => handleOpenEdit(veiculo)}
+                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all font-medium text-sm"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                        Editar
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteClick(veiculo)}
+                                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-all font-medium text-sm"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Excluir
+                                    </button>
                                 </div>
                             </div>
-
-                            {/* Actions Buttons */}
-                            <div className="flex gap-2 pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-                                <button
-                                    onClick={() => handleOpenEdit(veiculo)}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all font-medium text-sm"
-                                >
-                                    <Edit2 className="w-4 h-4" />
-                                    Editar
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteClick(veiculo)}
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-all font-medium text-sm"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                    Excluir
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </>
             )}
 

@@ -360,7 +360,7 @@ const FraudDashboard = () => {
                     <Card className="p-6 mt-6">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold">🚨 Alertas Recentes</h3>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
                                 {['all', 'pendente', 'em_analise', 'confirmado', 'descartado'].map(status => (
                                     <button
                                         key={status}
@@ -368,12 +368,12 @@ const FraudDashboard = () => {
                                             setStatusFilter(status);
                                             setAlertPage(1);
                                         }}
-                                        className={`px-3 py-1 text-sm rounded-full transition-colors ${statusFilter === status
-                                            ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
-                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                                        className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wide rounded-full whitespace-nowrap transition-all border ${statusFilter === status
+                                            ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20'
+                                            : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                                             }`}
                                     >
-                                        {status === 'all' ? 'Ativos' : status.replace('_', ' ')}
+                                        {status === 'all' ? 'Todos' : status.replace('_', ' ')}
                                     </button>
                                 ))}
                             </div>

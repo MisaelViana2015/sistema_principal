@@ -23,15 +23,18 @@ const FraudNavigation: React.FC<FraudNavigationProps> = ({ activeTab, onTabChang
             {tabs.map((tab) => {
                 const active = activeTab === tab.id;
                 return (
-                    <Button
+                    <button
                         key={tab.id}
-                        variant={active ? "default" : "ghost"}
                         onClick={() => onTabChange(tab.id)}
-                        className={`gap-2 ${active ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all
+                            ${active
+                                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
+                                : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-transparent hover:border-gray-200 dark:hover:border-slate-600'
+                            }`}
                     >
                         <tab.icon className="w-4 h-4" />
                         {tab.label}
-                    </Button>
+                    </button>
                 );
             })}
         </div>
