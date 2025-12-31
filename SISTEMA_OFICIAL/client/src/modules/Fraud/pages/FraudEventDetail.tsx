@@ -129,7 +129,7 @@ const FraudEventDetail = ({ eventId: propEventId, onClose }: FraudEventDetailPro
                     </Button>
 
                     {/* Status Actions */}
-                    {event.status === 'pendente' && (
+                    {(event.status === 'pendente' || event.status === 'em_analise') && (
                         <>
                             <Button
                                 variant="destructive"

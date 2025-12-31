@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ import FraudEventDetail from './pages/FraudEventDetail';
 
 const FraudDashboard = () => {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [currentTab, setCurrentTab] = useState('painel');
     // Filters & Pagination State
@@ -402,9 +403,36 @@ const FraudDashboard = () => {
                                                 </p>
                                             </div>
                                         </div>
-                                        <Button variant="outline" size="sm" onClick={() => setSelectedAlertId(alert.id)}>
-                                            Ver Detalhes
-                                        </Button>
+                                        <div className="flex gap-2">
+                                            {(alert.status === 'pendente' || alert.status === 'em_analise') && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-gray-500 hover:text-red-600 hover:bg-red-50"
+                                                    onClick={async () => {
+                                                        if (window.confirm('Marcar este alerta como Descartado (Falso Positivo)?')) {
+                                                            try {
+                                                                await api.post(`/fraud/event/${alert.id}/status`, {
+                                                                    status: 'descartado',
+                                                                    comment: 'Descartado via Acesso Rápido'
+                                                                });
+                                                                queryClient.invalidateQueries({ queryKey: ['fraud-recent-alerts'] });
+                                                                queryClient.invalidateQueries({ queryKey: ['fraud-stats'] });
+                                                            } catch (err) {
+                                                                alert("Erro ao descartar alerta.");
+                                                                console.error(err);
+                                                            }
+                                                        }
+                                                    }}
+                                                >
+                                                    <span className="sr-only">Descartar</span>
+                                                    <CheckCircle2 className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                            <Button variant="outline" size="sm" onClick={() => setSelectedAlertId(alert.id)}>
+                                                Ver Detalhes
+                                            </Button>
+                                        </div>
                                     </div>
                                 ))
                             ) : (
