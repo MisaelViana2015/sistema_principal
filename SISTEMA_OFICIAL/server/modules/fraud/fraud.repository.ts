@@ -78,27 +78,27 @@ export const FraudRepository = {
         }
 
         if (driverId && driverId !== 'all') {
-            whereClause = sql`${whereClause} AND fe.driver_id = ${driverId}`;
+            whereClause = sql`${whereClause} AND fraud_events.driver_id = ${driverId}`;
         }
 
-        // Date filtering using detected_at (now correctly set to shift.inicio)
+        // Date filtering using detected_at
         if (startDate) {
-            whereClause = sql`${whereClause} AND DATE(fe.detected_at) >= ${startDate}::date`;
+            whereClause = sql`${whereClause} AND DATE(fraud_events.detected_at) >= ${startDate}::date`;
         }
         if (endDate) {
-            whereClause = sql`${whereClause} AND DATE(fe.detected_at) <= ${endDate}::date`;
+            whereClause = sql`${whereClause} AND DATE(fraud_events.detected_at) <= ${endDate}::date`;
         }
 
         console.log('[FRAUD-REPO] getFraudEvents:', { startDate, endDate, status, driverId });
 
         const result = await db.execute(sql`
             SELECT 
-                fe.id, fe.shift_id as "shiftId", fe.driver_id as "driverId", fe.vehicle_id as "vehicleId",
-                fe.risk_score as "riskScore", fe.risk_level as "riskLevel", fe.status, 
-                fe.rules, fe.metadata, fe.detected_at as "detectedAt", fe.updated_at as "updatedAt", fe.comment
-            FROM fraud_events fe
+                id, shift_id as "shiftId", driver_id as "driverId",
+                risk_score as "riskScore", risk_level as "riskLevel", status, 
+                rules, metadata, detected_at as "detectedAt"
+            FROM fraud_events
             WHERE ${whereClause}
-            ORDER BY fe.detected_at DESC
+            ORDER BY detected_at DESC
             LIMIT ${limit} OFFSET ${offset}
         `);
 
