@@ -74,7 +74,7 @@ export default function Admin() {
         <div className={`min-h-screen ${isDark ? 'bg-gray-950' : 'bg-slate-100'}`}>
             <HeaderNew showDesktopNav={false} />
 
-            <main className="flex-1 overflow-y-auto pb-8">
+            <main className="flex-1 overflow-y-auto pb-8 pt-24">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
                     {/* Header Card - Hero Style */}

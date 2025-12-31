@@ -148,28 +148,7 @@ export default function VehiclesList() {
         container: { maxWidth: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column' as const, gap: '1.5rem' },
         header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
         title: { fontSize: '1.5rem', fontWeight: 'bold', color: isDark ? '#fff' : '#111827' },
-        subTabs: {
-            display: 'flex',
-            gap: '0.5rem',
-            borderBottom: `1px solid ${isDark ? '#374151' : '#e5e7eb'}`,
-            paddingBottom: '0.5rem',
-            marginBottom: '1rem',
-            overflowX: 'auto' as const
-        },
-        subTabBtn: (active: boolean) => ({
-            padding: '0.5rem 1rem',
-            borderRadius: '0.375rem',
-            border: 'none',
-            backgroundColor: active ? (isDark ? '#374151' : '#e5e7eb') : 'transparent',
-            color: active ? (isDark ? '#fff' : '#111827') : (isDark ? '#9ca3af' : '#6b7280'),
-            fontWeight: 500,
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            whiteSpace: 'nowrap' as const
-        }),
+
         addButton: {
             padding: '0.75rem 1.5rem',
             backgroundColor: '#22c55e',
@@ -252,8 +231,8 @@ export default function VehiclesList() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, status: 'ativo' })}
                                         className={`py-2 px-1 text-xs font-bold rounded-lg border-2 transition-all ${formData.status === 'ativo'
-                                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                                                : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300'
+                                            ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                                            : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300'
                                             }`}
                                     >
                                         🟢 ATIVO
@@ -262,8 +241,8 @@ export default function VehiclesList() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, status: 'manutencao' })}
                                         className={`py-2 px-1 text-xs font-bold rounded-lg border-2 transition-all ${formData.status === 'manutencao'
-                                                ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300'
-                                                : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300'
+                                            ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300'
+                                            : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300'
                                             }`}
                                     >
                                         🟡 MANUTENÇÃO
@@ -272,8 +251,8 @@ export default function VehiclesList() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, status: 'indisponivel' })}
                                         className={`py-2 px-1 text-xs font-bold rounded-lg border-2 transition-all ${formData.status === 'indisponivel'
-                                                ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
-                                                : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300'
+                                            ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                                            : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-gray-300'
                                             }`}
                                     >
                                         🔴 INDISPONÍVEL
@@ -460,14 +439,35 @@ export default function VehiclesList() {
             )}
 
             {/* Sub-abas Internas */}
-            <div style={s.subTabs}>
-                <button style={s.subTabBtn(activeTab === 'frota')} onClick={() => setActiveTab('frota')}>
+            <div className="flex gap-2 border-b border-gray-200 dark:border-gray-800 pb-4 mb-6 overflow-x-auto">
+                <button
+                    onClick={() => setActiveTab('frota')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap
+                        ${activeTab === 'frota'
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                >
                     <Car size={16} /> Frota
                 </button>
-                <button style={s.subTabBtn(activeTab === 'manutencao')} onClick={() => setActiveTab('manutencao')}>
+                <button
+                    onClick={() => setActiveTab('manutencao')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap
+                        ${activeTab === 'manutencao'
+                            ? 'bg-yellow-600 text-white shadow-lg shadow-yellow-600/20'
+                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                >
                     <Wrench size={16} /> Manutenções
                 </button>
-                <button style={s.subTabBtn(activeTab === 'pneus')} onClick={() => setActiveTab('pneus')}>
+                <button
+                    onClick={() => setActiveTab('pneus')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap
+                        ${activeTab === 'pneus'
+                            ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20'
+                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                >
                     <Disc size={16} /> Pneus
                 </button>
             </div>

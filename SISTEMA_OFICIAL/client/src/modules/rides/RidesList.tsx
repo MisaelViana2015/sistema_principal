@@ -249,7 +249,7 @@ export function RidesList({ shiftId: propShiftId }: RidesListProps) {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center justify-between mt-4 pb-2">
                 <div className="text-sm text-gray-400">
                     Total: {totalItems} corridas
                 </div>
