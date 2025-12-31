@@ -31,6 +31,18 @@ export async function loginController(
         // Chama service
         const result = await authService.login(credentials, userAgent, ipAddress);
 
+        // Se precisa trocar senha, retorna sem cookies/token
+        if (result.requirePasswordReset) {
+            return res.status(200).json({
+                success: true,
+                message: "Troca de senha obrigatória",
+                data: {
+                    requirePasswordReset: true,
+                    user: result.user
+                }
+            });
+        }
+
         // Define Cookie HttpOnly Seguro para o Refresh Token
         res.cookie("refreshToken", result.refreshToken, {
             httpOnly: true,
