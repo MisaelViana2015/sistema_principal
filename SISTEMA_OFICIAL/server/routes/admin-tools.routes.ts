@@ -161,4 +161,28 @@ router.post("/recalculate-shifts", async (req, res) => {
     }
 });
 
+/**
+ * Endpoint para recalcular UM turno específico (TEMPORÁRIO)
+ */
+import { recalculateShiftTotals } from "../modules/shifts/shifts.service.js";
+
+router.get("/recalculate-shift/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log(`🔄 Recalculando turno específico: ${id}`);
+        const result = await recalculateShiftTotals(id);
+        res.json({
+            success: true,
+            message: `Turno ${id} recalculado!`,
+            data: result
+        });
+    } catch (error: any) {
+        console.error("Erro ao recalcular turno:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Erro ao recalcular turno"
+        });
+    }
+});
+
 export default router;
