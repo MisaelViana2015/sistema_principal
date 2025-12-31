@@ -4,6 +4,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import { requireAuth, requireAdmin } from "../core/middlewares/authMiddleware.js";
+import { and, gte, lte } from "drizzle-orm";
+import { shifts } from "../../shared/schema.js";
+import { db } from "../core/db/connection.js";
+import { recalculateShiftTotals } from "../modules/shifts/shifts.service.js";
 
 const router = Router();
 
@@ -164,8 +168,6 @@ router.post("/recalculate-shifts", async (req, res) => {
 /**
  * Endpoint para recalcular UM turno específico (TEMPORÁRIO)
  */
-import { recalculateShiftTotals } from "../modules/shifts/shifts.service.js";
-
 router.get("/recalculate-shift/:id", async (req, res) => {
     try {
         const { id } = req.params;
@@ -181,6 +183,48 @@ router.get("/recalculate-shift/:id", async (req, res) => {
         res.status(500).json({
             success: false,
             message: error.message || "Erro ao recalcular turno"
+        });
+    }
+});
+
+/**
+ * Endpoint para recalcular turnos de um DIA específico (SEGURANÇA: limitado a hoje 31/12/2025)
+ */
+router.post("/recalculate-shifts-today", async (req, res) => {
+    try {
+        console.log("🔄 Recalculando todos os turnos de hoje (31/12/2025)...");
+
+        // Data fixa para segurança conforme solicitado
+        const todayStart = new Date('2025-12-31T00:00:00');
+        const todayEnd = new Date('2025-12-31T23:59:59');
+
+        const activeShifts = await db
+            .select()
+            .from(shifts)
+            .where(
+                and(
+                    gte(shifts.inicio, todayStart),
+                    lte(shifts.inicio, todayEnd)
+                )
+            );
+
+        console.log(`📊 Encontrados ${activeShifts.length} turnos para hoje.`);
+
+        let count = 0;
+        for (const shift of activeShifts) {
+            await recalculateShiftTotals(shift.id);
+            count++;
+        }
+
+        res.json({
+            success: true,
+            message: `${count} turnos recalculados para o dia 31/12/2025 com sucesso!`
+        });
+    } catch (error: any) {
+        console.error("Erro ao recalcular turnos de hoje:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Erro ao recalcular turnos"
         });
     }
 });

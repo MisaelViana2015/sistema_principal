@@ -202,6 +202,32 @@ export default function DriverFinancePage() {
                         <h1 style={s.title}>Caixa</h1>
                         <p style={s.subtitle}>Visualize fechamentos de turnos</p>
                     </div>
+
+                    {/* RECALCULATE BUTTON (ADMIN ONLY) */}
+                    {isAdmin && (
+                        <div className="ml-auto">
+                            <button
+                                onClick={async () => {
+                                    if (!confirm("Deseja recalcular todos os turnos de HOJE (31/12/2025)? Isso corrigirá os valores 60/40.")) return;
+                                    setLoading(true);
+                                    try {
+                                        const res = await fetch('/api/admin-tools/recalculate-shifts-today', { method: 'POST' });
+                                        const data = await res.json();
+                                        alert(data.message || "Recálculo finalizado!");
+                                        loadShifts(); // Refresh list
+                                    } catch (err) {
+                                        alert("Erro ao recalcular.");
+                                    } finally {
+                                        setLoading(false);
+                                    }
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold shadow-lg transition-all animate-pulse"
+                            >
+                                <Calculator className="w-5 h-5" />
+                                Recalcular Turnos de Hoje
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Filters */}
