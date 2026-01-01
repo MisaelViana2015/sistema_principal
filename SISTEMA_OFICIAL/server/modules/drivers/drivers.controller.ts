@@ -24,7 +24,7 @@ export const driversController = {
                 senha: data.senha,
                 telefone: data.telefone || null,
                 role: data.role
-            });
+            }, req.auditContext);
 
             res.status(201).json(newDriver);
         } catch (error: any) {
@@ -49,7 +49,7 @@ export const driversController = {
             if (data.telefone) updateData.telefone = data.telefone;
             if (data.role) updateData.role = data.role;
 
-            const updatedDriver = await driversService.updateDriver(id, updateData);
+            const updatedDriver = await driversService.updateDriver(id, updateData, req.auditContext);
             res.json(updatedDriver);
         } catch (error: any) {
             console.error("Error updating driver:", error);
@@ -63,7 +63,7 @@ export const driversController = {
     async delete(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            await driversService.deleteDriver(id);
+            await driversService.deleteDriver(id, req.auditContext);
             res.json({ success: true });
         } catch (error: any) {
             console.error("Error deleting driver:", error);
@@ -74,7 +74,7 @@ export const driversController = {
     async resetPassword(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const result = await driversService.resetDriverPassword(id);
+            const result = await driversService.resetDriverPassword(id, req.auditContext);
             res.json({
                 temp_password: result.tempPassword,
                 expires_at: result.expiresAt,

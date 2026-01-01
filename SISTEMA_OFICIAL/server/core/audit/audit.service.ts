@@ -24,6 +24,8 @@ import type {
     OperationType,
 } from "./audit.types.js";
 
+export { AuditContext };
+
 /**
  * Gera hash do payload para rastreabilidade
  * Remove campos voláteis (timestamp, nonce)
