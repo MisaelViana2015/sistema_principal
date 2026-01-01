@@ -116,7 +116,7 @@ export default function PerformanceContent() {
     });
 
     // 2. Totals
-    const totalBruto = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.totalBruto) || 0), 0);
+    const totalBruto = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.receita) || 0), 0);
     const totalRepasseEmpresa = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.repasseEmpresa) || 0), 0);
     const totalRepasseMotorista = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.repasseMotorista) || 0), 0);
     const totalTurnos = filteredShifts.length;
@@ -431,15 +431,8 @@ export default function PerformanceContent() {
 
                     {/* --- NEW CALCULATIONS (Corrected) --- */}
                     {(() => {
-                        // DEBUG: Log data to console
-                        console.log('DEBUG - shifts:', shifts?.length, 'filteredShifts:', filteredShifts?.length);
-                        console.log('DEBUG - selectedYear:', selectedYear, 'selectedMonth:', selectedMonth);
-                        if (filteredShifts?.length > 0) {
-                            console.log('DEBUG - sample shift:', filteredShifts[0]);
-                        }
-
-                        // Faturamento Total = Soma de totalBruto de todos os turnos filtrados
-                        const faturamentoTotal = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.totalBruto) || 0), 0);
+                        // Faturamento Total = Soma de receita de todos os turnos filtrados
+                        const faturamentoTotal = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.receita) || 0), 0);
 
                         // Lucro Bruto Empresa = 60% do Faturamento Total
                         const lucroBrutoEmpresa = faturamentoTotal * 0.60;
@@ -464,7 +457,7 @@ export default function PerformanceContent() {
                         // Driver breakdown
                         const driverBreakdown = drivers.map((driver: any) => {
                             const driverShifts = filteredShifts.filter((s: any) => s.driverId === driver.id);
-                            const driverTotal = driverShifts.reduce((acc: number, s: any) => acc + (Number(s.totalBruto) || 0), 0);
+                            const driverTotal = driverShifts.reduce((acc: number, s: any) => acc + (Number(s.receita) || 0), 0);
                             return {
                                 nome: driver.nome,
                                 valor: driverTotal * 0.40
@@ -614,7 +607,7 @@ export default function PerformanceContent() {
                                 return acc + h;
                             }, 0);
                             const totalShifts = driverShifts.length;
-                            const totalRevenue = driverShifts.reduce((acc: number, s: any) => acc + (Number(s.totalBruto) || 0), 0);
+                            const totalRevenue = driverShifts.reduce((acc: number, s: any) => acc + (Number(s.receita) || 0), 0);
 
                             return {
                                 name: driver.nome,
