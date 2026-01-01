@@ -3,6 +3,25 @@ import { db } from "../../core/db/connection.js";
 import { auditLogs, entityHistory } from "../../../shared/schema.js";
 import { desc, eq, and, gte, lte, like, sql } from "drizzle-orm";
 
+// Helper para sanitização de saída (Egress)
+function sanitizeOutput(obj: any): any {
+    if (!obj || typeof obj !== 'object') return obj;
+    const sanitized = { ...obj };
+    const sensitiveFields = ['password', 'senha', 'token', 'refreshToken', 'temp_password_hash', 'temp_password_expires_at', 'password_hash'];
+
+    for (const field of sensitiveFields) {
+        if (field in sanitized) sanitized[field] = '[REDACTED]';
+    }
+
+    // Recursão
+    for (const key in sanitized) {
+        if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
+            sanitized[key] = sanitizeOutput(sanitized[key]);
+        }
+    }
+    return sanitized;
+}
+
 export const auditController = {
     /**
      * GET /api/audit/logs
@@ -88,21 +107,25 @@ export const auditController = {
      * GET /api/audit/history/:entity/:entityId
      * Retorna histórico de alterações de uma entidade específica
      */
-    async getEntityHistory(req: Request, res: Response, next: NextFunction) {
+    async getEntityHistory(req: Request, res: Response) {
         try {
             const { entity, entityId } = req.params;
-
             const history = await db.select()
                 .from(entityHistory)
-                .where(and(
-                    eq(entityHistory.entity, entity),
-                    eq(entityHistory.entityId, entityId)
-                ))
+                .where(and(eq(entityHistory.entity, entity), eq(entityHistory.entityId, entityId)))
                 .orderBy(desc(entityHistory.createdAt));
 
-            res.json({ data: history });
+            // Sanitizar dados históricos antes de enviar
+            const sanitizedHistory = history.map(h => ({
+                ...h,
+                beforeData: h.beforeData ? sanitizeOutput(h.beforeData) : null,
+                afterData: h.afterData ? sanitizeOutput(h.afterData) : null,
+            }));
+
+            res.json({ data: sanitizedHistory });
         } catch (error) {
-            next(error);
+            console.error("Error fetching history:", error);
+            res.status(500).json({ error: "Internal Server Error" });
         }
     },
 

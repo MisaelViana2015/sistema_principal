@@ -116,8 +116,8 @@ const AuditPayloadViewer: React.FC<AuditPayloadViewerProps> = ({ data, label, cl
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                 <tbody>
                     {Object.entries(data).map(([key, value]) => {
-                        // Skip internal fields if needed
-                        if (key === 'password') return null;
+                        // Skip sensitive fields
+                        if (['password', 'senha', 'temp_password_hash', 'temp_password_expires_at', 'token'].includes(key)) return null;
 
                         return (
                             <tr key={key} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>

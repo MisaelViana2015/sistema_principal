@@ -67,11 +67,27 @@ function sanitizeForLog(obj: any): any {
     if (!obj || typeof obj !== 'object') return obj;
 
     const sanitized = { ...obj };
-    const sensitiveFields = ['password', 'senha', 'token', 'refreshToken', 'temp_password_hash'];
+    // Lista negra estrita de campos que NUNCA devem aparecer no log
+    const sensitiveFields = [
+        'password',
+        'senha',
+        'token',
+        'refreshToken',
+        'temp_password_hash',
+        'temp_password_expires_at',
+        'password_hash'
+    ];
 
     for (const field of sensitiveFields) {
         if (field in sanitized) {
             sanitized[field] = '[REDACTED]';
+        }
+    }
+
+    // Recursão simples para sub-objetos (ex: se houver nested data)
+    for (const key in sanitized) {
+        if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
+            sanitized[key] = sanitizeForLog(sanitized[key]);
         }
     }
 
