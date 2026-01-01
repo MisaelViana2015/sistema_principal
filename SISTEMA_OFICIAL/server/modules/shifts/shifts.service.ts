@@ -302,6 +302,16 @@ export async function updateShift(id: string, data: any) {
         }
         if (cleanData.fim !== undefined) {
             cleanData.fim = toDateObject(cleanData.fim);
+
+            // Auto-finalize: Se 'fim' foi definido e não há status explícito, 
+            // verificar se o turno atual está 'em_andamento' e finalizar automaticamente
+            if (cleanData.fim && cleanData.status === undefined) {
+                const currentShift = await shiftsRepository.findShiftById(id);
+                if (currentShift && currentShift.status === 'em_andamento') {
+                    cleanData.status = 'finalizado';
+                    console.log('[updateShift] Auto-finalizing shift since fim was set');
+                }
+            }
         }
 
         console.log('[updateShift] Clean data:', JSON.stringify(cleanData, null, 2));
