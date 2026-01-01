@@ -81,9 +81,36 @@ export async function createShift(data: any) {
 }
 
 export async function updateShift(id: string, data: any) {
+    console.log('[shiftsRepository.updateShift] Received data:', JSON.stringify(data, null, 2));
+
+    // Build update object using schema field references
+    const updateData: Record<string, any> = {};
+
+    if (data.kmInicial !== undefined) updateData.kmInicial = data.kmInicial;
+    if (data.kmFinal !== undefined) updateData.kmFinal = data.kmFinal;
+    if (data.inicio !== undefined) updateData.inicio = data.inicio;
+    if (data.fim !== undefined) updateData.fim = data.fim;
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.driverId !== undefined) updateData.driverId = data.driverId;
+    if (data.vehicleId !== undefined) updateData.vehicleId = data.vehicleId;
+    if (data.totalApp !== undefined) updateData.totalApp = data.totalApp;
+    if (data.totalParticular !== undefined) updateData.totalParticular = data.totalParticular;
+    if (data.totalBruto !== undefined) updateData.totalBruto = data.totalBruto;
+    if (data.totalCustos !== undefined) updateData.totalCustos = data.totalCustos;
+    if (data.liquido !== undefined) updateData.liquido = data.liquido;
+    if (data.repasseEmpresa !== undefined) updateData.repasseEmpresa = data.repasseEmpresa;
+    if (data.repasseMotorista !== undefined) updateData.repasseMotorista = data.repasseMotorista;
+    if (data.totalCorridas !== undefined) updateData.totalCorridas = data.totalCorridas;
+    if (data.totalCorridasApp !== undefined) updateData.totalCorridasApp = data.totalCorridasApp;
+    if (data.totalCorridasParticular !== undefined) updateData.totalCorridasParticular = data.totalCorridasParticular;
+    if (data.duracaoMin !== undefined) updateData.duracaoMin = data.duracaoMin;
+    if (data.valorKm !== undefined) updateData.valorKm = data.valorKm;
+
+    console.log('[shiftsRepository.updateShift] Update data:', JSON.stringify(updateData, null, 2));
+
     const [updatedShift] = await db
         .update(shifts)
-        .set(data)
+        .set(updateData)
         .where(eq(shifts.id, id))
         .returning();
     return updatedShift;
