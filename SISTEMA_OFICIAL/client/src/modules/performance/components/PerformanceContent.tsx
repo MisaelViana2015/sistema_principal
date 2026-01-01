@@ -545,29 +545,35 @@ export default function PerformanceContent() {
                                         <span style={cardSublabel}>Por enquanto = Faturamento Bruto Motorista</span>
 
                                         {/* Tabela de breakdown por motorista */}
-                                        <div style={{ marginTop: "1rem", maxHeight: "200px", overflowY: "auto" }}>
+                                        {/* Tabela de breakdown por motorista */}
+                                        <div style={{ marginTop: "1rem" }}>
                                             <table style={{ width: "100%", fontSize: "0.8rem", borderCollapse: "collapse" }}>
                                                 <thead>
                                                     <tr style={{ borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}` }}>
-                                                        <th style={{ textAlign: "center", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "8%" }}>#</th>
+                                                        <th style={{ textAlign: "center", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "5%" }}>#</th>
                                                         <th style={{ textAlign: "left", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Motorista</th>
-                                                        <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Vlr. Total</th>
                                                         <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Valor (40%)</th>
-                                                        <th style={{ textAlign: "right", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "12%" }}>%</th>
+                                                        <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Vlr. 60%</th>
+                                                        <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Vlr. Total</th>
+                                                        <th style={{ textAlign: "right", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "10%" }}>%</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {driverBreakdown.map((d: any, index: number) => {
                                                         const percent = faturamentoBrutoMotorista > 0 ? (d.valor / faturamentoBrutoMotorista) * 100 : 0;
+                                                        const valor60 = d.valorTotal * 0.60;
                                                         return (
                                                             <tr key={d.nome} style={{ borderBottom: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}` }}>
                                                                 <td style={{ textAlign: "center", padding: "0.4rem 0", color: isDark ? "#64748b" : "#94a3b8", fontSize: "0.75rem" }}>{index + 1}º</td>
                                                                 <td style={{ padding: "0.4rem 0.25rem", color: isDark ? "#e2e8f0" : "#1e293b", whiteSpace: "nowrap" }}>{d.nome}</td>
-                                                                <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>
-                                                                    R$ {d.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                                </td>
                                                                 <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: "#8b5cf6", fontWeight: "600" }}>
                                                                     R$ {d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                </td>
+                                                                <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>
+                                                                    R$ {valor60.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                </td>
+                                                                <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>
+                                                                    R$ {d.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                                 </td>
                                                                 <td style={{ textAlign: "right", padding: "0.4rem 0", color: isDark ? "#94a3b8" : "#64748b", fontSize: "0.75rem" }}>
                                                                     {percent.toFixed(2)}%
@@ -577,7 +583,7 @@ export default function PerformanceContent() {
                                                     })}
                                                     {driverBreakdown.length === 0 && (
                                                         <tr>
-                                                            <td colSpan={5} style={{ textAlign: "center", padding: "1rem 0", color: isDark ? "#64748b" : "#94a3b8" }}>
+                                                            <td colSpan={6} style={{ textAlign: "center", padding: "1rem 0", color: isDark ? "#64748b" : "#94a3b8" }}>
                                                                 Nenhum motorista no período
                                                             </td>
                                                         </tr>
