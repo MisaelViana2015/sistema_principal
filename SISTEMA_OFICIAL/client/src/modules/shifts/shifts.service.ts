@@ -65,5 +65,17 @@ export const shiftsService = {
 
     async delete(shiftId: string) {
         await api.delete(`/shifts/${shiftId}`);
+    },
+
+    /**
+     * Encerrar turno manualmente (Admin Manutenção)
+     * NUNCA altera timestamps das corridas!
+     */
+    async adminClose(shiftId: string, fim: Date, kmFinal: number) {
+        const response = await api.post<Shift & { _warning?: string }>(`/shifts/${shiftId}/close`, {
+            fim: fim.toISOString(),
+            kmFinal
+        });
+        return response.data;
     }
 };

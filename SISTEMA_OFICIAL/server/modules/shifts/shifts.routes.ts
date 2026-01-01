@@ -23,6 +23,9 @@ router.get("/:id", requireShiftOwner, shiftsController.getById);
 router.post("/", auditLog('START_SHIFT'), shiftsController.start);
 router.post("/:id/finish", auditLog('FINISH_SHIFT'), shiftsController.finish);
 
+// Encerrar turno manualmente (Admin Manutenção)
+router.post("/:id/close", requireAdmin, auditLog('ADMIN_CLOSE_SHIFT'), shiftsController.adminClose);
+
 // Apenas ADMIN pode editar ou excluir turnos
 router.patch("/:id", requireAdmin, auditLog('UPDATE_SHIFT'), shiftsController.update);
 router.delete("/:id", requireAdmin, shiftsController.delete);

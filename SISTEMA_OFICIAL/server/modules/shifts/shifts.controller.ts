@@ -137,5 +137,46 @@ export const shiftsController = {
     finish: finishShiftController,
     getOpen: getOpenShiftController,
     update: updateShiftController,
-    delete: deleteShiftController
+    delete: deleteShiftController,
+    adminClose: adminCloseShiftController
 };
+
+/**
+ * Admin Close Shift Controller - Encerrar turno manualmente (somente admin)
+ * NUNCA altera timestamps das corridas!
+ */
+export async function adminCloseShiftController(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const { fim, kmFinal } = req.body;
+
+        // Validação básica
+        if (!fim) {
+            return res.status(400).json({ message: "Data/hora de fim é obrigatória" });
+        }
+        if (!kmFinal && kmFinal !== 0) {
+            return res.status(400).json({ message: "KM Final é obrigatório" });
+        }
+
+        // Converter para Date
+        const fimDate = new Date(fim);
+        if (isNaN(fimDate.getTime())) {
+            return res.status(400).json({ message: "Data/hora de fim inválida" });
+        }
+
+        const result = await shiftsService.adminCloseShift(id, fimDate, Number(kmFinal));
+
+        // Retornar com aviso se houver
+        if (result.warning) {
+            return res.json({
+                ...result.shift,
+                _warning: result.warning
+            });
+        }
+
+        return res.json(result.shift);
+    } catch (error: any) {
+        console.error("[adminCloseShift] Error:", error);
+        return res.status(400).json({ message: error.message || "Erro ao encerrar turno" });
+    }
+}

@@ -368,6 +368,73 @@ export async function updateShift(id: string, data: any) {
     }
 }
 
+/**
+ * Admin Close Shift - Encerra um turno manualmente (área administrativa)
+ * IMPORTANTE: Esta função NUNCA altera os timestamps das corridas!
+ * 
+ * @param id - ID do turno
+ * @param fim - Data/hora de fim do turno
+ * @param kmFinal - KM final do veículo
+ * @returns { shift, warning? } - Turno atualizado e possível aviso
+ */
+export async function adminCloseShift(id: string, fim: Date, kmFinal: number) {
+    console.log('[adminCloseShift] Starting...', { id, fim, kmFinal });
+
+    // 1. Buscar o turno atual
+    const currentShift = await shiftsRepository.findShiftById(id);
+    if (!currentShift) {
+        throw new Error('Turno não encontrado');
+    }
+
+    if (currentShift.status === 'finalizado') {
+        throw new Error('Este turno já está finalizado');
+    }
+
+    // 2. Buscar a última corrida do turno para validação
+    const lastRideResult = await db
+        .select({ hora: rides.hora })
+        .from(rides)
+        .where(eq(rides.shiftId, id))
+        .orderBy(sql`${rides.hora} DESC`)
+        .limit(1);
+
+    const lastRide = lastRideResult[0];
+    let warning: string | undefined;
+
+    // 3. Verificar se o horário de fim é anterior à última corrida
+    if (lastRide && lastRide.hora) {
+        const lastRideTime = new Date(lastRide.hora);
+        if (fim < lastRideTime) {
+            warning = `Atenção: O horário de fim (${fim.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}) é anterior à última corrida (${lastRideTime.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}). O turno foi encerrado mesmo assim.`;
+            console.warn('[adminCloseShift] WARNING:', warning);
+        }
+    }
+
+    // 4. Atualizar APENAS o turno - NUNCA TOCAR NAS CORRIDAS
+    const updatedShift = await shiftsRepository.updateShift(id, {
+        fim: fim,
+        kmFinal: kmFinal,
+        status: 'finalizado'
+    });
+
+    console.log('[adminCloseShift] Shift closed successfully');
+
+    // 5. Recalcular totais do turno
+    try {
+        await recalculateShiftTotals(id);
+        console.log('[adminCloseShift] Totals recalculated');
+    } catch (calcError) {
+        console.error('[adminCloseShift] Error recalculating totals:', calcError);
+    }
+
+    // 6. Disparar análise de fraude (fire-and-forget)
+    FraudService.analyzeShift(id).catch(err => {
+        console.error(`[adminCloseShift] Fraud analysis error:`, err);
+    });
+
+    return { shift: updatedShift, warning };
+}
+
 export async function deleteShift(id: string) {
     return await shiftsRepository.deleteShift(id);
 }
