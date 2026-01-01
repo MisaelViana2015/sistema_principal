@@ -17,12 +17,12 @@ export const driversController = {
         try {
             const data = createDriverSchema.parse(req.body); // Validate
 
-            // Map keys
+            // Map keys (Schema matches DB now, so direct mapping mostly)
             const newDriver = await driversService.createDriver({
-                nome: data.name,
+                nome: data.nome,
                 email: data.email,
-                senha: data.password,
-                telefone: data.phone || null,
+                senha: data.senha,
+                telefone: data.telefone || null,
                 role: data.role
             });
 
@@ -43,10 +43,10 @@ export const driversController = {
 
             // Map keys partial
             const updateData: any = {};
-            if (data.name) updateData.nome = data.name;
+            if (data.nome) updateData.nome = data.nome;
             if (data.email) updateData.email = data.email;
-            if (data.password) updateData.senha = data.password;
-            if (data.phone) updateData.telefone = data.phone;
+            if (data.senha) updateData.senha = data.senha;
+            if (data.telefone) updateData.telefone = data.telefone;
             if (data.role) updateData.role = data.role;
 
             const updatedDriver = await driversService.updateDriver(id, updateData);
