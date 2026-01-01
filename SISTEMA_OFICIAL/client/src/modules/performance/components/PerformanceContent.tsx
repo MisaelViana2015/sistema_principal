@@ -65,8 +65,8 @@ export default function PerformanceContent() {
     const [activeSubTab, setActiveSubTab] = useState("financeiro");
     const [selectedCostType, setSelectedCostType] = useState("todos");
     const [selectedDriver, setSelectedDriver] = useState("todos");
-    const [selectedYear, setSelectedYear] = useState("todos");
-    const [selectedMonth, setSelectedMonth] = useState("todos");
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+    const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
 
 
 
@@ -366,14 +366,6 @@ export default function PerformanceContent() {
         <div style={styles.container}>
             <div style={styles.header}>
                 <h2 style={styles.title}>Análise e Relatórios</h2>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <button style={{ padding: "0.5rem 1rem", borderRadius: "0.375rem", border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, background: "transparent", color: isDark ? "#e2e8f0" : "#1e293b", fontSize: "0.875rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <Calendar size={14} /> Mês Atual
-                    </button>
-                    <button style={{ padding: "0.5rem 1rem", borderRadius: "0.375rem", border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, background: "transparent", color: isDark ? "#e2e8f0" : "#1e293b", fontSize: "0.875rem", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <Trophy size={14} /> Rankings
-                    </button>
-                </div>
             </div>
 
             <div style={styles.subTabs}>
