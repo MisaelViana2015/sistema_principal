@@ -9,6 +9,13 @@ import { useTheme } from "../../contexts/ThemeContext";
 
 import { api } from "../../lib/api";
 
+const placaRegex = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/;
+
+function isValidPlaca(placa: string): boolean {
+    const normalized = placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return placaRegex.test(normalized);
+}
+
 export default function VehiclesList() {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [drivers, setDrivers] = useState<Driver[]>([]);
@@ -34,6 +41,7 @@ export default function VehiclesList() {
     // Safe Delete State
     const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState("");
+
 
     useEffect(() => {
         loadData();
@@ -86,6 +94,13 @@ export default function VehiclesList() {
 
     const handleSaveVehicle = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validation
+        if (!isValidPlaca(formData.plate)) {
+            alert("Placa inválida. Formato esperado: ABC1234 ou ABC1D23 (Mercosul).");
+            return;
+        }
+
         try {
             const payload = {
                 plate: formData.plate.toUpperCase(),
@@ -99,10 +114,10 @@ export default function VehiclesList() {
 
             if (editingId) {
                 // Update
-                await api.put(`/vehicles/${editingId}`, payload);
+                await vehiclesService.update(editingId, payload);
             } else {
                 // Create
-                await api.post("/vehicles", payload);
+                await vehiclesService.create(payload);
             }
             setIsModalOpen(false);
             setFormData({ plate: "", modelo: "", kmInicial: "", motoristaPadraoId: "", color: "", imageUrl: "", status: "ativo" });
@@ -127,7 +142,7 @@ export default function VehiclesList() {
         }
 
         try {
-            await api.delete(`/vehicles/${vehicleToDelete.id}`);
+            await vehiclesService.delete(vehicleToDelete.id);
             loadVehicles();
             setVehicleToDelete(null);
             setDeleteConfirmation("");

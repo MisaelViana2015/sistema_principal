@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     TrendingUp, TrendingDown, DollarSign, Clock, Users, Calendar, Trophy,
     Car, Wrench, Filter, List, Plus, Trash2, Edit, PieChart, X, Save
@@ -12,6 +12,7 @@ import { KPICard } from "../../../components/kpi/KPICard";
 import { CostTypesManager } from "./CostTypesManager";
 import { FixedCostsManager } from "./FixedCostsManager";
 import { EditExpenseModal } from "../../financial/EditExpenseModal";
+import { calculateFinancialSummary, calculateDriverMetrics } from "../utils/financialCalculations";
 
 // --- FETCHERS ---
 async function fetchExpenses() {
@@ -86,6 +87,36 @@ export default function PerformanceContent() {
         queryKey: ["fixedCostInstallments", selectedYear, selectedMonth],
         queryFn: () => fetchFixedCostInstallments({ year: selectedYear, month: selectedMonth })
     });
+
+    // --- FINANCIAL CALCULATIONS (MEMOIZED) ---
+    const financialSummary = useMemo(() => calculateFinancialSummary(
+        shifts || [],
+        costs || [],
+        fixedCosts || [],
+        selectedYear,
+        selectedMonth
+    ), [shifts, costs, fixedCosts, selectedYear, selectedMonth]);
+
+    const driverBreakdown = useMemo(() => calculateDriverMetrics(
+        drivers || [],
+        shifts || [],
+        selectedYear,
+        selectedMonth
+    ), [drivers, shifts, selectedYear, selectedMonth]);
+
+    // Styles
+    const cardStyle = {
+        padding: "1.25rem",
+        backgroundColor: isDark ? "#1e293b" : "#ffffff",
+        borderRadius: "0.75rem",
+        border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+        display: "flex",
+        flexDirection: "column" as const,
+        gap: "0.5rem",
+    };
+    const cardTitle = { fontSize: "0.875rem", color: isDark ? "#94a3b8" : "#64748b", fontWeight: "500" as const };
+    const cardValue = { fontSize: "1.5rem", fontWeight: "700" as const, color: isDark ? "#ffffff" : "#0f172a" };
+    const cardSublabel = { fontSize: "0.75rem", color: isDark ? "#64748b" : "#94a3b8" };
 
     // Mutations
     const updateInstallmentMutation = useMutation({
@@ -429,173 +460,152 @@ export default function PerformanceContent() {
                         </div>
                     </div>
 
-                    {/* --- NEW CALCULATIONS (Corrected) --- */}
-                    {(() => {
-                        // Faturamento Total = Soma de receita de todos os turnos filtrados
-                        const faturamentoTotal = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.receita) || 0), 0);
-
-                        // Lucro Bruto Empresa = 60% do Faturamento Total
-                        const lucroBrutoEmpresa = faturamentoTotal * 0.60;
-
-                        // Faturamento Bruto Motorista = 40% do Faturamento Total
-                        const faturamentoBrutoMotorista = faturamentoTotal * 0.40;
-
-                        // Custo Total = Custos Fixos (do mês) + Custos Variáveis (despesas filtradas)
-                        const custosVariaveis = filteredExpenses.reduce((acc: number, c: any) => {
-                            const val = Number(c.valor) || 0;
-                            return acc + (c.isSplitCost ? val * 0.5 : val);
-                        }, 0);
-                        const custosFixosMes = selectedMonth !== "todos" ? totalCustosFixos : 0;
-                        const custoTotal = custosVariaveis + custosFixosMes;
-
-                        // Lucro Líquido Empresa = Lucro Bruto Empresa - Custo Total
-                        const lucroLiquidoEmpresa = lucroBrutoEmpresa - custoTotal;
-
-                        // Lucro Líquido Motorista (por enquanto = Faturamento Bruto Motorista)
-                        const lucroLiquidoMotorista = faturamentoBrutoMotorista;
-
-                        // Driver breakdown
-                        const driverBreakdown = drivers.map((driver: any) => {
-                            const driverShifts = filteredShifts.filter((s: any) => s.driverId === driver.id);
-                            const driverTotal = driverShifts.reduce((acc: number, s: any) => acc + (Number(s.receita) || 0), 0);
-                            return {
-                                nome: driver.nome,
-                                valorTotal: driverTotal,
-                                valor: driverTotal * 0.40
-                            };
-                        }).filter((d: any) => d.valor > 0).sort((a: any, b: any) => b.valor - a.valor);
-
-                        const cardStyle = {
-                            padding: "1.25rem",
-                            backgroundColor: isDark ? "#1e293b" : "#ffffff",
-                            borderRadius: "0.75rem",
-                            border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-                            display: "flex",
-                            flexDirection: "column" as const,
-                            gap: "0.5rem",
-                        };
-                        const cardTitle = { fontSize: "0.875rem", color: isDark ? "#94a3b8" : "#64748b", fontWeight: "500" as const };
-                        const cardValue = { fontSize: "1.5rem", fontWeight: "700" as const, color: isDark ? "#ffffff" : "#0f172a" };
-                        const cardSublabel = { fontSize: "0.75rem", color: isDark ? "#64748b" : "#94a3b8" };
-
-                        return (
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginTop: "1rem" }}>
-                                {/* === COLUNA ESQUERDA: EMPRESA === */}
-                                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                                    {/* Faturamento Total (100%) */}
-                                    <div style={{ ...cardStyle, borderLeft: "4px solid #3b82f6" }}>
-                                        <span style={cardTitle}>Faturamento Total</span>
-                                        <span style={cardValue}>R$ {faturamentoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        <span style={cardSublabel}>100% (App + Particular)</span>
-                                    </div>
-
-                                    {/* Lucro Bruto Empresa (60%) */}
-                                    <div style={{ ...cardStyle, borderLeft: "4px solid #22c55e" }}>
-                                        <span style={cardTitle}>Lucro Bruto Empresa</span>
-                                        <span style={cardValue}>R$ {lucroBrutoEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        <span style={cardSublabel}>60% do Faturamento Total</span>
-                                    </div>
-
-                                    {/* Custo Total */}
-                                    <div style={{ ...cardStyle, borderLeft: "4px solid #ef4444" }}>
-                                        <span style={cardTitle}>Custo Total</span>
-                                        <span style={cardValue}>R$ {custoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        <span style={cardSublabel}>Fixos: R$ {custosFixosMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + Var: R$ {custosVariaveis.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                    </div>
-
-                                    {/* Lucro Líquido Empresa */}
-                                    <div style={{ ...cardStyle, borderLeft: `4px solid ${lucroLiquidoEmpresa >= 0 ? "#22c55e" : "#ef4444"}` }}>
-                                        <span style={cardTitle}>Lucro Líquido Empresa</span>
-                                        <span style={{ ...cardValue, color: lucroLiquidoEmpresa >= 0 ? "#22c55e" : "#ef4444" }}>
-                                            R$ {lucroLiquidoEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                        </span>
-                                        <span style={cardSublabel}>Lucro Bruto (60%) - Custo Total</span>
-                                    </div>
+                    {/* --- NEW CALCULATIONS (Refactored) --- */}
+                    {/* --- KPI DASHBOARD --- */}
+                    <>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginTop: "1rem" }}>
+                            {/* === COLUNA ESQUERDA: EMPRESA === */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                                {/* Faturamento Total (100%) */}
+                                <div style={{ ...cardStyle, borderLeft: "4px solid #3b82f6" }}>
+                                    <span style={cardTitle}>Faturamento Total</span>
+                                    <span style={cardValue}>R$ {financialSummary.faturamentoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    <span style={cardSublabel}>100% (App + Particular)</span>
                                 </div>
 
-                                {/* === COLUNA CENTRAL: P.E. EMPRESA === */}
-                                <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center", justifyContent: "flex-start" }}>
-                                    <div style={{ ...cardStyle, borderLeft: "4px solid #f59e0b", width: "100%", minHeight: "200px", justifyContent: "center", alignItems: "center" }}>
-                                        <span style={{ ...cardTitle, textAlign: "center" }}>P.E. Empresa</span>
-                                        <span style={{ ...cardValue, fontSize: "2rem", color: "#f59e0b" }}>—</span>
-                                        <span style={{ ...cardSublabel, textAlign: "center" }}>Dados a definir</span>
-                                    </div>
+                                {/* Lucro Bruto Empresa (60%) */}
+                                <div style={{ ...cardStyle, borderLeft: "4px solid #22c55e" }}>
+                                    <span style={cardTitle}>Lucro Bruto Empresa</span>
+                                    <span style={cardValue}>R$ {financialSummary.lucroBrutoEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    <span style={cardSublabel}>60% do Faturamento Total</span>
                                 </div>
 
-                                {/* === COLUNA DIREITA: MOTORISTAS === */}
-                                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                                    {/* Faturamento Bruto Motorista (40%) */}
-                                    <div style={{ ...cardStyle, borderLeft: "4px solid #8b5cf6" }}>
-                                        <span style={cardTitle}>Faturamento Bruto Motorista</span>
-                                        <span style={cardValue}>R$ {faturamentoBrutoMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        <span style={cardSublabel}>40% do Faturamento Total</span>
+                                {/* Custo Total */}
+                                <div style={{ ...cardStyle, borderLeft: "4px solid #ef4444" }}>
+                                    <span style={cardTitle}>Custo Total</span>
+                                    <span style={cardValue}>R$ {financialSummary.custosTotais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    <span style={cardSublabel}>Fixos: R$ {financialSummary.custosFixosMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + Var: R$ {financialSummary.custosVariaveis.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                </div>
+
+                                {/* Lucro Líquido Empresa */}
+                                <div style={{ ...cardStyle, borderLeft: `4px solid ${financialSummary.lucroLiquidoEmpresa >= 0 ? "#22c55e" : "#ef4444"}` }}>
+                                    <span style={cardTitle}>Lucro Líquido Empresa</span>
+                                    <span style={{ ...cardValue, color: financialSummary.lucroLiquidoEmpresa >= 0 ? "#22c55e" : "#ef4444" }}>
+                                        R$ {financialSummary.lucroLiquidoEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </span>
+                                    <span style={cardSublabel}>Lucro Bruto (60%) - Custo Total</span>
+                                </div>
+                            </div>
+
+                            {/* === COLUNA CENTRAL: P.E. EMPRESA === */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center", justifyContent: "flex-start" }}>
+                                <div style={{ ...cardStyle, borderLeft: "4px solid #f59e0b", width: "100%", minHeight: "200px", justifyContent: "space-between" }}>
+                                    <div>
+                                        <span style={{ ...cardTitle, display: "block", textAlign: "center", marginBottom: "0.5rem" }}>P.E. Empresa (Break-Even)</span>
+                                        <div style={{ textAlign: "center", marginBottom: "1rem" }}>
+                                            <span style={{ fontSize: "2rem", fontWeight: "700", color: "#f59e0b" }}>
+                                                R$ {financialSummary.targetReceitaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
+                                            <span style={{ display: "block", fontSize: "0.75rem", color: isDark ? "#94a3b8" : "#64748b" }}>
+                                                Meta de Faturamento para Zero Prejuízo
+                                            </span>
+                                        </div>
                                     </div>
 
-                                    {/* Custos do Motorista (Placeholder) */}
-                                    <div style={{ ...cardStyle, borderLeft: "4px solid #64748b" }}>
-                                        <span style={cardTitle}>Custos do Motorista</span>
-                                        <span style={{ ...cardValue, color: "#64748b" }}>R$ —</span>
-                                        <span style={cardSublabel}>Dados a definir</span>
-                                    </div>
-
-                                    {/* Lucro Líquido Motorista + Tabela */}
-                                    <div style={{ ...cardStyle, borderLeft: "4px solid #8b5cf6", flex: 1 }}>
-                                        <span style={cardTitle}>Lucro Líquido Motorista</span>
-                                        <span style={cardValue}>R$ {lucroLiquidoMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        <span style={cardSublabel}>Por enquanto = Faturamento Bruto Motorista</span>
-
-                                        {/* Tabela de breakdown por motorista */}
-                                        {/* Tabela de breakdown por motorista */}
-                                        <div style={{ marginTop: "1rem" }}>
-                                            <table style={{ width: "100%", fontSize: "0.8rem", borderCollapse: "collapse" }}>
-                                                <thead>
-                                                    <tr style={{ borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}` }}>
-                                                        <th style={{ textAlign: "center", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "5%" }}>#</th>
-                                                        <th style={{ textAlign: "left", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Motorista</th>
-                                                        <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Valor (40%)</th>
-                                                        <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Vlr. 60%</th>
-                                                        <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Vlr. Total</th>
-                                                        <th style={{ textAlign: "right", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "10%" }}>%</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {driverBreakdown.map((d: any, index: number) => {
-                                                        const percent = faturamentoBrutoMotorista > 0 ? (d.valor / faturamentoBrutoMotorista) * 100 : 0;
-                                                        const valor60 = d.valorTotal * 0.60;
-                                                        return (
-                                                            <tr key={d.nome} style={{ borderBottom: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}` }}>
-                                                                <td style={{ textAlign: "center", padding: "0.4rem 0", color: isDark ? "#64748b" : "#94a3b8", fontSize: "0.75rem" }}>{index + 1}º</td>
-                                                                <td style={{ padding: "0.4rem 0.25rem", color: isDark ? "#e2e8f0" : "#1e293b", whiteSpace: "nowrap" }}>{d.nome}</td>
-                                                                <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: "#8b5cf6", fontWeight: "600" }}>
-                                                                    R$ {d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                                </td>
-                                                                <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>
-                                                                    R$ {valor60.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                                </td>
-                                                                <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>
-                                                                    R$ {d.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                                </td>
-                                                                <td style={{ textAlign: "right", padding: "0.4rem 0", color: isDark ? "#94a3b8" : "#64748b", fontSize: "0.75rem" }}>
-                                                                    {percent.toFixed(2)}%
-                                                                </td>
-                                                            </tr>
-                                                        );
-                                                    })}
-                                                    {driverBreakdown.length === 0 && (
-                                                        <tr>
-                                                            <td colSpan={6} style={{ textAlign: "center", padding: "1rem 0", color: isDark ? "#64748b" : "#94a3b8" }}>
-                                                                Nenhum motorista no período
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
+                                    <div style={{ width: "100%", padding: "0 1rem" }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem", fontSize: "0.75rem", fontWeight: "600", color: isDark ? "#fff" : "#0f172a" }}>
+                                            <span>Progresso</span>
+                                            <span>{financialSummary.progressoPE.toFixed(1)}%</span>
+                                        </div>
+                                        <div style={{ width: "100%", height: "10px", backgroundColor: isDark ? "#334155" : "#e2e8f0", borderRadius: "5px", overflow: "hidden" }}>
+                                            <div style={{
+                                                width: `${Math.min(financialSummary.progressoPE, 100)}%`,
+                                                height: "100%",
+                                                backgroundColor: financialSummary.progressoPE >= 100 ? "#22c55e" : "#f59e0b",
+                                                transition: "width 0.5s ease"
+                                            }} />
+                                        </div>
+                                        <div style={{ marginTop: "0.5rem", textAlign: "center", fontSize: "0.75rem", color: isDark ? "#94a3b8" : "#64748b" }}>
+                                            {financialSummary.progressoPE >= 100
+                                                ? "✅ Ponto de equilíbrio atingido!"
+                                                : `Faltam R$ ${financialSummary.faltaParaPE.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                                            }
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        );
-                    })()}
+                            {/* === COLUNA DIREITA: MOTORISTAS === */}
+                            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                                {/* Faturamento Bruto Motorista (40%) */}
+                                <div style={{ ...cardStyle, borderLeft: "4px solid #8b5cf6" }}>
+                                    <span style={cardTitle}>Faturamento Bruto Motorista</span>
+                                    <span style={cardValue}>R$ {financialSummary.repasseMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    <span style={cardSublabel}>40% do Faturamento Total</span>
+                                </div>
+
+                                {/* Custos do Motorista (Placeholder) */}
+                                <div style={{ ...cardStyle, borderLeft: "4px solid #64748b" }}>
+                                    <span style={cardTitle}>Custos do Motorista</span>
+                                    <span style={{ ...cardValue, color: "#64748b" }}>R$ —</span>
+                                    <span style={cardSublabel}>Dados a definir</span>
+                                </div>
+
+                                {/* Lucro Líquido Motorista + Tabela */}
+                                <div style={{ ...cardStyle, borderLeft: "4px solid #8b5cf6", flex: 1 }}>
+                                    <span style={cardTitle}>Lucro Líquido Motorista</span>
+                                    <span style={cardValue}>R$ {financialSummary.repasseMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                    <span style={cardSublabel}>Por enquanto = Faturamento Bruto Motorista</span>
+
+                                    {/* Tabela de breakdown por motorista */}
+                                    <div style={{ marginTop: "1rem" }}>
+                                        <table style={{ width: "100%", fontSize: "0.8rem", borderCollapse: "collapse" }}>
+                                            <thead>
+                                                <tr style={{ borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}` }}>
+                                                    <th style={{ textAlign: "center", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "5%" }}>#</th>
+                                                    <th style={{ textAlign: "left", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Motorista</th>
+                                                    <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Valor (40%)</th>
+                                                    <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Vlr. 60%</th>
+                                                    <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Vlr. Total</th>
+                                                    <th style={{ textAlign: "right", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "10%" }}>%</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {driverBreakdown.map((d: any, index: number) => {
+                                                    const percent = financialSummary.repasseMotorista > 0 ? (d.valor / financialSummary.repasseMotorista) * 100 : 0;
+                                                    const valor60 = d.valorTotal * 0.60;
+                                                    return (
+                                                        <tr key={d.nome} style={{ borderBottom: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}` }}>
+                                                            <td style={{ textAlign: "center", padding: "0.4rem 0", color: isDark ? "#64748b" : "#94a3b8", fontSize: "0.75rem" }}>{index + 1}º</td>
+                                                            <td style={{ padding: "0.4rem 0.25rem", color: isDark ? "#e2e8f0" : "#1e293b", whiteSpace: "nowrap" }}>{d.nome}</td>
+                                                            <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: "#8b5cf6", fontWeight: "600" }}>
+                                                                R$ {d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                            </td>
+                                                            <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>
+                                                                R$ {valor60.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                            </td>
+                                                            <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>
+                                                                R$ {d.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                            </td>
+                                                            <td style={{ textAlign: "right", padding: "0.4rem 0", color: isDark ? "#94a3b8" : "#64748b", fontSize: "0.75rem" }}>
+                                                                {percent.toFixed(2)}%
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                                {driverBreakdown.length === 0 && (
+                                                    <tr>
+                                                        <td colSpan={6} style={{ textAlign: "center", padding: "1rem 0", color: isDark ? "#64748b" : "#94a3b8" }}>
+                                                            Nenhum motorista no período
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </>
                 </>
             )}
 
@@ -949,12 +959,6 @@ export default function PerformanceContent() {
                                 dueDay = new Date().getDate();
                             }
 
-                            console.log("Saving Fixed Cost - Payload Debug:", {
-                                ...data,
-                                startDate,
-                                dueDay
-                            });
-
                             const payload = {
                                 ...data,
                                 name: data.description,
@@ -1128,7 +1132,6 @@ export default function PerformanceContent() {
                             <button onClick={() => setDeleteConfirmId(null)} style={{ padding: '0.5rem 1rem', borderRadius: '0.25rem', border: `1px solid ${isDark ? '#4b5563' : '#9ca3af'}`, background: 'transparent', color: isDark ? '#d1d5db' : '#374151', cursor: 'pointer' }}>Cancelar</button>
                             <button onClick={async () => {
                                 try {
-                                    console.log("Excluindo custo:", deleteConfirmId);
                                     await api.delete(`/financial/expenses/${deleteConfirmId}`);
                                     refetchExpenses();
                                     setDeleteConfirmId(null);

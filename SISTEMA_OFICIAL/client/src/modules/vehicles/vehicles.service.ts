@@ -3,9 +3,6 @@ import { Vehicle } from "../../../../shared/schema";
 
 export const vehiclesService = {
     async getAll() {
-        // The API returns an array directly? or { success: true, data: ... }?
-        // Looking at controller: res.json(vehicles);
-        // looking at lib/api: api is axios instance.
         const response = await api.get<Vehicle[]>("/vehicles");
         return response.data;
     },
@@ -13,5 +10,19 @@ export const vehiclesService = {
     async getAllWithStatus() {
         const response = await api.get<(Vehicle & { currentShiftId: string | null })[]>("/vehicles/with-status");
         return response.data;
+    },
+
+    async create(data: Partial<Vehicle>) {
+        const response = await api.post<Vehicle>("/vehicles", data);
+        return response.data;
+    },
+
+    async update(id: string, data: Partial<Vehicle>) {
+        const response = await api.put<Vehicle>(`/vehicles/${id}`, data);
+        return response.data;
+    },
+
+    async delete(id: string) {
+        await api.delete(`/vehicles/${id}`);
     }
 };
