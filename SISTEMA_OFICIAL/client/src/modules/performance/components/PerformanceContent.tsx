@@ -122,7 +122,10 @@ export default function PerformanceContent() {
     const totalTurnos = filteredShifts.length;
 
     // Costs
-    const totalCustosVariaveis = filteredExpenses.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0);
+    const totalCustosVariaveis = filteredExpenses.reduce((acc: number, c: any) => {
+        const val = Number(c.valor) || 0;
+        return acc + (c.isSplitCost ? val * 0.5 : val);
+    }, 0);
     const totalCustosFixos = (fixedCosts || []).reduce((acc: number, c: any) => acc + (Number(c.value) || 0), 0);
     const appliedFixedCosts = selectedMonth !== "todos" ? totalCustosFixos : (selectedYear !== "todos" ? totalCustosFixos * 12 : 0);
     const totalCustos = totalCustosVariaveis + appliedFixedCosts;
