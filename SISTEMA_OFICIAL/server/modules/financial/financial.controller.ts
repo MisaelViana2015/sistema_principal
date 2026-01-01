@@ -179,16 +179,18 @@ export async function createExpense(req: Request, res: Response) {
 }
 
 export async function updateExpenseController(req: Request, res: Response) {
-    const validatedData = updateExpenseSchema.parse(req.body);
+    try {
+        const { id } = req.params;
+        const validatedData = updateExpenseSchema.parse(req.body);
 
-    const updated = await service.updateExpense(id, validatedData, req.auditContext);
-    res.json(updated);
-} catch (error: any) {
-    console.error("Erro ao atualizar despesa:", error);
-    if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
-    res.status(500).json({ error: error.message || "Erro interno ao atualizar despesa" });
-}
+        const updated = await service.updateExpense(id, validatedData, req.auditContext);
+        res.json(updated);
+    } catch (error: any) {
+        console.error("Erro ao atualizar despesa:", error);
+        if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
+        res.status(500).json({ error: error.message || "Erro interno ao atualizar despesa" });
     }
+}
 
 export async function deleteExpenseController(req: Request, res: Response) {
     try {
