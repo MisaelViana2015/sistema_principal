@@ -55,7 +55,7 @@ export async function startShiftController(req: Request, res: Response) {
 
         const validatedData = startShiftSchema.parse(data);
 
-        const shift = await shiftsService.startShift(validatedData.driverId!, validatedData.vehicleId, validatedData.kmInicial);
+        const shift = await shiftsService.startShift(validatedData.driverId!, validatedData.vehicleId, validatedData.kmInicial, req.auditContext);
         return res.status(201).json(shift);
     } catch (error: any) {
         if (error.issues) return res.status(400).json({ message: "Validation error", details: error.issues });
@@ -77,7 +77,7 @@ export async function finishShiftController(req: Request, res: Response) {
             }
         }
 
-        const shift = await shiftsService.finishShift(id, validatedData.kmFinal);
+        const shift = await shiftsService.finishShift(id, validatedData.kmFinal, req.auditContext);
 
         // 🔴 NOVO: Dispara análise de fraude automaticamente ao fechar turno
         // Fire-and-forget para não bloquear o response
@@ -108,7 +108,7 @@ export async function getOpenShiftController(req: Request, res: Response) {
 export async function deleteShiftController(req: Request, res: Response) {
     try {
         const { id } = req.params;
-        await shiftsService.deleteShift(id);
+        await shiftsService.deleteShift(id, req.auditContext);
         return res.json({ message: "Turno excluído com sucesso" });
     } catch (error) {
         console.error("Error deleting shift:", error);
@@ -121,7 +121,7 @@ export async function updateShiftController(req: Request, res: Response) {
     try {
         const { id } = req.params;
         const validatedData = updateShiftSchema.parse(req.body);
-        const updated = await shiftsService.updateShift(id, validatedData);
+        const updated = await shiftsService.updateShift(id, validatedData, req.auditContext);
         return res.json(updated);
     } catch (error: any) {
         console.error("Error updating shift:", error);
@@ -164,7 +164,7 @@ export async function adminCloseShiftController(req: Request, res: Response) {
             return res.status(400).json({ message: "Data/hora de fim inválida" });
         }
 
-        const result = await shiftsService.adminCloseShift(id, fimDate, Number(kmFinal));
+        const result = await shiftsService.adminCloseShift(id, fimDate, Number(kmFinal), req.auditContext);
 
         // Retornar com aviso se houver
         if (result.warning) {

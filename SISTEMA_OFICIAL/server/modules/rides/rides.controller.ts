@@ -44,7 +44,7 @@ export async function createRideController(req: Request, res: Response) {
             tipo: validatedData.tipo,
             valor: validatedData.valor,
             hora: validatedData.hora
-        });
+        }, req.auditContext);
 
         return res.status(201).json(newRide);
     } catch (error: any) {
@@ -59,7 +59,7 @@ export async function updateRideController(req: Request, res: Response) {
         const { id } = req.params;
         const validatedData = updateRideSchema.parse(req.body);
 
-        const updated = await ridesService.updateRide(id, validatedData);
+        const updated = await ridesService.updateRide(id, validatedData, req.auditContext);
         return res.json(updated);
     } catch (error: any) {
         console.error("Erro ao atualizar corrida:", error);
@@ -71,7 +71,7 @@ export async function updateRideController(req: Request, res: Response) {
 export async function deleteRideController(req: Request, res: Response) {
     try {
         const { id } = req.params;
-        await ridesService.deleteRide(id);
+        await ridesService.deleteRide(id, req.auditContext);
         return res.json({ success: true, message: "Corrida excluída com sucesso" });
     } catch (error: any) {
         console.error("Erro ao excluir corrida:", error);

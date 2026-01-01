@@ -10,10 +10,10 @@ const router = Router();
 
 // Motorista pode listar e criar
 router.get("/", requireAuth, getAllRidesController); // Listar é safe
-router.post("/", requireAuth, rideCreationLimiter, auditLog('CREATE_RIDE'), preventReplay, createRideController); // Crítico
+router.post("/", requireAuth, rideCreationLimiter, preventReplay, createRideController); // Crítico
 
 // Apenas ADMIN pode editar ou excluir
-router.put("/:id", requireAuth, requireAdmin, auditLog('UPDATE_RIDE'), updateRideController);
-router.delete("/:id", requireAuth, requireAdmin, auditLog('DELETE_RIDE'), deleteRideController);
+router.put("/:id", requireAuth, requireAdmin, updateRideController);
+router.delete("/:id", requireAuth, requireAdmin, deleteRideController);
 
 export default router;

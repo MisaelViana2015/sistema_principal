@@ -169,7 +169,7 @@ export async function createExpense(req: Request, res: Response) {
             notes: validatedData.notes,
             isParticular: validatedData.isParticular,
             isSplitCost: (validatedData as any).isSplitCost,
-        });
+        }, req.auditContext);
 
         res.status(201).json(newExpense);
     } catch (error: any) {
@@ -184,7 +184,7 @@ export async function updateExpenseController(req: Request, res: Response) {
         const { id } = req.params;
         const validatedData = updateExpenseSchema.parse(req.body);
 
-        const updated = await service.updateExpense(id, validatedData);
+        const updated = await service.updateExpense(id, validatedData, req.auditContext);
         res.json(updated);
     } catch (error: any) {
         console.error("Erro ao atualizar despesa:", error);
@@ -196,7 +196,7 @@ export async function updateExpenseController(req: Request, res: Response) {
 export async function deleteExpenseController(req: Request, res: Response) {
     try {
         const { id } = req.params;
-        await service.deleteExpense(id);
+        await service.deleteExpense(id, req.auditContext);
         res.json({ message: "Despesa excluída com sucesso" });
     } catch (error: any) {
         console.error("Erro ao excluir despesa:", error);
