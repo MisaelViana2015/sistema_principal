@@ -54,6 +54,14 @@ export async function requireAuth(
         // Adiciona dados do usuário na request
         req.user = payload;
 
+        // ATUALIZA o contexto de auditoria com o usuário autenticado
+        // Isso garante que os logs registrem o usuário correto e não 'system'
+        if (req.auditContext) {
+            req.auditContext.actorType = req.user.role === 'admin' || req.user.role === 'supervisor' ? 'admin' : 'user';
+            req.auditContext.actorId = req.user.userId;
+            req.auditContext.actorRole = req.user.role;
+        }
+
         // Verifica se precisa trocar senha (bloqueia todas rotas exceto change-password-required)
         const isPasswordChangeRoute = req.path.includes("change-password-required");
 

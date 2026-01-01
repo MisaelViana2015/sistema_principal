@@ -70,8 +70,13 @@ app.use(express.urlencoded({ extended: true }));
 // Parse cookies
 app.use(cookieParser());
 
+import { requestContext } from "./core/middlewares/requestContext.js";
+
 // Trust proxy (importante para Railway e Rate Limit)
 app.set("trust proxy", 1);
+
+// Middleware de Contexto (RequestId, IP, UserAgent) - DEVE vir cedo
+app.use(requestContext);
 
 // Limitador Global de API (proteção contra flooding)
 // Deve vir antes das rotas de API
