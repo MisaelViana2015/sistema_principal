@@ -431,6 +431,13 @@ export default function PerformanceContent() {
 
                     {/* --- NEW CALCULATIONS (Corrected) --- */}
                     {(() => {
+                        // DEBUG: Log data to console
+                        console.log('DEBUG - shifts:', shifts?.length, 'filteredShifts:', filteredShifts?.length);
+                        console.log('DEBUG - selectedYear:', selectedYear, 'selectedMonth:', selectedMonth);
+                        if (filteredShifts?.length > 0) {
+                            console.log('DEBUG - sample shift:', filteredShifts[0]);
+                        }
+
                         // Faturamento Total = Soma de totalBruto de todos os turnos filtrados
                         const faturamentoTotal = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.totalBruto) || 0), 0);
 
