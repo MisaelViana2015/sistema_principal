@@ -16,7 +16,7 @@ export const updateShiftSchema = z.object({
     driverId: z.string().optional(),
     kmInicial: z.number().optional(),
     kmFinal: z.number().optional(),
-    startTime: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
-    endTime: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+    inicio: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
+    fim: z.string().or(z.date()).optional().transform(val => val ? new Date(val) : undefined),
     status: z.enum(["open", "closed"]).optional()
 });
