@@ -25,24 +25,24 @@ router.post("/legacy-maintenances", requireAdmin, auditLog('CREATE_LEGACY_MAINTE
 router.get("/tires", requireAdmin, controller.getTires);
 router.post("/tires", requireAdmin, auditLog('CREATE_TIRE'), controller.createTire);
 router.delete("/tires/:id", requireAdmin, auditLog('DELETE_TIRE'), controller.deleteTire);
-router.post("/expenses", auditLog('CREATE_EXPENSE'), preventReplay, controller.createExpense);
+router.post("/expenses", preventReplay, controller.createExpense);
 // Apenas ADMIN pode editar ou excluir despesas
-router.put("/expenses/:id", requireAdmin, auditLog('UPDATE_EXPENSE'), controller.updateExpenseController);
-router.delete("/expenses/:id", requireAdmin, auditLog('DELETE_EXPENSE'), controller.deleteExpenseController);
+router.put("/expenses/:id", requireAdmin, controller.updateExpenseController);
+router.delete("/expenses/:id", requireAdmin, controller.deleteExpenseController);
 
 // Cost Types
 router.post("/cost-types/restore-defaults", requireAdmin, auditLog('RESTORE_COST_TYPES'), controller.restoreDefaultCostTypes);
 router.get("/cost-types", controller.getCostTypes);
-router.delete("/cost-types/:id", requireAdmin, controller.deleteCostType);
+router.delete("/cost-types/:id", requireAdmin, auditLog('DELETE_COST_TYPE'), controller.deleteCostType);
 
 // Installments (Must be before /:id)
 router.get("/fixed-costs/installments", requireAdmin, controller.getFixedCostInstallments);
-router.put("/fixed-costs/installments/:id", requireAdmin, controller.updateFixedCostInstallment);
+router.put("/fixed-costs/installments/:id", requireAdmin, auditLog('UPDATE_Fc_INSTALLMENT'), controller.updateFixedCostInstallment);
 
 router.get("/fixed-costs", requireAdmin, controller.getFixedCosts);
-router.post("/fixed-costs", requireAdmin, controller.createFixedCost);
-router.put("/fixed-costs/:id", requireAdmin, controller.updateFixedCost);
-router.delete("/fixed-costs/:id", requireAdmin, controller.deleteFixedCost);
+router.post("/fixed-costs", requireAdmin, auditLog('CREATE_FIXED_COST'), controller.createFixedCost);
+router.put("/fixed-costs/:id", requireAdmin, auditLog('UPDATE_FIXED_COST'), controller.updateFixedCost);
+router.delete("/fixed-costs/:id", requireAdmin, auditLog('DELETE_FIXED_COST'), controller.deleteFixedCost);
 
 // ⚠️ ROTAS DE MANUTENÇÃO / FIX (Desabilitadas em prod por padrão)
 if (process.env.ENABLE_FIX_ROUTES === 'true') {

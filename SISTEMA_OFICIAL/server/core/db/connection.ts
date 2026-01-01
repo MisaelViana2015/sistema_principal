@@ -26,7 +26,7 @@ console.log(`🔌 Conectando ao banco de dados...`);
 console.log(`📍 Ambiente: ${env} (${appEnv})`);
 
 // Configuração do Pool PostgreSQL
-const pool = new Pool({
+export const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl:
         env === "production"
