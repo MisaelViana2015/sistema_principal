@@ -286,12 +286,22 @@ export async function updateShift(id: string, data: any) {
         console.log('[updateShift] Received data:', JSON.stringify(data, null, 2));
 
         // Converter Date objects para strings ISO se necessário
+        // Também garantir que strings se mantenham como strings
         const cleanData = { ...data };
-        if (cleanData.inicio instanceof Date) {
-            cleanData.inicio = cleanData.inicio.toISOString();
+
+        // Helper para garantir que temos uma string ISO ou undefined
+        const toISOStringOrKeep = (val: any): string | undefined => {
+            if (!val) return undefined;
+            if (val instanceof Date) return val.toISOString();
+            if (typeof val === 'string') return val; // já é string
+            return undefined;
+        };
+
+        if (cleanData.inicio !== undefined) {
+            cleanData.inicio = toISOStringOrKeep(cleanData.inicio);
         }
-        if (cleanData.fim instanceof Date) {
-            cleanData.fim = cleanData.fim.toISOString();
+        if (cleanData.fim !== undefined) {
+            cleanData.fim = toISOStringOrKeep(cleanData.fim);
         }
 
         console.log('[updateShift] Clean data:', JSON.stringify(cleanData, null, 2));
