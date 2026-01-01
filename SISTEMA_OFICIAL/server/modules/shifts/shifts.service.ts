@@ -282,61 +282,60 @@ export async function getOpenShift(driverId: string) {
 }
 
 export async function updateShift(id: string, data: any) {
-    console.log('[updateShift] Received data:', JSON.stringify(data, null, 2));
+    try {
+        console.log('[updateShift] Received data:', JSON.stringify(data, null, 2));
 
-    // Converter Date objects para strings ISO se necessário
-    const cleanData = { ...data };
-    if (cleanData.inicio instanceof Date) {
-        cleanData.inicio = cleanData.inicio.toISOString();
-    }
-    if (cleanData.fim instanceof Date) {
-        cleanData.fim = cleanData.fim.toISOString();
-    }
+        // Converter Date objects para strings ISO se necessário
+        const cleanData = { ...data };
+        if (cleanData.inicio instanceof Date) {
+            cleanData.inicio = cleanData.inicio.toISOString();
+        }
+        if (cleanData.fim instanceof Date) {
+            cleanData.fim = cleanData.fim.toISOString();
+        }
 
-    console.log('[updateShift] Clean data:', JSON.stringify(cleanData, null, 2));
+        console.log('[updateShift] Clean data:', JSON.stringify(cleanData, null, 2));
 
-    // Se está alterando a data de início, precisamos ajustar as corridas
-    if (cleanData.inicio) {
-        const currentShift = await shiftsRepository.findShiftById(id);
-        if (currentShift && currentShift.inicio) {
-            const oldStart = new Date(currentShift.inicio);
-            const newStart = new Date(cleanData.inicio);
-            const timeDiffMs = newStart.getTime() - oldStart.getTime();
+        // Se está alterando a data de início, precisamos ajustar as corridas
+        if (cleanData.inicio) {
+            const currentShift = await shiftsRepository.findShiftById(id);
+            if (currentShift && currentShift.inicio) {
+                const oldStart = new Date(currentShift.inicio);
+                const newStart = new Date(cleanData.inicio);
+                const timeDiffMs = newStart.getTime() - oldStart.getTime();
 
-            console.log('[updateShift] Time diff:', timeDiffMs, 'ms');
+                console.log('[updateShift] Time diff:', timeDiffMs, 'ms');
 
-            // Se houver diferença de tempo, atualizar todas as corridas
-            if (timeDiffMs !== 0) {
+                // Se houver diferença de tempo, atualizar todas as corridas
+                if (timeDiffMs !== 0) {
+                    console.log('[updateShift] Updating ride timestamps...');
+                    // Atualiza todas as corridas do turno, aplicando o mesmo deslocamento
+                    await db.update(rides)
+                        .set({
+                            hora: sql`${rides.hora} + INTERVAL '${timeDiffMs} milliseconds'`
+                        })
+                        .where(eq(rides.shiftId, id));
 
-                // Atualiza todas as corridas do turno, aplicando o mesmo deslocamento
-                await db.update(rides)
-                    .set({
-                        hora: sql`${rides.hora} + INTERVAL '${timeDiffMs} milliseconds'`
-                    })
-                    .where(eq(rides.shiftId, id));
-
-                console.log('[updateShift] Updated ride timestamps');
+                    console.log('[updateShift] Updated ride timestamps');
+                }
             }
         }
-    }
 
-    const result = await shiftsRepository.updateShift(id, cleanData);
-    console.log('[updateShift] Result:', JSON.stringify(result, null, 2));
+        const result = await shiftsRepository.updateShift(id, cleanData);
+        console.log('[updateShift] Result:', JSON.stringify(result, null, 2));
 
-    // Re-analyze fraud if shift is finalized (status === 'finalizado')
-    // We fetch again or use result to check status? result likely has status if updated, 
-    // but better check fresh from DB or if result has it. 
-    // shiftsRepository.updateShift returns the updated shift usually.
-    // Let's safe check by fetching.
-    const updatedResult = await shiftsRepository.findShiftById(id);
-    if (updatedResult?.status === 'finalizado') {
-        console.log(`[FRAUD] Re-analisando turno finalizado ${id} após atualização...`);
+        // Re-analyze fraud
+        console.log(`[FRAUD] Re-analisando turno ${id} após atualização...`);
         FraudService.analyzeShift(id).catch(err => {
             console.error(`[FRAUD] Erro ao re-analisar turno ${id}:`, err);
         });
-    }
 
-    return result;
+        return result;
+
+    } catch (error: any) {
+        console.error('[updateShift] CRITICAL ERROR:', error);
+        throw error;
+    }
 }
 
 export async function deleteShift(id: string) {
