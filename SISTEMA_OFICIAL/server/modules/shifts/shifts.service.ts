@@ -296,6 +296,9 @@ export async function updateShift(id: string, data: any) {
 
         console.log('[updateShift] Clean data:', JSON.stringify(cleanData, null, 2));
 
+        // TEMPORARILY DISABLED: Ride timestamp update logic
+        // TODO: Re-enable after fixing the SQL issue
+        /*
         // Se está alterando a data de início, precisamos ajustar as corridas
         if (cleanData.inicio) {
             const currentShift = await shiftsRepository.findShiftById(id);
@@ -309,7 +312,7 @@ export async function updateShift(id: string, data: any) {
                 // Se houver diferença de tempo e for válido, atualizar todas as corridas
                 if (timeDiffMs !== 0 && !isNaN(timeDiffMs)) {
                     console.log('[updateShift] Updating ride timestamps...');
-
+                    
                     // Use make_interval for robust interval calculation with numeric parameter
                     // make_interval(secs => float)
                     const diffSeconds = timeDiffMs / 1000.0;
@@ -326,12 +329,13 @@ export async function updateShift(id: string, data: any) {
                 }
             }
         }
+        */
 
         const result = await shiftsRepository.updateShift(id, cleanData);
         console.log('[updateShift] Result:', JSON.stringify(result, null, 2));
 
         // Re-analyze fraud
-        console.log(`[FRAUD] Re-analisando turno ${id} após atualização...`);
+        console.log(`[FRAUD] Re-analizando turno ${id} após atualização...`);
         FraudService.analyzeShift(id).catch(err => {
             console.error(`[FRAUD] Erro ao re-analisar turno ${id}:`, err);
         });
