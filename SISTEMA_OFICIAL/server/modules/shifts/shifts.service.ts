@@ -310,13 +310,13 @@ export async function updateShift(id: string, data: any) {
                 if (timeDiffMs !== 0 && !isNaN(timeDiffMs)) {
                     console.log('[updateShift] Updating ride timestamps...');
 
-                    // Postgres requires interval string construction carefully
-                    // We use string interpolation for the interval value to avoid parameter binding issues inside quotes
-                    const intervalString = `${Math.floor(timeDiffMs)} milliseconds`;
+                    // Use make_interval for robust interval calculation with numeric parameter
+                    // make_interval(secs => float)
+                    const diffSeconds = timeDiffMs / 1000.0;
 
                     await db.update(rides)
                         .set({
-                            hora: sql`${rides.hora} + ${intervalString}::interval`
+                            hora: sql`${rides.hora} + make_interval(secs => ${diffSeconds})`
                         })
                         .where(eq(rides.shiftId, id));
 
