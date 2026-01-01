@@ -71,7 +71,8 @@ export function CostsList({ shiftId }: CostsListProps) {
         }
     };
 
-    const handleEditSave = async (id: string, data: Partial<Expense>) => {
+    const handleEditSave = async (id: string | null, data: Partial<Expense>) => {
+        if (!id) return;
         try {
             await api.put(`/financial/expenses/${id}`, data);
             loadExpenses(); // Reload

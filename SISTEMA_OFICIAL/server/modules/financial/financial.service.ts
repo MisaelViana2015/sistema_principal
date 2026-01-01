@@ -44,66 +44,111 @@ export async function restoreDefaultCostTypes() {
 import { db } from "../../core/db/connection.js";
 import { shifts, expenses } from "../../../shared/schema.js";
 import { eq, and, sql } from "drizzle-orm";
+import { auditService, AUDIT_ACTIONS } from "../../core/audit/index.js";
+import type { AuditContext } from "../../core/audit/index.js";
 
 // Note: imports already present
 import { recalculateShiftTotals } from "../shifts/shifts.service.js";
 
-export async function createExpense(data: typeof expenses.$inferInsert) {
-    const newExpense = await repository.createExpense(data);
+export async function createExpense(data: typeof expenses.$inferInsert, context?: AuditContext) {
+    const auditContext = context || auditService.createSystemContext('legacy-create-expense');
 
-    // Update Shift Totals if linked to a shift
-    if (data.shiftId) {
-        await recalculateShiftTotals(data.shiftId);
-    } else if (data.driverId) {
-        // Fallback: try to find active shift for this driver
-        const [shift] = await db.select().from(shifts)
-            .where(and(
-                eq(shifts.driverId, String(data.driverId)),
-                eq(shifts.status, 'em_andamento')
-            ));
+    return auditService.withAudit({
+        action: AUDIT_ACTIONS.CREATE_EXPENSE,
+        entity: 'expenses',
+        entityId: 'new', // ID gerado
+        operation: 'INSERT',
+        context: auditContext,
+        execute: async () => {
+            const newExpense = await repository.createExpense(data);
 
-        if (shift) {
-            // Update expense with shiftId
-            await repository.updateExpense(newExpense.id, { shiftId: shift.id });
-            await recalculateShiftTotals(shift.id);
+            // Update Shift Totals if linked to a shift
+            if (data.shiftId) {
+                await recalculateShiftTotals(data.shiftId);
+            } else if (data.driverId) {
+                // Fallback: try to find active shift for this driver
+                const [shift] = await db.select().from(shifts)
+                    .where(and(
+                        eq(shifts.driverId, String(data.driverId)),
+                        eq(shifts.status, 'em_andamento')
+                    ));
+
+                if (shift) {
+                    // Update expense with shiftId
+                    await repository.updateExpense(newExpense.id, { shiftId: shift.id });
+                    await recalculateShiftTotals(shift.id);
+                }
+            }
+
+            return newExpense;
+        },
+        fetchAfter: async (result) => {
+            if (result && result.id) {
+                return await repository.getExpenseById(result.id);
+            }
+            return result;
         }
-    }
-
-    return newExpense;
+    });
 }
 
-export async function updateExpense(id: string, data: Partial<typeof expenses.$inferInsert>) {
-    const original = await repository.getExpenseById(id);
-    if (!original) throw new Error("Despesa não encontrada");
+export async function updateExpense(id: string, data: Partial<typeof expenses.$inferInsert>, context?: AuditContext) {
+    const auditContext = context || auditService.createSystemContext('legacy-update-expense');
 
-    const updated = await repository.updateExpense(id, data);
+    return auditService.withAudit({
+        action: AUDIT_ACTIONS.UPDATE_EXPENSE,
+        entity: 'expenses',
+        entityId: id,
+        operation: 'UPDATE',
+        context: auditContext,
+        fetchBefore: () => repository.getExpenseById(id),
+        execute: async () => {
+            const original = await repository.getExpenseById(id);
+            if (!original) throw new Error("Despesa não encontrada");
 
-    if (original.shiftId) {
-        await recalculateShiftTotals(original.shiftId);
-    }
-    if (data.shiftId && data.shiftId !== original.shiftId) {
-        await recalculateShiftTotals(data.shiftId);
-    }
+            const updated = await repository.updateExpense(id, data);
 
-    return updated;
+            if (original.shiftId) {
+                await recalculateShiftTotals(original.shiftId);
+            }
+            if (data.shiftId && data.shiftId !== original.shiftId) {
+                await recalculateShiftTotals(data.shiftId);
+            }
+
+            return updated;
+        },
+        fetchAfter: () => repository.getExpenseById(id)
+    });
 }
 
-export async function deleteExpense(id: string) {
-    const expense = await repository.getExpenseById(id);
-    if (!expense) throw new Error("Despesa não encontrada");
+export async function deleteExpense(id: string, context?: AuditContext) {
+    const auditContext = context || auditService.createSystemContext('legacy-delete-expense');
 
-    await repository.deleteExpense(id);
+    return auditService.withAudit({
+        action: AUDIT_ACTIONS.DELETE_EXPENSE,
+        entity: 'expenses',
+        entityId: id,
+        operation: 'DELETE',
+        context: auditContext,
+        fetchBefore: () => repository.getExpenseById(id),
+        execute: async () => {
+            const expense = await repository.getExpenseById(id);
+            if (!expense) throw new Error("Despesa não encontrada");
 
-    // Tentar recalcular turno, mas não falhar se o turno não existir mais (despesa órfã)
-    if (expense.shiftId) {
-        try {
-            await recalculateShiftTotals(expense.shiftId);
-        } catch (error: any) {
-            console.warn(`[deleteExpense] Não foi possível recalcular turno ${expense.shiftId} (pode ter sido deletado): ${error.message}`);
-        }
-    }
+            await repository.deleteExpense(id);
 
-    return true;
+            // Tentar recalcular turno, mas não falhar se o turno não existir mais (despesa órfã)
+            if (expense.shiftId) {
+                try {
+                    await recalculateShiftTotals(expense.shiftId);
+                } catch (error: any) {
+                    console.warn(`[deleteExpense] Não foi possível recalcular turno ${expense.shiftId} (pode ter sido deletado): ${error.message}`);
+                }
+            }
+
+            return true;
+        },
+        // fetchAfter null
+    });
 }
 
 export async function createCostType(data: any) {

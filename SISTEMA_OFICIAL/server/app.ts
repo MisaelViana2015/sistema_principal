@@ -160,8 +160,11 @@ app.use("/api/drivers", driversRoutes);
 app.use("/api/rides", ridesRoutes);
 app.use("/api/financial", financialRoutes);
 app.use("/api/config/features", featuresRoutes);
+import auditRoutes from "./modules/audit/audit.routes.js"; // NEW AUDIT
+
 app.use("/api/fraud", fraudRoutes);
 app.use("/api/maintenance", maintenanceRoutes); // NEW
+app.use("/api/audit", auditRoutes); // NEW AUDIT
 
 import adminRoutes from "./modules/admin/admin.routes.js";
 import tiresRoutes from "./modules/tires/tires.routes.js";

@@ -68,7 +68,7 @@ export interface WithAuditParams<T> {
     operation: OperationType;
     fetchBefore?: () => Promise<any>;
     execute: () => Promise<T>;
-    fetchAfter?: () => Promise<any>;
+    fetchAfter?: (executionResult?: T) => Promise<any>;
     meta?: Record<string, any>;
 }
 

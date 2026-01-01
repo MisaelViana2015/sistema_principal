@@ -2,8 +2,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { vehiclesService } from "../modules/vehicles/vehicles.service";
 import { resolveVehicleImage } from "../lib/vehicleAssets";
-import { Vehicle } from "../../../shared/schema";
-import { useToast } from "../components/ui/use-toast";
+import { Vehicle } from "@shared/schema";
+import { useToast } from "../hooks/use-toast";
 
 export interface VehicleWithUI extends Vehicle {
     image: string;

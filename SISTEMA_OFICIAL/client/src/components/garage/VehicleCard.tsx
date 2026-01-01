@@ -1,6 +1,5 @@
-
 import { motion } from "framer-motion";
-import { Car, TrendingUp, TrendingDown, Wrench, CheckCircle, Star, DollarSign, Gauge, Activity, Cpu, ArrowRight } from "lucide-react";
+import { Car, TrendingUp, TrendingDown, Wrench, CheckCircle, Star, DollarSign, Gauge, Activity, Cpu, ArrowRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VehicleWithUI } from "@/hooks/useVehicles";
 
@@ -42,6 +41,12 @@ export function VehicleCard({
                 icon: Wrench,
                 glow: "shadow-[0_0_15px_hsl(var(--warning)/0.5)]"
             },
+            indisponivel: {
+                label: "INDISPONÍVEL",
+                color: "bg-destructive/20 text-destructive border-destructive/40",
+                icon: AlertCircle,
+                glow: "shadow-[0_0_15px_hsl(var(--destructive)/0.5)]"
+            }
         };
         return configs[status] || configs.disponivel;
     };
@@ -77,7 +82,7 @@ export function VehicleCard({
                 <div className="absolute inset-0 scan-lines opacity-30" />
 
                 {/* Status Badge */}
-                <div className={`absolute top-4 right-4 flex items-center gap-2 px-4 py-2 rounded-full border ${statusConfig.color} ${statusConfig.glow} backdrop-blur-sm`}>
+                <div className={`absolute top - 4 right - 4 flex items - center gap - 2 px - 4 py - 2 rounded - full border ${statusConfig.color} ${statusConfig.glow} backdrop - blur - sm`}>
                     <StatusIcon className="w-4 h-4" />
                     <span className="text-xs font-display font-bold tracking-wider">{statusConfig.label}</span>
                 </div>
@@ -106,10 +111,10 @@ export function VehicleCard({
                             {vehicle.modelo}
                         </p>
                     </div>
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border ${vehicle.status === "disponivel" ? "bg-primary/10 border-primary/30 text-primary" :
+                    <div className={`w - 14 h - 14 rounded - 2xl flex items - center justify - center border ${vehicle.status === "disponivel" ? "bg-primary/10 border-primary/30 text-primary" :
                         vehicle.status === "em_uso" ? "bg-racing-orange/10 border-racing-orange/30 text-racing-orange" :
                             "bg-warning/10 border-warning/30 text-warning"
-                        }`}>
+                        } `}>
                         <Car className="w-7 h-7" />
                     </div>
                 </div>
@@ -137,7 +142,7 @@ export function VehicleCard({
                     <div className="stat-bar">
                         <motion.div
                             initial={{ width: 0 }}
-                            animate={{ width: `${vehicle.stats.meta}%` }}
+                            animate={{ width: `${vehicle.stats.meta}% ` }}
                             transition={{ delay: index * 0.1 + 0.5, duration: 1, ease: "easeOut" }}
                             className="stat-bar-fill"
                         />

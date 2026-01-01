@@ -1,5 +1,7 @@
 import { round2 } from "./format";
-import type { Ride, Cost } from "@shared/schema";
+import type { Ride } from "@shared/schema";
+// import type { expenses } from "@shared/schema";
+type Cost = any;
 
 export interface ShiftCalculations {
   totalApp: number;

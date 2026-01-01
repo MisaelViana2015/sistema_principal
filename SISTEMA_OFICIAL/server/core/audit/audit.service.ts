@@ -177,7 +177,8 @@ export const auditService = {
             // 3. Capturar estado posterior (deep copy)
             let after: any = null;
             if (needsAfter && fetchAfter) {
-                after = deepClone(await fetchAfter());
+                // Passar o resultado da execução para o fetchAfter (útil para INSERTs onde precisamos do ID gerado)
+                after = deepClone(await fetchAfter(result));
             }
 
             // 4. Gerar hash do payload

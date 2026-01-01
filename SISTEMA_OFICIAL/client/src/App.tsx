@@ -31,6 +31,7 @@ const FraudReports = lazy(() => import("./modules/Fraud/pages/FraudReports"));
 const FraudVehicleProfile = lazy(() => import("./modules/Fraud/pages/FraudVehicleProfile"));
 const FraudConfiguration = lazy(() => import("./modules/Fraud/pages/FraudConfiguration"));
 const FraudLogs = lazy(() => import("./modules/Fraud/pages/FraudLogs"));
+const AuditPage = lazy(() => import("./pages/AuditPage"));
 
 import MainLayout from "./components/MainLayout"; // Not currently used in layout but imported
 
@@ -142,6 +143,12 @@ function App() {
                                     <Route path="/fraude/logs" element={
                                         <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
                                             <FraudLogs />
+                                        </Suspense>
+                                    } />
+                                    {/* System Audit - Nova Rota */}
+                                    <Route path="/admin/audit" element={
+                                        <Suspense fallback={<div className="p-10 text-center">Carregando...</div>}>
+                                            <AuditPage />
                                         </Suspense>
                                     } />
                                 </Route>

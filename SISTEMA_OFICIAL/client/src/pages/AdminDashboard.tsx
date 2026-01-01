@@ -12,12 +12,13 @@ import { RidesList } from "../modules/rides/RidesList";
 import ImportTab from "./admin/tabs/ImportTab";
 import PerformanceContent from "../modules/performance/components/PerformanceContent";
 import FraudDashboard from "../modules/Fraud/FraudDashboard";
+import AuditPage from "../pages/AuditPage";
 import { useTheme } from "../contexts/ThemeContext";
 import { api } from "../lib/api";
 
 type TabValue =
     | "motoristas" | "veiculos" | "turnos" | "corridas"
-    | "analise" | "fraude" | "importar";
+    | "analise" | "fraude" | "importar" | "auditoria";
 
 interface TabItem {
     value: TabValue;
@@ -62,6 +63,7 @@ export default function Admin() {
 
     const tabs: TabItem[] = [
         { value: "fraude", label: "Fraude", icon: AlertTriangle, color: "from-red-500 to-orange-500" },
+        { value: "auditoria", label: "Auditoria", icon: Shield, color: "from-cyan-500 to-blue-500" },
         { value: "motoristas", label: "Motoristas", icon: Users, color: "from-blue-500 to-cyan-500" },
         { value: "veiculos", label: "Veículos", icon: Car, badge: alertCount > 0 ? alertCount : undefined, color: "from-green-500 to-emerald-500" },
         { value: "turnos", label: "Turnos", icon: Calendar, color: "from-purple-500 to-violet-500" },
@@ -175,6 +177,11 @@ export default function Admin() {
                             {activeTab === "corridas" && <RidesList />}
                             {activeTab === "analise" && <PerformanceContent />}
                             {activeTab === "fraude" && <FraudDashboard />}
+                            {activeTab === "auditoria" && (
+                                <div className="rounded-xl overflow-hidden shadow-2xl border border-gray-700 bg-[#0d1117]">
+                                    <AuditPage />
+                                </div>
+                            )}
                             {activeTab === "importar" && <ImportTab />}
                         </div>
                     </div>

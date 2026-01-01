@@ -1,10 +1,10 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../../contexts/AuthContext";
 import { vehiclesService } from "../../../modules/vehicles/vehicles.service";
 import { shiftsService } from "../../../modules/shifts/shifts.service";
 import { ridesService, RideWithDetails } from "../../../modules/rides/rides.service";
-import { Vehicle } from "../../../../shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { Shift, Vehicle } from "@shared/schema";
 import { api } from "../../../lib/api";
 
 export enum TurnoView {
@@ -110,7 +110,7 @@ export function useShiftLogic() {
             const diffMins = Math.max(0, Math.floor(diffMs / 60000));
             const hours = Math.floor(diffMins / 60);
             const mins = diffMins % 60;
-            setWorkedTime(`${hours}h ${mins}min`);
+            setWorkedTime(`${hours}h ${mins} min`);
         };
         updateTimer();
         const interval = setInterval(updateTimer, 60000);

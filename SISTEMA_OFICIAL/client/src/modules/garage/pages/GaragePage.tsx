@@ -6,7 +6,7 @@ import MainLayout from "../../../components/MainLayout";
 import { shiftsService } from "../../shifts/shifts.service";
 import { useAuth } from "../../../contexts/AuthContext";
 import { Zap, AlertTriangle, ShieldCheck, X, Activity } from "lucide-react";
-import { useToast } from "../../../components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "../../../components/ui/button";
 import { useVehicles, VehicleWithUI } from "../../../hooks/useVehicles";
 import { VehicleCard } from "../../../components/garage/VehicleCard";
@@ -95,7 +95,7 @@ export default function GaragePage() {
             const msg = error.response?.data?.message || error.message || "Erro ao iniciar turno.";
             toast({ title: "Erro", description: msg, variant: "destructive", duration: 5000 });
             // Alert para garantir que o usuário veja
-            alert(`Não foi possível iniciar o turno:\n${msg}`);
+            alert(`Não foi possível iniciar o turno: \n${msg} `);
         } finally {
             setIsStartingShift(false);
         }
