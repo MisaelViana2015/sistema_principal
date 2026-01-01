@@ -386,3 +386,80 @@ export const vehicleMaintenancesRelations = relations(vehicleMaintenances, ({ on
 export type MaintenanceConfig = typeof maintenanceConfigs.$inferSelect;
 export type VehicleMaintenance = typeof vehicleMaintenances.$inferSelect;
 
+// ============================================
+// AUDIT SYSTEM - Rastreabilidade Completa
+// ============================================
+
+/**
+ * audit_logs - Registro de TODAS as ações do sistema
+ * Quem fez, quando, qual ação, qual entidade
+ */
+export const auditLogs = pgTable("audit_logs", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+
+    // Identificação do Ator
+    actorType: text("actor_type").notNull(), // 'user' | 'admin' | 'ai' | 'system'
+    actorId: varchar("actor_id"),
+    actorRole: text("actor_role"),
+
+    // Ação Semântica
+    action: text("action").notNull(), // 'CREATE_EXPENSE', 'FINISH_SHIFT', 'DELETE_RIDE'
+    entity: text("entity").notNull(), // 'shifts', 'expenses', 'rides', 'vehicles'
+    entityId: varchar("entity_id"),
+
+    // Contexto da Request
+    source: text("source").default('api'), // 'api' | 'web' | 'job' | 'ai'
+    requestId: varchar("request_id"),
+    ip: text("ip"),
+    userAgent: text("user_agent"),
+
+    // Metadata Adicional (sem PII sensível)
+    meta: jsonb("meta").default({}),
+}, (table) => ({
+    createdAtIdx: index("idx_audit_logs_created_at").on(table.createdAt),
+    entityIdx: index("idx_audit_logs_entity").on(table.entity, table.entityId),
+    actorIdx: index("idx_audit_logs_actor").on(table.actorType, table.actorId),
+    actionIdx: index("idx_audit_logs_action").on(table.action),
+}));
+
+/**
+ * entity_history - Histórico de Alterações (antes/depois)
+ * Permite rollback lógico e auditoria forense
+ */
+export const entityHistory = pgTable("entity_history", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+
+    // Entidade Afetada
+    entity: text("entity").notNull(),
+    entityId: varchar("entity_id").notNull(),
+    operation: text("operation").notNull(), // 'INSERT' | 'UPDATE' | 'DELETE'
+
+    // Snapshots (deep copies)
+    beforeData: jsonb("before_data"), // null para INSERT
+    afterData: jsonb("after_data"),   // null para DELETE
+
+    // Identificação do Ator
+    actorType: text("actor_type").notNull(),
+    actorId: varchar("actor_id"),
+    actorRole: text("actor_role"),
+
+    // Contexto
+    source: text("source").default('api'),
+    requestId: varchar("request_id"),
+    payloadHash: text("payload_hash"), // sha256 do payload (sem campos voláteis)
+
+    // Metadata
+    meta: jsonb("meta").default({}),
+}, (table) => ({
+    createdAtIdx: index("idx_entity_history_created_at").on(table.createdAt),
+    entityIdx: index("idx_entity_history_entity").on(table.entity, table.entityId),
+    actorIdx: index("idx_entity_history_actor").on(table.actorType, table.actorId),
+}));
+
+// Types para Auditoria
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type NewAuditLog = typeof auditLogs.$inferInsert;
+export type EntityHistoryRecord = typeof entityHistory.$inferSelect;
+export type NewEntityHistory = typeof entityHistory.$inferInsert;
