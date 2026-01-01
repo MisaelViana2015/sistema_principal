@@ -3,6 +3,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import styles from "../modules/audit/styles/AuditPage.module.css";
 import { Shield, RefreshCw } from "lucide-react";
+import AuditPayloadViewer from "../modules/audit/components/AuditPayloadViewer";
 
 // Interfaces
 interface AuditLog {
@@ -386,6 +387,8 @@ export default function AuditPage() {
                             </div>
                         </div>
 
+
+
                         {/* History Diff Viewer */}
                         {historyData.length > 0 && (
                             <div className={styles.historySection}>
@@ -397,26 +400,18 @@ export default function AuditPage() {
                                         </div>
                                         <div className={styles.diffContainer}>
                                             <div className={styles.diffPanel}>
-                                                <div className={`${styles.diffHeader} ${styles.diffHeaderBefore}`}>
-                                                    ANTES ({h.beforeData ? "Dados Originais" : "Vazio"})
-                                                </div>
-                                                <pre className={styles.jsonPre}>
-                                                    {h.beforeData
-                                                        ? JSON.stringify(h.beforeData, null, 2)
-                                                        : <span style={{ opacity: 0.3 }}>(Nenhum dado prévio)</span>
-                                                    }
-                                                </pre>
+                                                <AuditPayloadViewer
+                                                    data={h.beforeData}
+                                                    label={`ANTES (${h.beforeData ? "Dados Originais" : "Vazio"})`}
+                                                    className={styles.diffHeaderBefore}
+                                                />
                                             </div>
                                             <div className={styles.diffPanel}>
-                                                <div className={`${styles.diffHeader} ${styles.diffHeaderAfter}`}>
-                                                    DEPOIS ({h.afterData ? "Novos Dados" : "Removido"})
-                                                </div>
-                                                <pre className={styles.jsonPre}>
-                                                    {h.afterData
-                                                        ? JSON.stringify(h.afterData, null, 2)
-                                                        : <span style={{ opacity: 0.3 }}>(Entidade removida)</span>
-                                                    }
-                                                </pre>
+                                                <AuditPayloadViewer
+                                                    data={h.afterData}
+                                                    label={`DEPOIS (${h.afterData ? "Novos Dados" : "Removido"})`}
+                                                    className={styles.diffHeaderAfter}
+                                                />
                                             </div>
                                         </div>
                                     </div>
