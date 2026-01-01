@@ -27,7 +27,7 @@ export async function createDriver(data: NewDriver, context?: AuditContext) {
             operation: 'INSERT',
             context,
             execute: () => driversRepository.createDriver(driverToCreate),
-            fetchAfter: (result) => driversRepository.findDriverById(result.id)
+            fetchAfter: (result) => driversRepository.findDriverById(result!.id)
         });
     }
 
