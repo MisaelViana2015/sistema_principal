@@ -306,17 +306,23 @@ export async function updateShift(id: string, data: any) {
 
                 console.log('[updateShift] Time diff:', timeDiffMs, 'ms');
 
-                // Se houver diferença de tempo, atualizar todas as corridas
-                if (timeDiffMs !== 0) {
+                // Se houver diferença de tempo e for válido, atualizar todas as corridas
+                if (timeDiffMs !== 0 && !isNaN(timeDiffMs)) {
                     console.log('[updateShift] Updating ride timestamps...');
-                    // Atualiza todas as corridas do turno, aplicando o mesmo deslocamento
+
+                    // Postgres requires interval string construction carefully
+                    // We use string interpolation for the interval value to avoid parameter binding issues inside quotes
+                    const intervalString = `${Math.floor(timeDiffMs)} milliseconds`;
+
                     await db.update(rides)
                         .set({
-                            hora: sql`${rides.hora} + INTERVAL '${timeDiffMs} milliseconds'`
+                            hora: sql`${rides.hora} + ${intervalString}::interval`
                         })
                         .where(eq(rides.shiftId, id));
 
                     console.log('[updateShift] Updated ride timestamps');
+                } else if (isNaN(timeDiffMs)) {
+                    console.warn('[updateShift] Invalid date calculation, skipping ride update. oldStart:', oldStart, 'newStart:', newStart);
                 }
             }
         }
