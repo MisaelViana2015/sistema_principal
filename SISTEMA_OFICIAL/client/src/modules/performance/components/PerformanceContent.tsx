@@ -122,10 +122,7 @@ export default function PerformanceContent() {
     const totalTurnos = filteredShifts.length;
 
     // Costs
-    const totalCustosVariaveis = filteredExpenses.reduce((acc: number, c: any) => {
-        const val = Number(c.valor) || 0;
-        return acc + (c.isSplitCost ? val * 0.5 : val);
-    }, 0);
+    const totalCustosVariaveis = filteredExpenses.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0);
     const totalCustosFixos = (fixedCosts || []).reduce((acc: number, c: any) => acc + (Number(c.value) || 0), 0);
     const appliedFixedCosts = selectedMonth !== "todos" ? totalCustosFixos : (selectedYear !== "todos" ? totalCustosFixos * 12 : 0);
     const totalCustos = totalCustosVariaveis + appliedFixedCosts;
@@ -406,96 +403,187 @@ export default function PerformanceContent() {
                 </button>
             </div>
 
+
             {activeSubTab === "financeiro" && (
                 <>
-                    <div style={styles.gridKPI}>
-                        <KPICard
-                            title="Lucro Líquido"
-                            value={`R$ ${lucroLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                            sublabel="Receita Empresa (60%) - Custos"
-                            icon={TrendingUp}
-                            gradient={lucroLiquido >= 0 ? "green" : "red"}
-                        />
-                        <KPICard
-                            title="Margem de Lucro"
-                            value={`${margemLucro.toFixed(1)}%`}
-                            sublabel="Lucro / Receita Empresa"
-                            icon={DollarSign}
-                            gradient={margemLucro >= 0 ? "blue" : "red"}
-                        />
-                        <KPICard
-                            title="Receita Empresa"
-                            value={`R$ ${totalRepasseEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                            sublabel={`60% de R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                            icon={DollarSign}
-                            gradient="blue"
-                        />
-                        <KPICard
-                            title="Repasse Motoristas"
-                            value={`R$ ${totalRepasseMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                            sublabel={`40% de R$ ${totalBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                            icon={Users}
-                            gradient="purple"
-                        />
-                        <KPICard
-                            title="Turnos"
-                            value={totalTurnos.toString()}
-                            sublabel="Total no período"
-                            icon={Clock}
-                            gradient="orange"
-                        />
-                        <KPICard
-                            title="Custo Total"
-                            value={`R$ ${totalCustos.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                            sublabel={`Fixos: ${appliedFixedCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + Var: ${totalCustosVariaveis.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                            icon={TrendingDown}
-                            gradient="red" // Or Orange
-                        />
-                        <KPICard
-                            title="P.E. Total (100%)"
-                            value={`${peTotalPercent.toFixed(1)}%`}
-                            sublabel={peTotalPercent >= 100 ? "Meta Atingida!" : `Faltam R$ ${faltaParaPE.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                            icon={TrendingUp}
-                            gradient={peTotalPercent >= 100 ? "green" : "orange"}
-                        />
-                    </div>
-
-                    <div style={styles.chartPlaceholder}>
-                        <div style={{ width: "80%", height: "200px", display: "flex", alignItems: "flex-end", justifyContent: "space-around", gap: "10px" }}>
-                            {/* Revenue Bar */}
-                            <div style={{ width: "15%", height: "80%", background: "#3b82f6", borderRadius: "4px 4px 0 0", position: "relative", transition: "height 0.5s ease" }} title={`Receita: R$ ${totalRepasseEmpresa.toLocaleString('pt-BR')}`}>
-                                <span style={{ position: "absolute", bottom: "-25px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem" }}>Receita</span>
-                                <span style={{ position: "absolute", top: "-20px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem", fontWeight: "bold" }}>R$ {(totalRepasseEmpresa / 1000).toFixed(1)}k</span>
-                            </div>
-
-                            {/* Costs Bar */}
-                            <div style={{
-                                width: "15%",
-                                height: `${Math.min((totalCustos / (totalRepasseEmpresa || 1)) * 80, 80)}%`,
-                                background: "#ef4444",
-                                borderRadius: "4px 4px 0 0",
-                                position: "relative",
-                                transition: "height 0.5s ease"
-                            }} title={`Custos: R$ ${totalCustos.toLocaleString('pt-BR')}`}>
-                                <span style={{ position: "absolute", bottom: "-25px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem" }}>Custos</span>
-                                <span style={{ position: "absolute", top: "-20px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem", fontWeight: "bold" }}>R$ {(totalCustos / 1000).toFixed(1)}k</span>
-                            </div>
-
-                            {/* Profit Bar */}
-                            <div style={{
-                                width: "15%",
-                                height: `${Math.max(Math.min((lucroLiquido / (totalRepasseEmpresa || 1)) * 80, 80), 2)}%`, // Min 2% visibility
-                                background: lucroLiquido >= 0 ? "#22c55e" : "#ef4444",
-                                borderRadius: "4px 4px 0 0",
-                                position: "relative",
-                                transition: "height 0.5s ease"
-                            }} title={`Lucro: R$ ${lucroLiquido.toLocaleString('pt-BR')}`}>
-                                <span style={{ position: "absolute", bottom: "-25px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem" }}>Lucro</span>
-                                <span style={{ position: "absolute", top: "-20px", left: "0", right: "0", textAlign: "center", fontSize: "0.7rem", fontWeight: "bold" }}>R$ {(lucroLiquido / 1000).toFixed(1)}k</span>
-                            </div>
+                    {/* --- FILTERS (Dia/Semana/Mês/Ano) --- */}
+                    <div style={styles.filtersCard}>
+                        <div style={styles.inputGroup}>
+                            <label style={styles.label}>Ano</label>
+                            <select style={styles.select} value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
+                                <option value="todos">Todos</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                            </select>
                         </div>
-                        <p style={{ marginTop: "2rem", fontSize: "0.9rem", color: styles.label.color }}>Visão Geral Financeira</p>
+                        <div style={styles.inputGroup}>
+                            <label style={styles.label}>Mês</label>
+                            <select style={styles.select} value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
+                                <option value="todos">Todos</option>
+                                <option value="1">Janeiro</option>
+                                <option value="2">Fevereiro</option>
+                                <option value="3">Março</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Maio</option>
+                                <option value="6">Junho</option>
+                                <option value="7">Julho</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Setembro</option>
+                                <option value="10">Outubro</option>
+                                <option value="11">Novembro</option>
+                                <option value="12">Dezembro</option>
+                            </select>
+                        </div>
                     </div>
+
+                    {/* --- NEW CALCULATIONS (Corrected) --- */}
+                    {(() => {
+                        // Faturamento Total = Soma de totalBruto de todos os turnos filtrados
+                        const faturamentoTotal = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.totalBruto) || 0), 0);
+
+                        // Lucro Bruto Empresa = 60% do Faturamento Total
+                        const lucroBrutoEmpresa = faturamentoTotal * 0.60;
+
+                        // Faturamento Bruto Motorista = 40% do Faturamento Total
+                        const faturamentoBrutoMotorista = faturamentoTotal * 0.40;
+
+                        // Custo Total = Custos Fixos (do mês) + Custos Variáveis (despesas filtradas)
+                        const custosVariaveis = filteredExpenses.reduce((acc: number, c: any) => {
+                            const val = Number(c.valor) || 0;
+                            return acc + (c.isSplitCost ? val * 0.5 : val);
+                        }, 0);
+                        const custosFixosMes = selectedMonth !== "todos" ? totalCustosFixos : 0;
+                        const custoTotal = custosVariaveis + custosFixosMes;
+
+                        // Lucro Líquido Empresa = Lucro Bruto Empresa - Custo Total
+                        const lucroLiquidoEmpresa = lucroBrutoEmpresa - custoTotal;
+
+                        // Lucro Líquido Motorista (por enquanto = Faturamento Bruto Motorista)
+                        const lucroLiquidoMotorista = faturamentoBrutoMotorista;
+
+                        // Driver breakdown
+                        const driverBreakdown = drivers.map((driver: any) => {
+                            const driverShifts = filteredShifts.filter((s: any) => s.driverId === driver.id);
+                            const driverTotal = driverShifts.reduce((acc: number, s: any) => acc + (Number(s.totalBruto) || 0), 0);
+                            return {
+                                nome: driver.nome,
+                                valor: driverTotal * 0.40
+                            };
+                        }).filter((d: any) => d.valor > 0).sort((a: any, b: any) => b.valor - a.valor);
+
+                        const cardStyle = {
+                            padding: "1.25rem",
+                            backgroundColor: isDark ? "#1e293b" : "#ffffff",
+                            borderRadius: "0.75rem",
+                            border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+                            display: "flex",
+                            flexDirection: "column" as const,
+                            gap: "0.5rem",
+                        };
+                        const cardTitle = { fontSize: "0.875rem", color: isDark ? "#94a3b8" : "#64748b", fontWeight: "500" as const };
+                        const cardValue = { fontSize: "1.5rem", fontWeight: "700" as const, color: isDark ? "#ffffff" : "#0f172a" };
+                        const cardSublabel = { fontSize: "0.75rem", color: isDark ? "#64748b" : "#94a3b8" };
+
+                        return (
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginTop: "1rem" }}>
+                                {/* === COLUNA ESQUERDA: EMPRESA === */}
+                                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                                    {/* Faturamento Total (100%) */}
+                                    <div style={{ ...cardStyle, borderLeft: "4px solid #3b82f6" }}>
+                                        <span style={cardTitle}>Faturamento Total</span>
+                                        <span style={cardValue}>R$ {faturamentoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span style={cardSublabel}>100% (App + Particular)</span>
+                                    </div>
+
+                                    {/* Lucro Bruto Empresa (60%) */}
+                                    <div style={{ ...cardStyle, borderLeft: "4px solid #22c55e" }}>
+                                        <span style={cardTitle}>Lucro Bruto Empresa</span>
+                                        <span style={cardValue}>R$ {lucroBrutoEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span style={cardSublabel}>60% do Faturamento Total</span>
+                                    </div>
+
+                                    {/* Custo Total */}
+                                    <div style={{ ...cardStyle, borderLeft: "4px solid #ef4444" }}>
+                                        <span style={cardTitle}>Custo Total</span>
+                                        <span style={cardValue}>R$ {custoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span style={cardSublabel}>Fixos: R$ {custosFixosMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + Var: R$ {custosVariaveis.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                    </div>
+
+                                    {/* Lucro Líquido Empresa */}
+                                    <div style={{ ...cardStyle, borderLeft: `4px solid ${lucroLiquidoEmpresa >= 0 ? "#22c55e" : "#ef4444"}` }}>
+                                        <span style={cardTitle}>Lucro Líquido Empresa</span>
+                                        <span style={{ ...cardValue, color: lucroLiquidoEmpresa >= 0 ? "#22c55e" : "#ef4444" }}>
+                                            R$ {lucroLiquidoEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </span>
+                                        <span style={cardSublabel}>Lucro Bruto (60%) - Custo Total</span>
+                                    </div>
+                                </div>
+
+                                {/* === COLUNA CENTRAL: P.E. EMPRESA === */}
+                                <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center", justifyContent: "flex-start" }}>
+                                    <div style={{ ...cardStyle, borderLeft: "4px solid #f59e0b", width: "100%", minHeight: "200px", justifyContent: "center", alignItems: "center" }}>
+                                        <span style={{ ...cardTitle, textAlign: "center" }}>P.E. Empresa</span>
+                                        <span style={{ ...cardValue, fontSize: "2rem", color: "#f59e0b" }}>—</span>
+                                        <span style={{ ...cardSublabel, textAlign: "center" }}>Dados a definir</span>
+                                    </div>
+                                </div>
+
+                                {/* === COLUNA DIREITA: MOTORISTAS === */}
+                                <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                                    {/* Faturamento Bruto Motorista (40%) */}
+                                    <div style={{ ...cardStyle, borderLeft: "4px solid #8b5cf6" }}>
+                                        <span style={cardTitle}>Faturamento Bruto Motorista</span>
+                                        <span style={cardValue}>R$ {faturamentoBrutoMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span style={cardSublabel}>40% do Faturamento Total</span>
+                                    </div>
+
+                                    {/* Custos do Motorista (Placeholder) */}
+                                    <div style={{ ...cardStyle, borderLeft: "4px solid #64748b" }}>
+                                        <span style={cardTitle}>Custos do Motorista</span>
+                                        <span style={{ ...cardValue, color: "#64748b" }}>R$ —</span>
+                                        <span style={cardSublabel}>Dados a definir</span>
+                                    </div>
+
+                                    {/* Lucro Líquido Motorista + Tabela */}
+                                    <div style={{ ...cardStyle, borderLeft: "4px solid #8b5cf6", flex: 1 }}>
+                                        <span style={cardTitle}>Lucro Líquido Motorista</span>
+                                        <span style={cardValue}>R$ {lucroLiquidoMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        <span style={cardSublabel}>Por enquanto = Faturamento Bruto Motorista</span>
+
+                                        {/* Tabela de breakdown por motorista */}
+                                        <div style={{ marginTop: "1rem", maxHeight: "200px", overflowY: "auto" }}>
+                                            <table style={{ width: "100%", fontSize: "0.8rem", borderCollapse: "collapse" }}>
+                                                <thead>
+                                                    <tr style={{ borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}` }}>
+                                                        <th style={{ textAlign: "left", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b" }}>Motorista</th>
+                                                        <th style={{ textAlign: "right", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b" }}>Valor</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {driverBreakdown.map((d: any) => (
+                                                        <tr key={d.nome} style={{ borderBottom: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}` }}>
+                                                            <td style={{ padding: "0.4rem 0", color: isDark ? "#e2e8f0" : "#1e293b" }}>{d.nome}</td>
+                                                            <td style={{ textAlign: "right", padding: "0.4rem 0", color: "#8b5cf6", fontWeight: "600" }}>
+                                                                R$ {d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                    {driverBreakdown.length === 0 && (
+                                                        <tr>
+                                                            <td colSpan={2} style={{ textAlign: "center", padding: "1rem 0", color: isDark ? "#64748b" : "#94a3b8" }}>
+                                                                Nenhum motorista no período
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </>
             )}
 
