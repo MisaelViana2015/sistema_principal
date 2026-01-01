@@ -6,8 +6,8 @@ export const createExpenseSchema = z.object({
     driverId: z.string().optional(),
     shiftId: z.string().optional(),
     costTypeId: z.string({ required_error: "Tipo de custo é obrigatório" }),
-    value: z.number().min(0.01, "Valor deve ser positivo").or(z.string()).transform(val => String(val)), // Accept number or string, convert to string
-    date: z.string().or(z.date()).transform(val => new Date(val)),
+    valor: z.number().min(0.01, "Valor deve ser positivo").or(z.string()).transform(val => String(val)), // Accept number or string, convert to string
+    data: z.string().or(z.date()).transform(val => new Date(val)),
     notes: z.string().optional(),
     isParticular: z.boolean().default(false).optional(),
     isSplitCost: z.boolean().default(false).optional()
@@ -18,7 +18,7 @@ export const updateExpenseSchema = createExpenseSchema.partial();
 // --- FIXED COSTS ---
 export const createFixedCostSchema = z.object({
     name: z.string({ required_error: "Nome é obrigatório" }),
-    value: z.number().min(0.01, "Valor deve ser positivo").or(z.string()).transform(val => String(val)),
+    valor: z.number().min(0.01, "Valor deve ser positivo").or(z.string()).transform(val => String(val)),
     frequency: z.enum(["Mensal", "Semanal", "Anual", "Único"]).default("Mensal"),
     dueDay: z.number().min(1).max(31).default(5),
     vehicleId: z.string().optional().transform(val => val === "" ? undefined : val),

@@ -65,20 +65,21 @@ export async function getFixedCosts(req: Request, res: Response) {
 
 export async function createFixedCost(req: Request, res: Response) {
     try {
-        const validatedData = createFixedCostSchema.parse(req.body);
-
-        const newCost = await service.createFixedCost({
-            name: validatedData.name,
-            value: validatedData.value,
-            frequency: validatedData.frequency,
-            dueDay: validatedData.dueDay,
-            vehicleId: validatedData.vehicleId,
-            costTypeId: validatedData.costTypeId,
-            notes: validatedData.notes,
-            totalInstallments: validatedData.totalInstallments,
-            startDate: validatedData.startDate
+        const payload = createFixedCostSchema.parse(req.body);
+        const fixedCost = await service.createFixedCost({
+            name: payload.name,
+            value: payload.valor,
+            frequency: payload.frequency,
+            dueDay: payload.dueDay,
+            vehicleId: payload.vehicleId,
+            costTypeId: payload.costTypeId,
+            notes: payload.notes,
+            vendor: payload.vendor,
+            description: payload.description,
+            totalInstallments: payload.totalInstallments,
+            startDate: payload.startDate
         });
-        res.status(201).json(newCost);
+        res.status(201).json(fixedCost);
     } catch (error: any) {
         console.error("Erro ao criar custo fixo:", error);
         if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
@@ -110,8 +111,6 @@ export async function deleteFixedCost(req: Request, res: Response) {
         res.status(500).json({ error: "Erro interno" });
     }
 }
-
-
 
 export async function getFixedCostInstallments(req: Request, res: Response) {
     try {
@@ -147,51 +146,49 @@ export async function createExpense(req: Request, res: Response) {
         const driverId = user.role === 'admin' ? (req.body.driverId || user.userId) : user.userId;
 
         const data = { ...req.body, driverId };
-        const validatedData = createExpenseSchema.parse(data);
+        const payload = createExpenseSchema.parse(data);
 
         // Se houver shiftId, verificar se o turno pertence a este motorista (Segurança Adicional)
-        if (validatedData.shiftId) {
+        if (payload.shiftId) {
             const shift = await db.select().from(shifts)
-                .where(and(eq(shifts.id, validatedData.shiftId), eq(shifts.driverId, String(driverId))))
+                .where(and(eq(shifts.id, payload.shiftId), eq(shifts.driverId, String(driverId))))
                 .limit(1);
 
             if (shift.length === 0 && user.role !== 'admin') {
-                return res.status(403).json({ error: "Este turno não pertence a você." });
+                return res.status(403).json({ error: "Turno não pertence ao motorista" });
             }
         }
 
         const newExpense = await service.createExpense({
-            driverId: validatedData.driverId,
-            shiftId: validatedData.shiftId,
-            costTypeId: validatedData.costTypeId,
-            value: validatedData.value,
-            date: validatedData.date,
-            notes: validatedData.notes,
-            isParticular: validatedData.isParticular,
-            isSplitCost: (validatedData as any).isSplitCost,
+            driverId: payload.driverId,
+            shiftId: payload.shiftId,
+            costTypeId: payload.costTypeId,
+            value: payload.valor,
+            date: payload.data,
+            notes: payload.notes,
+            isParticular: payload.isParticular,
+            isSplitCost: payload.isSplitCost,
         }, req.auditContext);
 
         res.status(201).json(newExpense);
     } catch (error: any) {
         console.error("Erro ao criar despesa:", error);
         if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
-        res.status(500).json({ error: "Erro interno ao criar despesa" });
+        res.status(500).json({ error: "Erro interno", detail: error.message });
     }
 }
 
 export async function updateExpenseController(req: Request, res: Response) {
-    try {
-        const { id } = req.params;
-        const validatedData = updateExpenseSchema.parse(req.body);
+    const validatedData = updateExpenseSchema.parse(req.body);
 
-        const updated = await service.updateExpense(id, validatedData, req.auditContext);
-        res.json(updated);
-    } catch (error: any) {
-        console.error("Erro ao atualizar despesa:", error);
-        if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
-        res.status(500).json({ error: error.message || "Erro interno ao atualizar despesa" });
-    }
+    const updated = await service.updateExpense(id, validatedData, req.auditContext);
+    res.json(updated);
+} catch (error: any) {
+    console.error("Erro ao atualizar despesa:", error);
+    if (error.issues) return res.status(400).json({ error: "Validation error", details: error.issues });
+    res.status(500).json({ error: error.message || "Erro interno ao atualizar despesa" });
 }
+    }
 
 export async function deleteExpenseController(req: Request, res: Response) {
     try {

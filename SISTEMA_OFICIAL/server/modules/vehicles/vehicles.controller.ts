@@ -49,8 +49,17 @@ export const vehiclesController = {
     async create(req: Request, res: Response, next: NextFunction) {
         try {
             const data = createVehicleSchema.parse(req.body);
-            // @ts-ignore - Tipo do Zod compatível com Drizzle, mas TS reclama de optional vs null
-            const newVehicle = await vehiclesService.createVehicle(data);
+            // Map keys
+            const newVehicle = await vehiclesService.createVehicle({
+                plate: data.placa,
+                modelo: data.modelo,
+                kmInicial: data.kmInicial,
+                motoristaPadraoId: data.motoristaPadraoId,
+                color: data.color,
+                imageUrl: data.imageUrl,
+                isActive: data.isActive,
+                status: data.status
+            });
             res.status(201).json(newVehicle);
         } catch (error) {
             next(error);

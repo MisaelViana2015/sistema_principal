@@ -9,7 +9,7 @@ import { z } from "zod";
  */
 
 export const createVehicleSchema = z.object({
-    plate: z
+    placa: z
         .string({ required_error: "Placa é obrigatória" })
         .min(7, "Placa deve ter 7 caracteres")
         .max(8, "Placa deve ter no máximo 8 caracteres")
