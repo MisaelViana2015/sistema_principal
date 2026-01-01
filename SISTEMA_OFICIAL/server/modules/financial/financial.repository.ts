@@ -37,6 +37,11 @@ export async function findAllFixedCosts() {
     return await db.select().from(fixedCosts);
 }
 
+export async function getFixedCostById(id: string) {
+    const [cost] = await db.select().from(fixedCosts).where(eq(fixedCosts.id, id));
+    return cost;
+}
+
 export async function createFixedCost(data: typeof fixedCosts.$inferInsert) {
     const [newCost] = await db.insert(fixedCosts).values(data).returning();
 

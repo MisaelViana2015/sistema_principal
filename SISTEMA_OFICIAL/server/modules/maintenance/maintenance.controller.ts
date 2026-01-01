@@ -33,7 +33,7 @@ export async function fixDbData(req: Request, res: Response) {
 export async function performMaintenance(req: Request, res: Response) {
     try {
         const { vehicleId, configId, currentKm, date } = req.body;
-        await maintenanceService.performMaintenance(vehicleId, configId, Number(currentKm), new Date(date));
+        await maintenanceService.performMaintenance(vehicleId, configId, Number(currentKm), new Date(date), req.auditContext);
         res.json({ success: true, message: "Manutenção registrada com sucesso!" });
     } catch (error: any) {
         res.status(500).json({ success: false, error: error.message });

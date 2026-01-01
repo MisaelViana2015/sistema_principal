@@ -12,6 +12,11 @@ export async function findAllTires() {
     return await db.select().from(tires).orderBy(desc(tires.installDate));
 }
 
+export async function findTireById(id: string) {
+    const result = await db.select().from(tires).where(eq(tires.id, id));
+    return result[0];
+}
+
 export async function deleteTire(id: string) {
     await db.delete(tires).where(eq(tires.id, id));
     return true;

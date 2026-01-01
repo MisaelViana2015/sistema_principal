@@ -20,6 +20,15 @@ export const maintenanceRepository = {
         });
     },
 
+    async findByVehicleAndConfig(vehicleId: string, configId: string) {
+        return await db.query.vehicleMaintenances.findFirst({
+            where: and(
+                eq(vehicleMaintenances.vehicleId, vehicleId),
+                eq(vehicleMaintenances.configId, configId)
+            )
+        });
+    },
+
     // Buscar DASHBOARD (Status da frota)
     async getFleetStatus() {
         // Retorna todos os veículos com suas manutenções

@@ -78,7 +78,7 @@ export async function createFixedCost(req: Request, res: Response) {
             description: payload.description,
             totalInstallments: payload.totalInstallments,
             startDate: payload.startDate
-        });
+        }, req.auditContext);
         res.status(201).json(fixedCost);
     } catch (error: any) {
         console.error("Erro ao criar custo fixo:", error);
@@ -92,7 +92,7 @@ export async function updateFixedCost(req: Request, res: Response) {
         const { id } = req.params;
         const validatedData = updateFixedCostSchema.parse(req.body);
 
-        const updated = await service.updateFixedCost(id, validatedData);
+        const updated = await service.updateFixedCost(id, validatedData, req.auditContext);
         res.json(updated);
     } catch (error: any) {
         console.error("Erro ao atualizar custo fixo:", error);
@@ -104,11 +104,11 @@ export async function updateFixedCost(req: Request, res: Response) {
 export async function deleteFixedCost(req: Request, res: Response) {
     try {
         const { id } = req.params;
-        await service.deleteFixedCost(id);
-        res.json({ message: "Custo fixo removido" });
+        await service.deleteFixedCost(id, req.auditContext);
+        res.status(204).send();
     } catch (error) {
         console.error("Erro ao remover custo fixo:", error);
-        res.status(500).json({ error: "Erro interno" });
+        res.status(500).json({ error: "Erro interno ao remover custo fixo" });
     }
 }
 

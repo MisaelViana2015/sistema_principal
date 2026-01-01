@@ -25,15 +25,49 @@ export async function updateFixedCostInstallment(id: string, data: any) {
     return await repository.updateFixedCostInstallment(id, data);
 }
 
-export async function createFixedCost(data: any) {
+export async function createFixedCost(data: any, context?: AuditContext) {
+    if (context) {
+        return await auditService.withAudit({
+            action: 'CREATE_FIXED_COST', // Need to check if this action exists or just use generic
+            entity: 'fixed_costs',
+            entityId: 'new',
+            operation: 'INSERT',
+            context,
+            execute: () => repository.createFixedCost(data),
+            fetchAfter: (result) => repository.getFixedCostById(result!.id) // Assuming getFixedCostById exists
+        });
+    }
     return await repository.createFixedCost(data);
 }
 
-export async function updateFixedCost(id: string, data: any) {
+export async function updateFixedCost(id: string, data: any, context?: AuditContext) {
+    if (context) {
+        return await auditService.withAudit({
+            action: 'UPDATE_FIXED_COST',
+            entity: 'fixed_costs',
+            entityId: id,
+            operation: 'UPDATE',
+            context,
+            fetchBefore: () => repository.getFixedCostById(id),
+            execute: () => repository.updateFixedCost(id, data),
+            fetchAfter: () => repository.getFixedCostById(id)
+        });
+    }
     return await repository.updateFixedCost(id, data);
 }
 
-export async function deleteFixedCost(id: string) {
+export async function deleteFixedCost(id: string, context?: AuditContext) {
+    if (context) {
+        return await auditService.withAudit({
+            action: 'DELETE_FIXED_COST',
+            entity: 'fixed_costs',
+            entityId: id,
+            operation: 'DELETE',
+            context,
+            fetchBefore: () => repository.getFixedCostById(id),
+            execute: () => repository.deleteFixedCost(id)
+        });
+    }
     return await repository.deleteFixedCost(id);
 }
 

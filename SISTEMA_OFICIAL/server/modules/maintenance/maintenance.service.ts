@@ -1,6 +1,6 @@
-
 import { maintenanceRepository } from "./maintenance.repository.js";
 import { vehiclesRepository } from "../vehicles/vehicles.repository.js";
+import { auditService, AuditContext } from "../../core/audit/audit.service.js";
 
 export const maintenanceService = {
 
@@ -74,25 +74,42 @@ export const maintenanceService = {
     },
 
     // Registrar que uma manutenção foi feita
-    async performMaintenance(vehicleId: string, configId: string, currentKm: number, date: Date) {
+    async performMaintenance(vehicleId: string, configId: string, currentKm: number, date: Date, context?: AuditContext) {
         // 1. Busca config para saber intervalo
         const configs = await maintenanceRepository.getConfigs();
         const config = configs.find(c => c.id === configId);
 
         if (!config) throw new Error("Configuração de manutenção não encontrada");
 
-        // 2. Registra e Reseta
-        await maintenanceRepository.registerMaintenance(vehicleId, configId, currentKm, config.intervalKm);
+        const executeMaintenance = async () => {
+            // 2. Registra e Reseta
+            await maintenanceRepository.registerMaintenance(vehicleId, configId, currentKm, config.intervalKm);
 
-        // 3. Atualiza KM do veículo também (se o informado for maior)
-        const vehicle = await vehiclesRepository.findById(vehicleId);
-        // @ts-ignore
-        if (vehicle && currentKm > (vehicle.currentKm || 0)) {
-            await vehiclesRepository.update(vehicleId, { currentKm });
+            // 3. Atualiza KM do veículo também (se o informado for maior)
+            const vehicle = await vehiclesRepository.findById(vehicleId);
+            // @ts-ignore
+            if (vehicle && currentKm > (vehicle.currentKm || 0)) {
+                await vehiclesRepository.update(vehicleId, { currentKm });
+            }
+
+            // 4. Re-check status
+            await this.checkStatus(vehicleId, currentKm);
+        };
+
+        if (context) {
+            await auditService.withAudit({
+                action: 'PERFORM_MAINTENANCE',
+                entity: 'maintenances',
+                entityId: `${vehicleId}_${configId}`, // Composite ID logic
+                operation: 'UPDATE', // It's logically an update of the maintenance record
+                context,
+                fetchBefore: () => maintenanceRepository.findByVehicleAndConfig(vehicleId, configId),
+                execute: executeMaintenance,
+                fetchAfter: () => maintenanceRepository.findByVehicleAndConfig(vehicleId, configId)
+            });
+        } else {
+            await executeMaintenance();
         }
-
-        // 4. Re-check status
-        await this.checkStatus(vehicleId, currentKm);
     },
 
     // Verificar e atualizar status (chamado pelo finishShift)

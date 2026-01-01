@@ -1,4 +1,3 @@
-
 import { Request, Response } from "express";
 import * as tiresService from "./tires.service.js";
 import { insertTireSchema } from "../../../shared/schema.js";
@@ -13,7 +12,7 @@ export const createTire = async (req: Request, res: Response) => {
         });
 
         const tireData = createTireSchema.parse(req.body);
-        const newTire = await tiresService.create(tireData);
+        const newTire = await tiresService.create(tireData, req.auditContext);
         res.status(201).json(newTire);
     } catch (error) {
         if (error instanceof z.ZodError) {
@@ -42,7 +41,7 @@ export const getAllTires = async (_req: Request, res: Response) => {
 export const deleteTire = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        await tiresService.remove(id);
+        await tiresService.remove(id, req.auditContext);
         res.status(204).send();
     } catch (error) {
         console.error("Error deleting tire:", error);

@@ -59,7 +59,7 @@ export const vehiclesController = {
                 imageUrl: data.imageUrl,
                 isActive: data.isActive,
                 status: data.status
-            });
+            }, req.auditContext);
             res.status(201).json(newVehicle);
         } catch (error) {
             next(error);
@@ -69,7 +69,7 @@ export const vehiclesController = {
     async update(req: Request, res: Response, next: NextFunction) {
         try {
             const data = updateVehicleSchema.parse(req.body);
-            const updatedVehicle = await vehiclesService.updateVehicle(req.params.id, data);
+            const updatedVehicle = await vehiclesService.updateVehicle(req.params.id, data, req.auditContext);
             res.json(updatedVehicle);
         } catch (error) {
             next(error);
@@ -78,7 +78,7 @@ export const vehiclesController = {
 
     async delete(req: Request, res: Response, next: NextFunction) {
         try {
-            await vehiclesService.deleteVehicle(req.params.id);
+            await vehiclesService.deleteVehicle(req.params.id, req.auditContext);
             res.status(204).send();
         } catch (error) {
             next(error);
