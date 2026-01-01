@@ -460,6 +460,7 @@ export default function PerformanceContent() {
                             const driverTotal = driverShifts.reduce((acc: number, s: any) => acc + (Number(s.receita) || 0), 0);
                             return {
                                 nome: driver.nome,
+                                valorTotal: driverTotal,
                                 valor: driverTotal * 0.40
                             };
                         }).filter((d: any) => d.valor > 0).sort((a: any, b: any) => b.valor - a.valor);
@@ -548,10 +549,11 @@ export default function PerformanceContent() {
                                             <table style={{ width: "100%", fontSize: "0.8rem", borderCollapse: "collapse" }}>
                                                 <thead>
                                                     <tr style={{ borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}` }}>
-                                                        <th style={{ textAlign: "center", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "10%" }}>#</th>
-                                                        <th style={{ textAlign: "left", padding: "0.5rem 0.5rem", color: isDark ? "#94a3b8" : "#64748b" }}>Motorista</th>
-                                                        <th style={{ textAlign: "right", padding: "0.5rem 0.5rem", color: isDark ? "#94a3b8" : "#64748b" }}>Valor</th>
-                                                        <th style={{ textAlign: "right", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b" }}>%</th>
+                                                        <th style={{ textAlign: "center", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "8%" }}>#</th>
+                                                        <th style={{ textAlign: "left", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Motorista</th>
+                                                        <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Vlr. Total</th>
+                                                        <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Valor (40%)</th>
+                                                        <th style={{ textAlign: "right", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "12%" }}>%</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -560,8 +562,11 @@ export default function PerformanceContent() {
                                                         return (
                                                             <tr key={d.nome} style={{ borderBottom: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}` }}>
                                                                 <td style={{ textAlign: "center", padding: "0.4rem 0", color: isDark ? "#64748b" : "#94a3b8", fontSize: "0.75rem" }}>{index + 1}º</td>
-                                                                <td style={{ padding: "0.4rem 0.5rem", color: isDark ? "#e2e8f0" : "#1e293b" }}>{d.nome}</td>
-                                                                <td style={{ textAlign: "right", padding: "0.4rem 0.5rem", color: "#8b5cf6", fontWeight: "600" }}>
+                                                                <td style={{ padding: "0.4rem 0.25rem", color: isDark ? "#e2e8f0" : "#1e293b", whiteSpace: "nowrap" }}>{d.nome}</td>
+                                                                <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>
+                                                                    R$ {d.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                                </td>
+                                                                <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: "#8b5cf6", fontWeight: "600" }}>
                                                                     R$ {d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                                 </td>
                                                                 <td style={{ textAlign: "right", padding: "0.4rem 0", color: isDark ? "#94a3b8" : "#64748b", fontSize: "0.75rem" }}>
@@ -572,7 +577,7 @@ export default function PerformanceContent() {
                                                     })}
                                                     {driverBreakdown.length === 0 && (
                                                         <tr>
-                                                            <td colSpan={4} style={{ textAlign: "center", padding: "1rem 0", color: isDark ? "#64748b" : "#94a3b8" }}>
+                                                            <td colSpan={5} style={{ textAlign: "center", padding: "1rem 0", color: isDark ? "#64748b" : "#94a3b8" }}>
                                                                 Nenhum motorista no período
                                                             </td>
                                                         </tr>
