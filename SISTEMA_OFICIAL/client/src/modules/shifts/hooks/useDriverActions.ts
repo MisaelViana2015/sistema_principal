@@ -114,8 +114,8 @@ export function useDriverActions(
                 driverId: user?.id,
                 shiftId: activeShift.id,
                 costTypeId: costType.id,
-                value: Number(costValue),
-                date: new Date(),
+                valor: Number(costValue),
+                data: new Date().toISOString(),
                 notes: obs,
                 isSplitCost: isSplitCost
             });
