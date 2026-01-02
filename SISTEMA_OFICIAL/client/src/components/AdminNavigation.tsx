@@ -17,6 +17,8 @@ interface AdminNavItem {
 const adminNavItems: AdminNavItem[] = [
     { path: "/admin/motoristas", label: "Motoristas", icon: Users },
     { path: "/admin/veiculos", label: "Veículos", icon: Car },
+    { path: "/fraude/eventos", label: "Fraude", icon: Shield },
+    { path: "/admin/audit", label: "Auditoria", icon: FileText },
     { path: "/admin/relatorios", label: "Relatórios", icon: FileText },
     { path: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
     { path: "/admin/configuracoes", label: "Config", icon: Settings },
@@ -53,8 +55,8 @@ export default function AdminNavigation() {
                                     <>
                                         <div
                                             className={`p-2 rounded-lg transition-all duration-200 ${isActive
-                                                    ? "bg-purple-600 shadow-lg shadow-purple-600/50"
-                                                    : "group-hover:bg-gray-700"
+                                                ? "bg-purple-600 shadow-lg shadow-purple-600/50"
+                                                : "group-hover:bg-gray-700"
                                                 }`}
                                         >
                                             <Icon className="w-6 h-6" />
