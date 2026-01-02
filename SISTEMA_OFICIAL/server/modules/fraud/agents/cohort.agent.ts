@@ -5,7 +5,7 @@ import type { FraudRuleHit } from '../fraud.types.js';
 export const CohortAgent: FraudAgent = {
     name: 'CohortAgent',
     description: 'Compara motorista com a frota em tempo real',
-    runOn: 'open_shift',
+    runOn: 'both', // CHANGED: Now runs on both open AND closed shifts
     priority: 1,
 
     async analyze(ctx: AgentContext): Promise<FraudRuleHit[]> {

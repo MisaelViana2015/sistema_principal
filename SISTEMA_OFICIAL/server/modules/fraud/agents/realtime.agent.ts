@@ -13,7 +13,7 @@ const THRESHOLDS = {
 export const RealTimeAgent: FraudAgent = {
     name: 'RealTimeAgent',
     description: 'Analisa padrões de corridas em tempo real durante turno aberto',
-    runOn: 'open_shift',
+    runOn: 'both', // CHANGED: Now also runs on closed shifts to detect patterns retrospectively
     priority: 1,
 
     async analyze(ctx: AgentContext): Promise<FraudRuleHit[]> {

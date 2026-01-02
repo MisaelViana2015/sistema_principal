@@ -29,8 +29,9 @@ interface AuditMetrics {
     classificacaoTurno: 'BOM' | 'RUIM';
 }
 
-// Hardcoded Official Rules List (Mirroring Backend)
+// Hardcoded Official Rules List (Mirroring Backend - ALL RULES INCLUDING V2)
 const OFFICIAL_RULES_LIST = [
+    // === REGRAS LEGADO (01-10) ===
     { code: "KM_ZERO_COM_RECEITA", name: "REGRA 01 — KM ZERO COM RECEITA", desc: "Existe receita registrada com km total menor ou igual a zero. Não é possível gerar receita sem deslocamento." },
     { code: "RECEITA_KM_MUITO_BAIXA", name: "REGRA 02 — BAIXA RECEITA POR KM", desc: "Receita por km abaixo do piso operacional (R$ 2,00/km). Indica ineficiência ou subdeclaração." },
     { code: "RECEITA_KM_MUITO_ALTA", name: "REGRA 03 — ALTA RECEITA POR KM", desc: "Receita por km acima do pico real (R$ 3,10/km). Indica possível inconsistência de km." },
@@ -42,6 +43,22 @@ const OFFICIAL_RULES_LIST = [
     { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 09 — DESVIO DE BASELINE CRÍTICO", desc: "Receita/KM variou +/- 50% (1.5x) em relação à média pessoal." },
     { code: "KM_SALTO_ABSURDO", name: "REGRA 10 — GAP DE KM ANÔMALO", desc: "Diferença entre turnos maior que 250 km. Indica uso não registrado." },
     { code: "KM_RETROCEDEU", name: "REGRA ERROR — KM RETROCEDEU", desc: "O km inicial do turno atual é menor que o km final do turno anterior." },
+
+    // === REGRAS V2 - COMPARAÇÃO EM TEMPO REAL (CohortAgent) ===
+    { code: "DRIVER_IDLE_FLEET_ACTIVE", name: "REGRA V2 — MOTORISTA PARADO COM FROTA ATIVA", desc: "Demanda alta na cidade porém motorista não registrou corridas nos últimos 15 minutos. Indica possível ocultação de corridas ou parada não justificada." },
+    { code: "NO_RIDE_15_PLUS_HIGH_DEMAND", name: "REGRA V2 — SEM CORRIDAS ≥R$15 EM DEMANDA ALTA", desc: "Frota com mediana de valor acima de R$15, mas motorista só tem corridas abaixo desse valor. Indica possível seleção de corridas ou divisão." },
+    { code: "OUTLIER_VS_FLEET", name: "REGRA V2 — PRODUTIVIDADE ABAIXO DA FROTA", desc: "Motorista está produzindo menos de 50% da média de corridas/hora da frota ativa no mesmo período." },
+
+    // === REGRAS V2 - PADRÕES SUSPEITOS (RealTimeAgent) ===
+    { code: "LOW_VALUE_STEADY", name: "REGRA V2 — PADRÃO DE VALORES BAIXOS", desc: "60% ou mais das corridas são ≤ R$12. Padrão típico de divisão de corridas (uma corrida real dividida em várias menores)." },
+    { code: "RIDE_INTERVAL_20_30", name: "REGRA V2 — INTERVALO SUSPEITAMENTE REGULAR", desc: "Maioria dos intervalos entre corridas está entre 20-35 minutos. Padrão fabricado típico de corridas inventadas." },
+    { code: "VALUE_DISTRIBUTION_SPIKE", name: "REGRA V2 — CONCENTRAÇÃO EM VALOR ÚNICO", desc: "Mais de 50% das corridas têm exatamente o mesmo valor. Indica valores possivelmente inventados." },
+
+    // === REGRAS V2 - ANÁLISE COMPORTAMENTAL ===
+    { code: "PRODUTIVIDADE_ABAIXO_BASELINE", name: "REGRA V2 — PRODUTIVIDADE VS FROTA", desc: "Motorista produziu 70%+ menos que a média da frota em múltiplas faixas horárias do turno." },
+    { code: "TIME_GAP_SEM_JUSTIFICATIVA", name: "REGRA V2 — GAP DE TEMPO SEM CORRIDA", desc: "Período de 1h ou mais sem registrar corridas enquanto turno estava ativo. Requer verificação de câmeras." },
+    { code: "DEVIATION_VS_SELF", name: "REGRA V2 — DESVIO DO PRÓPRIO HISTÓRICO", desc: "Produtividade muito diferente da média histórica do próprio motorista nos últimos 30 dias." },
+    { code: "VALUE_ASYMMETRY", name: "REGRA V2 — ASSIMETRIA DE VALORES", desc: "Motorista pegando apenas corridas baratas enquanto frota tem acesso às mesmas corridas caras. Indica seleção proposital." },
 ];
 
 const getSeverityWeight = (s?: string) => {
