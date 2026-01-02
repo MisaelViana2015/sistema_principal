@@ -12,9 +12,11 @@ export interface FraudRuleHit {
     code: string;
     label: string;
     description: string;
-    severity: FraudSeverity;
+    severity: 'low' | 'medium' | 'high' | 'critical';
     score: number;
-    data?: Record<string, any>;
+    confidence?: number; // 0.0 - 1.0 (Improved precision)
+    needsEvidence?: boolean; // Requires physical evidence (dashcam/telemetry)
+    data: Record<string, any>;
 }
 
 export interface FraudScore {
@@ -52,6 +54,7 @@ export interface FraudShiftAnalysis {
     baseline?: DriverBaseline;
     shiftInicio?: Date; // Full start timestamp for accurate detectedAt
     isPartialAnalysis?: boolean; // Turno ainda em andamento
+    metadata?: Record<string, any>;
 }
 
 export interface ShiftContext {

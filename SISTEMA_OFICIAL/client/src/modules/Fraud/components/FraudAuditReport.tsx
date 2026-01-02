@@ -195,7 +195,14 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                                         const sevColor = rule.severity === 'critical' ? 'text-red-600' : rule.severity === 'high' ? 'text-orange-600' : rule.severity === 'medium' ? 'text-yellow-600' : 'text-blue-600';
                                         return (
                                             <tr key={idx} className="border-b border-gray-200">
-                                                <td className="py-2">{rDef?.name || rule.label || rule.code}</td>
+                                                <td className="py-2">
+                                                    {rDef?.name || rule.label || rule.code}
+                                                    {rule.needsEvidence && (
+                                                        <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-800 border border-purple-200 uppercase tracking-wide">
+                                                            Evidência Req.
+                                                        </span>
+                                                    )}
+                                                </td>
                                                 <td className={`py-2 text-center font-semibold uppercase ${sevColor}`}>{rule.severity || 'low'}</td>
                                                 <td className="py-2 text-right font-bold">{rule.score || 0}</td>
                                             </tr>

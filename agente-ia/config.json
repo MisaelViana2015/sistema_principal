@@ -1,0 +1,19 @@
+{
+    "chatgpt_url": "https://chat.openai.com",
+    "rota_verde_api": "https://endpoint-api-production.up.railway.app/api",
+    "check_interval_seconds": 300,
+    "max_tokens_before_rotate": 8000,
+    "log_level": "INFO",
+    "tasks": [
+        {
+            "name": "validacao_calculos",
+            "enabled": true,
+            "cron": "0 */2 * * *"
+        },
+        {
+            "name": "analise_fraude",
+            "enabled": true,
+            "cron": "*/30 * * * *"
+        }
+    ]
+}

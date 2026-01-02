@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 Agente IA - Painel de Controle</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Agente IA - Rota Verde</h1>
+            <div id="status-badge" class="badge stopped">PARADO</div>
+        </header>
+
+        <div class="controls">
+            <button id="btn-start" class="btn btn-success">▶️ START</button>
+            <button id="btn-pause" class="btn btn-warning">⏸️ PAUSE</button>
+            <button id="btn-stop" class="btn btn-danger">⏹️ STOP</button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Tarefas Completadas</div>
+                <div id="tasks-completed" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Conversas Rotacionadas</div>
+                <div id="conversations-rotated" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Fila de Tarefas</div>
+                <div id="queue-size" class="stat-value">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Última Atividade</div>
+                <div id="last-activity" class="stat-value">-</div>
+            </div>
+        </div>
+
+        <div class="current-task">
+            <h3>Tarefa Atual</h3>
+            <div id="current-task-name">Nenhuma</div>
+        </div>
+
+        <div class="manual-task">
+            <h3>Enviar Tarefa Manual</h3>
+            <textarea id="manual-prompt" placeholder="Digite o prompt aqui para o ChatGPT..."></textarea>
+            <button id="btn-send-task" class="btn btn-primary">Enviar Tarefa</button>
+        </div>
+
+        <div class="logs-container">
+            <h3>Dica:</h3>
+            <p style="opacity: 0.7; font-size: 0.9rem;">
+                Para funcionar, feche todas as janelas do Chrome antes de clicar em START.
+                O agente usará seu login do ChatGPT.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Atualizar status a cada 2 segundos
+        async function updateStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+
+                const badge = document.getElementById('status-badge');
+                if (data.is_running) {
+                    badge.textContent = data.is_paused ? 'PAUSADO' : 'RODANDO';
+                    badge.className = 'badge ' + (data.is_paused ? 'paused' : 'running');
+                } else {
+                    badge.textContent = 'PARADO';
+                    badge.className = 'badge stopped';
+                }
+
+                document.getElementById('tasks-completed').textContent = data.stats.tasks_completed;
+                document.getElementById('conversations-rotated').textContent = data.stats.conversations_rotated;
+                document.getElementById('queue-size').textContent = data.queue_size;
+
+                if (data.stats.last_activity) {
+                    const date = new Date(data.stats.last_activity);
+                    document.getElementById('last-activity').textContent = date.toLocaleTimeString();
+                } else {
+                    document.getElementById('last-activity').textContent = '-';
+                }
+
+                document.getElementById('current-task-name').textContent = data.current_task || 'Nenhuma';
+            } catch (e) {
+                console.error('Erro ao atualizar status:', e);
+            }
+        }
+
+        setInterval(updateStatus, 2000);
+        updateStatus();
+
+        // Event listeners
+        document.getElementById('btn-start').onclick = () => fetch('/api/start', { method: 'POST' });
+        document.getElementById('btn-pause').onclick = () => fetch('/api/pause', { method: 'POST' });
+        document.getElementById('btn-stop').onclick = () => fetch('/api/stop', { method: 'POST' });
+
+        document.getElementById('btn-send-task').onclick = async () => {
+            const prompt = document.getElementById('manual-prompt').value;
+            if (!prompt) return;
+
+            await fetch('/api/add-task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: 'Manual', prompt })
+            });
+
+            document.getElementById('manual-prompt').value = '';
+            alert('Tarefa adicionada à fila!');
+        };
+    </script>
+</body>
+
+</html>

@@ -167,15 +167,35 @@ const FraudEventDetail = ({ eventId: propEventId, onClose }: FraudEventDetailPro
 
                     {/* Additional Context Alert if Pending - On Screen Only */}
                     {event.status === 'pendente' && (
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 rounded print:hidden">
-                            <div className="flex">
-                                <div className="flex-shrink-0">
-                                    <AlertTriangle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                        <div className="space-y-4 print:hidden mb-4">
+                            {/* EVIDENCE REQUIRED ALERT */}
+                            {event.rules?.some((r: any) => r.needsEvidence) && (
+                                <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded shadow-sm">
+                                    <div className="flex">
+                                        <div className="flex-shrink-0">
+                                            <ShieldAlert className="h-5 w-5 text-orange-500" aria-hidden="true" />
+                                        </div>
+                                        <div className="ml-3">
+                                            <h3 className="text-sm font-bold text-orange-800">Verificação de Evidência Necessária</h3>
+                                            <p className="text-sm text-orange-700 mt-1">
+                                                Pelo menos uma regra disparada ({event.rules.find((r: any) => r.needsEvidence)?.label}) requer validação física (ex: foto do painel, comprovante).
+                                                Use o botão "Add Evidência" acima para anexar provas.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="ml-3">
-                                    <p className="text-sm text-yellow-700">
-                                        Este evento está pendente de análise. Revise o relatório de auditoria abaixo antes de tomar uma decisão.
-                                    </p>
+                            )}
+
+                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                                <div className="flex">
+                                    <div className="flex-shrink-0">
+                                        <AlertTriangle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                                    </div>
+                                    <div className="ml-3">
+                                        <p className="text-sm text-yellow-700">
+                                            Este evento está pendente de análise. Revise o relatório de auditoria abaixo antes de tomar uma decisão.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
