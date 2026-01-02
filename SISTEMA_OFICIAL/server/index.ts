@@ -4,6 +4,7 @@ import { testConnection, closeConnection, db } from "./core/db/connection.js";
 import { runMigrations } from "./core/db/migrator.js";
 import { sql } from "drizzle-orm";
 import { FraudService } from "./modules/fraud/fraud.service.js";
+import { startFraudScheduler } from "./core/schedulers/fraudScheduler.js";
 
 // Routes Imports
 import authRoutes from "./modules/auth/auth.routes.js";
@@ -178,7 +179,8 @@ async function startServer() {
                 testConnection().then((connected) => {
                     if (connected) {
                         console.log("✅ Banco de dados conectado e sincronizado!");
-                        // Fraud scheduler removed
+                        // Inicia scheduler de análise de fraude em tempo real
+                        startFraudScheduler();
                     }
                 });
             }).catch(async err => {
@@ -186,7 +188,9 @@ async function startServer() {
                 // Mesmo com erro, tenta hotfix e conectar
                 await ensureSchemaIntegrity();
                 testConnection().then((connected) => {
-                    if (connected) { /* Fraud scheduler removed */ }
+                    if (connected) {
+                        startFraudScheduler();
+                    }
                 });
             });
         } else {
@@ -195,7 +199,8 @@ async function startServer() {
                     console.log("✅ Banco de dados conectado!");
                     // Dev mode também roda pra garantir
                     await ensureSchemaIntegrity();
-                    // Fraud scheduler removed used to be here
+                    // Inicia scheduler de análise de fraude em tempo real
+                    startFraudScheduler();
                 }
             });
         }
