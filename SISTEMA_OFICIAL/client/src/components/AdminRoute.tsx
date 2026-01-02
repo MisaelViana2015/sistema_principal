@@ -17,5 +17,12 @@ export default function AdminRoute() {
         return <Navigate to="/garagem" replace />;
     }
 
-    return <Outlet />;
+    return (
+        <div className="flex flex-col min-h-screen">
+            <div className="flex-1 pb-20"> {/* Padding bottom for fixed nav */}
+                <Outlet />
+            </div>
+            <AdminNavigation />
+        </div>
+    );
 }
