@@ -72,7 +72,7 @@ export function AddRideForm({ onSave, onCancel, isSubmitting, error, cooldown }:
                                 inputMode="decimal"
                                 value={rideValue}
                                 onChange={e => setRideValue(e.target.value)}
-                                className="w-full bg-black/50 border-2 border-gray-700 rounded-xl px-4 pl-12 py-4 text-2xl font-bold text-white focus:border-emerald-500 focus:outline-none focus:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all font-mono"
+                                className="w-full bg-black/50 border-2 border-gray-700 rounded-xl px-4 pl-12 py-4 text-2xl font-bold text-white focus:border-emerald-500 focus:outline-none focus:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 placeholder="0,00"
                                 autoFocus
                             />

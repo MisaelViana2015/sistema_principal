@@ -65,7 +65,10 @@ export function FinishShiftForm({ activeShift, onFinish, onCancel, error }: Fini
                             inputMode="decimal"
                             value={kmFinal}
                             onChange={e => setKmFinal(e.target.value)}
-                            className="w-full bg-black/50 border-2 border-gray-700 rounded-xl px-4 py-4 text-2xl font-bold text-white focus:border-red-500 focus:outline-none focus:shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all font-mono"
+                            className={`w-full bg-black/50 border-2 rounded-xl px-4 py-4 text-2xl font-bold text-white focus:outline-none transition-all font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${kmFinal && Number(kmFinal) >= Number(activeShift.kmInicial)
+                                    ? 'border-emerald-500 focus:border-emerald-400 focus:shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                                    : 'border-gray-700 focus:border-gray-500'
+                                }`}
                             placeholder={activeShift.kmInicial}
                             autoFocus
                         />
