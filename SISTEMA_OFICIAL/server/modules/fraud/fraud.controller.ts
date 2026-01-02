@@ -8,6 +8,7 @@ import { calculateAuditMetrics } from "./fraud.audit.service.js";
 // Static imports for better performance
 import { generateEventPdf } from "./fraud.pdf.js";
 import { randomUUID } from "node:crypto";
+import { auditService } from "../../core/audit/audit.service.js";
 
 
 // Simple in-memory status tracker (sufficient for maintenance tasks)
@@ -26,6 +27,16 @@ export const FraudController = {
     async manualAnalyze(req: Request, res: Response) {
         try {
             const { shiftId } = req.params;
+
+            // AUDIT: Log manual trigger
+            const context = req.auditContext || { ...auditService.createSystemContext('manual-analyze'), ip: req.ip };
+            await auditService.logAction({
+                action: 'TRIGGER_ANALYSIS',
+                entity: 'shifts',
+                entityId: shiftId,
+                context
+            });
+
             const result = await FraudService.analyzeShift(shiftId);
 
             if (!result) {
@@ -467,17 +478,20 @@ export const FraudController = {
         }
     },
 
+
+
+    // ...
+
     // POST /api/fraud/event/:id/status
     async updateEventStatus(req: Request, res: Response) {
         try {
             const { id } = req.params;
             const { status, comment } = req.body;
 
+            // ... validation ...
             if (!status || status === 'pendente') {
                 return res.status(400).json({ error: "Status inválido ou não fornecido." });
             }
-
-            // Input Validation
             if (comment && typeof comment !== 'string') {
                 return res.status(400).json({ error: "Comentário inválido." });
             }
@@ -492,7 +506,22 @@ export const FraudController = {
                 return res.status(404).json({ error: "Evento não encontrado." });
             }
 
-            const updated = await FraudRepository.updateEventStatus(id, status, comment);
+            // USE WITH AUDIT
+            const performUpdate = async () => {
+                return await FraudRepository.updateEventStatus(id, status, comment);
+            };
+
+            const updated = await auditService.withAudit({
+                action: 'UPDATE_FRAUD_STATUS',
+                entity: 'fraud_events',
+                entityId: id,
+                operation: 'UPDATE',
+                context: req.auditContext || { ...auditService.createSystemContext('fraud-update'), ip: req.ip },
+                fetchBefore: () => FraudRepository.getFraudEventById(id),
+                execute: performUpdate, // This actually returns the updated record
+                fetchAfter: () => FraudRepository.getFraudEventById(id)
+            });
+
             res.json(updated);
         } catch (error: any) {
             console.error("[FRAUD] Error updating event status:", error);
@@ -503,6 +532,15 @@ export const FraudController = {
     // POST /api/fraud/seed
     async seedData(req: Request, res: Response) {
         try {
+            // AUDIT: Log seed trigger
+            const context = req.auditContext || { ...auditService.createSystemContext('seed-data'), ip: req.ip };
+            await auditService.logAction({
+                action: 'SEED_DATA',
+                entity: 'system',
+                entityId: 'n/a',
+                context
+            });
+
             // Clean old seed data to prevent duplicates
             try {
                 // Remove data marked as seed in metadata
@@ -825,6 +863,15 @@ export const FraudController = {
         }
 
         try {
+            // AUDIT: Log batch reprocess trigger
+            const context = req.auditContext || { ...auditService.createSystemContext('batch-reprocess'), ip: req.ip };
+            await auditService.logAction({
+                action: 'TRIGGER_BATCH_REPROCESS',
+                entity: 'system',
+                entityId: 'all',
+                context
+            });
+
             const allShifts = await db.execute(sql`
                 SELECT id FROM shifts WHERE status = 'finalizado'
             `);

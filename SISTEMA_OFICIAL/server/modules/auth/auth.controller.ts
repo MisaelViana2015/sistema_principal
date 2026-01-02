@@ -123,7 +123,7 @@ export async function registerController(
         const data = createDriverSchema.parse(req.body);
 
         // Chama service
-        const newDriver = await authService.createNewDriver(data);
+        const newDriver = await authService.createNewDriver(data, req.auditContext);
 
         // Retorna sucesso
         res.status(201).json({
