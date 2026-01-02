@@ -254,7 +254,7 @@ export default function GaragePage() {
                                             pattern="[0-9]*"
                                             value={kmInicial}
                                             onChange={(e) => setKmInicial(e.target.value)}
-                                            className="w-full h-14 bg-black/50 border border-white/10 rounded-lg px-4 text-xl font-mono text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-muted-foreground/30"
+                                            className="w-full h-14 bg-black/50 border border-white/10 rounded-lg px-4 text-xl font-mono text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-muted-foreground/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                             placeholder="000000"
                                             autoFocus
                                         />
