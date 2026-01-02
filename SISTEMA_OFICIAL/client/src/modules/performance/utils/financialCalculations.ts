@@ -18,6 +18,11 @@ export interface DriverMetric {
     nome: string;
     valorTotal: number;
     valor: number; // 40%
+    totalHours: number;
+    totalShifts: number;
+    avgHours: number;
+    totalRevenue: number;
+    revenuePerHour: number;
 }
 
 export function calculateFinancialSummary(
@@ -44,7 +49,7 @@ export function calculateFinancialSummary(
     });
 
     // 3. Totais Base
-    const faturamentoTotal = filteredShifts.reduce((acc, s) => acc + (Number(s.totalBruto) || 0), 0); // Alterado para totalBruto conforme schema, ou mantemos receita se for campo virtual? O schema diz totalBruto. O código original usava receita. Vou verificar se receita é calculada. O schema tem totalBruto.
+    const faturamentoTotal = filteredShifts.reduce((acc, s) => acc + (Number(s.totalBruto) || 0), 0);
     // Nota: O código original usava s.receita. No schema Shifts tem 'totalBruto'. Assumindo totalBruto.
 
     // Repasse Motorista: O schema tem repasseMotorista salvo.
@@ -62,7 +67,7 @@ export function calculateFinancialSummary(
 
     // Custos Fixos
     const totalFixosCadastrados = fixedCosts.reduce((acc, c) => acc + (Number(c.value) || 0), 0);
-    const custosFixosMes = selectedMonth !== "todos" ? totalFixosCadastrados : 0;
+    const custosFixosMes = selectedMonth !== "todos" ? totalFixosCadastrados : (selectedYear !== "todos" ? totalFixosCadastrados * 12 : 0);
 
     const custosTotais = custosVariaveis + custosFixosMes;
 
@@ -102,15 +107,33 @@ export function calculateDriverMetrics(
             const d = new Date(s.inicio);
             const yearMatch = selectedYear === "todos" || d.getFullYear().toString() === selectedYear;
             const monthMatch = selectedMonth === "todos" || (d.getMonth() + 1).toString() === selectedMonth;
-            return yearMatch && monthMatch && s.driverId === driver.id;
+            // Match both ID (if populated) or match name if ID missing (legacy compat)
+            const idMatch = s.driverId === driver.id; // Removed fallback to name match for stricter typing
+            return yearMatch && monthMatch && idMatch;
         });
 
-        // Usando totalBruto aqui tabém para consistência
-        const driverTotal = dShifts.reduce((acc, s) => acc + (Number(s.totalBruto) || 0), 0);
+        const totalHours = dShifts.reduce((acc, s) => {
+            let h = (Number(s.duracaoMin) || 0) / 60;
+            if (h === 0 && s.inicio && s.fim) {
+                const start = new Date(s.inicio).getTime();
+                const end = new Date(s.fim).getTime();
+                h = (end - start) / (1000 * 60 * 60);
+            }
+            return acc + h;
+        }, 0);
+
+        const totalShifts = dShifts.length;
+        const totalRevenue = dShifts.reduce((acc, s) => acc + (Number(s.totalBruto) || 0), 0);
+
         return {
             nome: driver.nome,
-            valorTotal: driverTotal,
-            valor: driverTotal * 0.40
+            valorTotal: totalRevenue,
+            valor: totalRevenue * 0.40,
+            totalHours,
+            totalShifts,
+            avgHours: totalShifts > 0 ? totalHours / totalShifts : 0,
+            totalRevenue,
+            revenuePerHour: totalHours > 0 ? totalRevenue / totalHours : 0
         };
-    }).filter((d) => d.valor > 0).sort((a, b) => b.valor - a.valor);
+    }).filter((d) => d.totalShifts > 0).sort((a, b) => b.totalHours - a.totalHours);
 }

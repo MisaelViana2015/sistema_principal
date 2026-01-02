@@ -4,7 +4,7 @@ import { FraudRepository } from "./fraud.repository.js";
 import { db } from "../../core/db/connection.js";
 import { desc, eq, sql } from "drizzle-orm";
 import { fraudEvents, shifts } from "../../../shared/schema.js";
-import { calculateAuditMetrics } from "./fraud.audit.service.js";
+// calculateAuditMetrics removed
 // Static imports for better performance
 import { generateEventPdf } from "./fraud.pdf.js";
 import { randomUUID } from "node:crypto";
@@ -338,142 +338,18 @@ export const FraudController = {
     async getEventDetail(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const event = await FraudRepository.getFraudEventById(id);
+            const result = await FraudService.getEventDetail(id);
 
-            if (!event) {
+            if (!result) {
                 return res.status(404).json({ error: "Evento de fraude não encontrado" });
             }
 
-            if (!event.shiftId) {
-                return res.status(404).json({ error: "Evento sem turno associado" });
-            }
-
-            let shiftData = await db.query.shifts.findFirst({
-                where: (s, { eq }) => eq(s.id, event.shiftId as string)
-            });
-
-            // FALLBACK GRACEFUL PARA EVENTOS ÓRFÃOS
-            if (!shiftData) {
-                console.warn(`[FRAUD] Evento ${id} possui turno órfão ${event.shiftId}. Usando fallback de metadata.`);
-                const meta = event.metadata as any || {};
-                const fallbackDate = event.detectedAt ? event.detectedAt.toISOString() : new Date().toISOString();
-
-                // Reconstrói um objeto de turno "falso" apenas para visualização
-                shiftData = {
-                    id: event.shiftId as string,
-                    driverId: event.driverId as string,
-                    vehicleId: meta.vehicleId || 'desconhecido',
-                    inicio: meta.date ? new Date(meta.date + "T00:00:00").toISOString() : fallbackDate,
-                    fim: meta.date ? new Date(meta.date + "T23:59:59").toISOString() : fallbackDate,
-                    totalBruto: meta.revenueTotal || "0",
-                    totalCorridas: 0,
-                    kmInicial: "0",
-                    kmFinal: String(meta.kmTotal || 0),
-                    status: "excluido_ou_nao_encontrado" // Sinalizador visual
-                } as any;
-            }
-
-            // At this point, shiftData is guaranteed to be defined
-            const shift = shiftData!;
-
-            // Fetch Driver and Vehicle Details
-            const driver = await db.query.drivers.findFirst({
-                where: (d, { eq }) => eq(d.id, shift.driverId),
-                columns: { nome: true }
-            });
-
-            const vehicle = await db.query.vehicles.findFirst({
-                where: (v, { eq }) => eq(v.id, shift.vehicleId),
-                columns: { plate: true, modelo: true }
-            });
-
-            // EXPLICIT CALCULATION FROM RIDES (MANDATORY REQUIREMENT)
-            const ridesRaw = await db.execute(sql`SELECT tipo, valor FROM rides WHERE shift_id = ${shift.id}`);
-            const ridesList = ridesRaw.rows as any[];
-
-            let ridesAppCount = 0;
-            let ridesParticularCount = 0;
-            let revenueApp = 0;
-            let revenueParticular = 0;
-
-            let ridesUnknownCount = 0;
-            let revenueUnknown = 0;
-
-            ridesList.forEach(r => {
-                const rawType = (r.tipo || '').toUpperCase();
-                const val = Number(r.valor || 0);
-
-                if (['APP', 'APLICATIVO'].includes(rawType)) {
-                    ridesAppCount++;
-                    revenueApp += val;
-                } else if (rawType === 'PARTICULAR') {
-                    ridesParticularCount++;
-                    revenueParticular += val;
-                } else {
-                    ridesUnknownCount++;
-                    revenueUnknown += val;
-                }
-            });
-
-            // --- AUDIT ENRICHMENT (PHASE 2) ---
-            // Calculate strict operational metrics (Time Slots, Gaps, Baseline)
-            // This does NOT affect the fraud engine or risk score.
-            let auditMetrics = null;
-            try {
-                // Calculate share particular for contextual score
-                const shareParticular = Number(shift.totalBruto || 0) > 0
-                    ? (revenueParticular / Number(shift.totalBruto)) * 100
-                    : 0;
-
-                auditMetrics = await calculateAuditMetrics(
-                    shift.id,
-                    shift.driverId,
-                    {
-                        inicio: shift.inicio,
-                        fim: shift.fim,
-                        totalBruto: Number(shift.totalBruto || 0),
-                        totalCorridas: Number(shift.totalCorridas || 0),
-                        kmInicial: Number(shift.kmInicial || 0),
-                        kmFinal: Number(shift.kmFinal || 0),
-                        duracaoMin: Number(shift.duracaoMin || 0)
-                    },
-                    event.riskScore || 0,
-                    shareParticular
-                );
-            } catch (auditError) {
-                console.error("[FRAUD] Error calculating audit metrics:", auditError);
-                // Non-blocking error - return null metrics
-            }
-
-            res.json({
-                event,
-                shift: {
-                    id: shift.id,
-                    driverId: shift.driverId,
-                    vehicleId: shift.vehicleId,
-                    inicio: shift.inicio,
-                    fim: shift.fim,
-                    kmInicial: Number(shift.kmInicial || 0),
-                    kmFinal: Number(shift.kmFinal || 0),
-                    totalBruto: Number(shift.totalBruto || 0),
-                    totalCorridas: Number(shift.totalCorridas || 0),
-                    duracaoMin: Number(shift.duracaoMin || 0),
-                    // New Explicit Aggregations
-                    ridesAppCount,
-                    ridesParticularCount,
-                    ridesUnknownCount,
-                    revenueApp,
-                    revenueParticular,
-                    revenueUnknown,
-                    // Identity Details
-                    driverName: driver?.nome || "Desconhecido",
-                    vehiclePlate: vehicle?.plate || "Desconhecido",
-                    vehicleModel: vehicle?.modelo || ""
-                },
-                auditMetrics // Injecting Audit Metrics for Phase 2
-            });
+            res.json(result);
         } catch (error: any) {
             console.error("[FRAUD] Error getting event detail:", error);
+            if (error.message === "Evento sem turno associado") {
+                return res.status(404).json({ error: "Evento sem turno associado" });
+            }
             res.status(500).json({ error: error.message });
         }
     },
@@ -630,94 +506,41 @@ export const FraudController = {
     async getEventPdf(req: Request, res: Response) {
         try {
             const { id } = req.params;
-            const data = await FraudService.getEventPdfData(id);
+            const detail = await FraudService.getEventDetail(id);
 
-            // Re-calculate aggregations and metrics for PDF generation (Presentation Logic remains in controler or can be moved to a helper)
-            // Ideally, the Service returns RAW data, and the Controller/PDF Generator handles formatting.
-            // For now, let's keep the heavy lifting in the service but we need to pass data to generateEventPdf
-
-            // Calculate audit metrics for PDF
-            let auditMetrics = null;
-
-            // Aggregation Variables
-            let ridesAppCount = 0;
-            let ridesParticularCount = 0;
-            let ridesUnknownCount = 0;
-            let revenueApp = 0;
-            let revenueParticular = 0;
-            let revenueUnknown = 0;
-
-            try {
-                // Full Aggregation Logic
-                data.rides.forEach((ride: any) => {
-                    const rawType = (ride.tipo || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                    const val = Number(ride.valor || 0);
-
-                    if (rawType === 'app') {
-                        ridesAppCount++;
-                        revenueApp += val;
-                    } else if (rawType === 'particular') {
-                        ridesParticularCount++;
-                        revenueParticular += val;
-                    } else {
-                        ridesUnknownCount++;
-                        revenueUnknown += val;
-                    }
-                });
-
-                const shareParticular = Number(data.shift.totalBruto || 0) > 0
-                    ? (revenueParticular / Number(data.shift.totalBruto)) * 100
-                    : 0;
-
-                auditMetrics = await calculateAuditMetrics(
-                    data.shift.id,
-                    data.shift.driverId,
-                    {
-                        inicio: data.shift.inicio,
-                        fim: data.shift.fim,
-                        totalBruto: Number(data.shift.totalBruto || 0),
-                        totalCorridas: Number(data.shift.totalCorridas || 0),
-                        kmInicial: Number(data.shift.kmInicial || 0),
-                        kmFinal: Number(data.shift.kmFinal || 0),
-                        duracaoMin: Number(data.shift.duracaoMin || 0)
-                    },
-                    data.event.riskScore || 0,
-                    shareParticular
-                );
-            } catch (auditError) {
-                console.error("[FRAUD] PDF: Error calculating audit metrics:", auditError);
+            if (!detail) {
+                return res.status(404).json({ error: "Evento de fraude não encontrado" });
             }
 
-            const pdfBuffer = await generateEventPdf(data.event, {
-                id: data.shift.id,
-                driverId: data.shift.driverId,
-                vehicleId: data.shift.vehicleId,
-                inicio: data.shift.inicio,
-                fim: data.shift.fim,
-                kmInicial: Number(data.shift.kmInicial || 0),
-                kmFinal: Number(data.shift.kmFinal || 0),
-                totalBruto: Number(data.shift.totalBruto || 0),
-                totalCorridas: Number(data.shift.totalCorridas || 0),
-                duracaoMin: Number(data.shift.duracaoMin || 0),
-                // Breakdown Data
-                ridesAppCount,
-                ridesParticularCount,
-                revenueApp,
-                revenueParticular,
-                ridesUnknownCount,
-                revenueUnknown,
-                // Audit Metrics
-                auditMetrics
+            const pdfBuffer = await generateEventPdf(detail.event, {
+                id: detail.shift.id,
+                driverId: detail.shift.driverId,
+                vehicleId: detail.shift.vehicleId,
+                inicio: detail.shift.inicio,
+                fim: detail.shift.fim,
+                kmInicial: detail.shift.kmInicial,
+                kmFinal: detail.shift.kmFinal,
+                totalBruto: detail.shift.totalBruto,
+                totalCorridas: detail.shift.totalCorridas,
+                duracaoMin: detail.shift.duracaoMin,
+                // Aggregates from service
+                ridesAppCount: detail.shift.ridesAppCount,
+                ridesParticularCount: detail.shift.ridesParticularCount,
+                ridesUnknownCount: detail.shift.ridesUnknownCount,
+                revenueApp: detail.shift.revenueApp,
+                revenueParticular: detail.shift.revenueParticular,
+                revenueUnknown: detail.shift.revenueUnknown,
+                // Audit Metrics from service
+                auditMetrics: detail.auditMetrics
             });
 
-            res.setHeader("Content-Type", "application/pdf");
-            res.setHeader("Content-Disposition", `attachment; filename=fraud-event-${data.event.id}.pdf`);
+            const filename = `relatorio_fraude_${detail.event.id.substring(0, 8)}.pdf`;
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
             res.send(pdfBuffer);
         } catch (error: any) {
             console.error("[FRAUD] Error generating PDF:", error);
-            if (error.message === "Evento não encontrado") {
-                return res.status(404).json({ error: "Evento não encontrado" });
-            }
             res.status(500).json({ error: error.message });
         }
     },

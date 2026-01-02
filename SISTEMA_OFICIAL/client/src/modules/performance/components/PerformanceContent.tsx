@@ -1,170 +1,57 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState } from "react";
 import {
-    TrendingUp, TrendingDown, DollarSign, Clock, Users, Calendar, Trophy,
-    Car, Wrench, Filter, List, Plus, Trash2, Edit, PieChart, X, Save
+    DollarSign, Users, Car, Wrench, Filter, List
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { api } from "../../../lib/api";
 
+// Hooks
+import { usePerformanceData } from "../hooks/usePerformanceData";
+import { usePerformanceCalculations } from "../hooks/usePerformanceCalculations";
+
 // Components
-import { KPICard } from "../../../components/kpi/KPICard";
 import { CostTypesManager } from "./CostTypesManager";
 import { FixedCostsManager } from "./FixedCostsManager";
 import { EditExpenseModal } from "../../financial/EditExpenseModal";
-import { calculateFinancialSummary, calculateDriverMetrics } from "../utils/financialCalculations";
-
-// --- FETCHERS ---
-async function fetchExpenses() {
-    const response = await api.get("/financial/expenses");
-    return response.data;
-}
-
-async function fetchCostTypes() {
-    const response = await api.get("/financial/cost-types");
-    return response.data;
-}
-
-async function fetchFixedCosts() {
-    const response = await api.get("/financial/fixed-costs");
-    return response.data;
-}
-
-async function fetchDrivers() {
-    const response = await api.get("/drivers");
-    return response.data;
-}
-
-async function fetchShifts() {
-    // Busca últimos 1000 turnos para análise
-    const response = await api.get("/shifts?limit=1000");
-    return response.data.data || response.data; // Handle pagination structure
-}
-
-async function fetchLegacyMaintenances() {
-    const response = await api.get("/financial/legacy-maintenances");
-    return response.data;
-}
-
-async function fetchVehicles() {
-    const response = await api.get("/vehicles");
-    return response.data;
-}
-
-async function fetchFixedCostInstallments(filters?: any) {
-    const params = new URLSearchParams(filters).toString();
-    const response = await api.get(`/financial/fixed-costs/installments?${params}`);
-    return response.data;
-}
-
-// --- MAIN CONTENT COMPONENT ---
+import { ExpenseTable } from "./ExpenseTable";
+import { PerformanceKPIs } from "./PerformanceKPIs";
 
 export default function PerformanceContent() {
     const { theme } = useTheme();
     const isDark = theme === "dark";
+    const queryClient = useQueryClient();
 
     const [activeSubTab, setActiveSubTab] = useState("financeiro");
-    const [selectedCostType, setSelectedCostType] = useState("todos");
-    const [selectedDriver, setSelectedDriver] = useState("todos");
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
     const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString());
 
+    // Filters for Expenses Table (Lifted state if needed, or local in ExpenseTable)
+    // Actually ExpenseTable has its own filters props. 
+    // But we might want to sync the global Year/Month with ExpenseTable?
+    // In the original, the filters were separate per tab or shared?
+    // In financeiro tab (KPIs), there were filters at the top (lines 433).
+    // In expenses tab (Repasses), there were filters again (lines 724).
+    // Let's keep them synced or separate? The user might want valid comparison.
+    // I will use `selectedYear/Month` for the main dashboard (financeiro), and pass them to hooks.
+    // Inside ExpenseTable, it has its own selectors. I will allow it to control itself but initial state can match.
+    // Actually, let's keep it simple. `usePerformanceData` needs year/month for INSTALLMENTS fetching.
 
+    // Data & Logic
+    const {
+        costs, costTypes, fixedCosts, drivers, shifts, legacyMaintenances, vehicles, installments,
+        refetchExpenses, refetchCostTypes, refetchFixedCosts, refetchInstallments
+    } = usePerformanceData(selectedYear, selectedMonth);
 
-    const queryClient = useQueryClient();
-
-    // Queries
-    const { data: costs = [], refetch: refetchExpenses } = useQuery({ queryKey: ["expenses"], queryFn: fetchExpenses });
-    const { data: costTypes = [], refetch: refetchCostTypes } = useQuery({ queryKey: ["costTypes"], queryFn: fetchCostTypes });
-    const { data: fixedCosts = [] } = useQuery({ queryKey: ["fixedCosts"], queryFn: fetchFixedCosts });
-    const { data: drivers = [] } = useQuery({ queryKey: ["drivers"], queryFn: fetchDrivers });
-    const { data: shifts = [] } = useQuery({ queryKey: ["shifts"], queryFn: fetchShifts });
-    const { data: legacyMaintenances = [] } = useQuery({ queryKey: ["legacyMaintenances"], queryFn: fetchLegacyMaintenances });
-    const { data: vehicles = [] } = useQuery({ queryKey: ["vehicles"], queryFn: fetchVehicles });
-
-    // Fetch Installments (filtered by year/month if selected)
-    const { data: installments = [], refetch: refetchInstallments } = useQuery({
-        queryKey: ["fixedCostInstallments", selectedYear, selectedMonth],
-        queryFn: () => fetchFixedCostInstallments({ year: selectedYear, month: selectedMonth })
+    const { financialSummary, driverBreakdown } = usePerformanceCalculations({
+        drivers, shifts, costs, fixedCosts, selectedYear, selectedMonth
     });
 
-    // --- FINANCIAL CALCULATIONS (MEMOIZED) ---
-    const financialSummary = useMemo(() => calculateFinancialSummary(
-        shifts || [],
-        costs || [],
-        fixedCosts || [],
-        selectedYear,
-        selectedMonth
-    ), [shifts, costs, fixedCosts, selectedYear, selectedMonth]);
-
-    const driverBreakdown = useMemo(() => calculateDriverMetrics(
-        drivers || [],
-        shifts || [],
-        selectedYear,
-        selectedMonth
-    ), [drivers, shifts, selectedYear, selectedMonth]);
-
-    // Styles
-    const cardStyle = {
-        padding: "1.25rem",
-        backgroundColor: isDark ? "#1e293b" : "#ffffff",
-        borderRadius: "0.75rem",
-        border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-        display: "flex",
-        flexDirection: "column" as const,
-        gap: "0.5rem",
-    };
-    const cardTitle = { fontSize: "0.875rem", color: isDark ? "#94a3b8" : "#64748b", fontWeight: "500" as const };
-    const cardValue = { fontSize: "1.5rem", fontWeight: "700" as const, color: isDark ? "#ffffff" : "#0f172a" };
-    const cardSublabel = { fontSize: "0.75rem", color: isDark ? "#64748b" : "#94a3b8" };
-
-    // Mutations
-    const updateInstallmentMutation = useMutation({
-        mutationFn: (data: { id: string, status?: string, value?: number, dueDate?: Date, paidDate?: Date | null, paidAmount?: number | null }) =>
-            api.put(`/financial/fixed-costs/installments/${data.id}`, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["fixedCostInstallments"] });
-            queryClient.invalidateQueries({ queryKey: ["fixedCosts"] });
-        }
-    });
-
-    // --- CALCULATIONS (Financeiro) ---
-
-
-    // 1. Filter Data based on selection
-    const filteredShifts = (shifts || []).filter((s: any) => {
-        const d = new Date(s.inicio);
-        const yearMatch = selectedYear === "todos" || d.getFullYear().toString() === selectedYear;
-        const monthMatch = selectedMonth === "todos" || (d.getMonth() + 1).toString() === selectedMonth;
-        return yearMatch && monthMatch;
-    });
-
-    const filteredExpenses = (costs || []).filter((c: any) => {
-        const d = new Date(c.data);
-        const yearMatch = selectedYear === "todos" || d.getFullYear().toString() === selectedYear;
-        const monthMatch = selectedMonth === "todos" || (d.getMonth() + 1).toString() === selectedMonth;
-        return yearMatch && monthMatch;
-    });
-
-    // 2. Totals
-    const totalBruto = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.receita) || 0), 0);
-    const totalRepasseEmpresa = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.repasseEmpresa) || 0), 0);
-    const totalRepasseMotorista = filteredShifts.reduce((acc: number, s: any) => acc + (Number(s.repasseMotorista) || 0), 0);
-    const totalTurnos = filteredShifts.length;
-
-    // Costs
-    const totalCustosVariaveis = filteredExpenses.reduce((acc: number, c: any) => acc + (Number(c.valor) || 0), 0);
-    const totalCustosFixos = (fixedCosts || []).reduce((acc: number, c: any) => acc + (Number(c.value) || 0), 0);
-    const appliedFixedCosts = selectedMonth !== "todos" ? totalCustosFixos : (selectedYear !== "todos" ? totalCustosFixos * 12 : 0);
-    const totalCustos = totalCustosVariaveis + appliedFixedCosts;
-
-    const lucroLiquido = totalRepasseEmpresa - totalCustos;
-    const margemLucro = totalRepasseEmpresa > 0 ? (lucroLiquido / totalRepasseEmpresa) * 100 : 0;
-
-    const targetReceitaEmpresa = totalCustos;
-    const targetReceitaBruta = targetReceitaEmpresa / 0.60;
-    const peTotalPercent = targetReceitaBruta > 0 ? (totalBruto / targetReceitaBruta) * 100 : 0;
-    const faltaParaPE = Math.max(0, targetReceitaBruta - totalBruto);
+    // SubState for Expenses Tab filters (if different from global)
+    const [expYear, setExpYear] = useState(selectedYear);
+    const [expMonth, setExpMonth] = useState(selectedMonth);
+    const [expDriver, setExpDriver] = useState("todos");
+    const [expType, setExpType] = useState("todos");
 
     // Mutations
     const createFixedCostMutation = useMutation({
@@ -191,9 +78,17 @@ export default function PerformanceContent() {
         }
     });
 
-    // --- EXPENSE MODAL & DELETE CONFIRM ---
+    const updateInstallmentMutation = useMutation({
+        mutationFn: (data: { id: string, status?: string, value?: number, dueDate?: Date, paidDate?: Date | null, paidAmount?: number | null }) =>
+            api.put(`/financial/fixed-costs/installments/${data.id}`, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["fixedCostInstallments"] });
+            queryClient.invalidateQueries({ queryKey: ["fixedCosts"] });
+        }
+    });
+
+    // Expense Modal Logic
     const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
-    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const [editingExpense, setEditingExpense] = useState<any>(null);
 
     const handleSaveExpense = async (id: string | null, data: any) => {
@@ -201,46 +96,31 @@ export default function PerformanceContent() {
             if (id) {
                 await api.put(`/financial/expenses/${id}`, data);
             } else {
-                // Ensure costTypeId is present if backend requires it, or just pass as is if EditExpenseModal handles it
-                // EditExpenseModal sends { tipo: string, ... } and maybe we need to map to costTypeId if backend creates via ID
-                // But the current backend validator creates via `costTypeId`. 
-                // The `EditExpenseModal` uses names. This might be a mismatch.
-                // Let's check `EditExpenseModal`:
-                // It sends `tipo`. 
-                // Backend `createExpenseSchema` requires `costTypeId`.
-                // WE NEED TO MAP `tipo` (name) to `costTypeId`.
-
                 const typeObj = costTypes.find((t: any) => t.name === data.tipo);
                 const payload = {
                     ...data,
                     costTypeId: typeObj?.id,
-                    date: new Date().toISOString() // Default to now for new expense
+                    date: new Date().toISOString()
                 };
-
                 await api.post("/financial/expenses", payload);
             }
             refetchExpenses();
             setIsExpenseModalOpen(false);
         } catch (error) {
             console.error("Error saving expense", error);
-            alert("Erro ao salvar despesa. Verifique se o tipo de custo é válido.");
+            alert("Erro ao salvar despesa.");
         }
     };
 
-
-
-
-
-    const getBadgeStyle = (color: string) => {
-        const isDarkTheme = theme === "dark";
-        switch (color) {
-            case "blue": return { bg: isDarkTheme ? "#1e3a8a" : "#dbeafe", text: isDarkTheme ? "#93c5fd" : "#1e40af" };
-            case "green": return { bg: isDarkTheme ? "#14532d" : "#dcfce7", text: isDarkTheme ? "#86efac" : "#166534" };
-            case "red": return { bg: isDarkTheme ? "#7f1d1d" : "#fee2e2", text: isDarkTheme ? "#fca5a5" : "#991b1b" };
-            case "cyan": return { bg: isDarkTheme ? "#164e63" : "#cffafe", text: isDarkTheme ? "#67e8f9" : "#155e75" };
-            default: return { bg: isDarkTheme ? "#1f2937" : "#f3f4f6", text: isDarkTheme ? "#9ca3af" : "#4b5563" };
+    const handleDeleteExpense = async (id: string) => {
+        try {
+            await api.delete(`/financial/expenses/${id}`);
+            refetchExpenses();
+        } catch (err) {
+            console.error(err);
+            alert("Erro ao excluir.");
         }
-    };
+    }
 
     const styles = {
         container: {
@@ -250,147 +130,74 @@ export default function PerformanceContent() {
             maxWidth: '1200px', margin: '0 auto', width: '100%'
         },
         header: {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+            paddingBottom: "1rem",
         },
         title: {
-            fontSize: "1.25rem",
+            fontSize: "1.5rem",
             fontWeight: "700",
             color: isDark ? "#ffffff" : "#0f172a",
-            margin: 0,
-        },
-        filtersCard: {
-            padding: "1rem",
-            backgroundColor: isDark ? "#1e293b" : "#ffffff",
-            borderRadius: "0.5rem",
-            border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-            display: "flex",
-            flexWrap: "wrap" as const,
-            gap: "1rem",
-            alignItems: "flex-end",
         },
         subTabs: {
             display: "flex",
-            flexWrap: "wrap" as const,
             gap: "0.5rem",
-            marginBottom: "1.5rem",
+            alignItems: "center",
+            overflowX: "auto" as const,
+            paddingBottom: "0.5rem",
         },
         subTabButton: (isActive: boolean) => ({
             padding: "0.5rem 1rem",
             borderRadius: "0.5rem",
-            border: `1px solid ${isActive ? (isDark ? "#3730a3" : "#4338ca") : (isDark ? "#334155" : "#e2e8f0")}`,
-            backgroundColor: isActive ? (isDark ? "#312e81" : "#e0e7ff") : (isDark ? "#1e293b" : "#ffffff"),
-            color: isActive ? (isDark ? "#818cf8" : "#4338ca") : (isDark ? "#e2e8f0" : "#64748b"),
-            fontSize: "0.875rem",
-            fontWeight: 500,
+            border: isActive ? "none" : `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+            backgroundColor: isActive ? (isDark ? "#3b82f6" : "#2563eb") : "transparent",
+            color: isActive ? "#ffffff" : (isDark ? "#94a3b8" : "#64748b"),
             cursor: "pointer",
+            fontWeight: "500" as const,
+            fontSize: "0.875rem",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
             gap: "0.5rem",
             transition: "all 0.2s",
-            minWidth: "120px",
+            whiteSpace: "nowrap" as const
         }),
-        gridKPI: {
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: "1rem",
-        },
-        chartPlaceholder: {
-            minHeight: "300px",
+        filtersCard: {
             backgroundColor: isDark ? "#1e293b" : "#ffffff",
-            borderRadius: "0.75rem",
-            border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexDirection: "column" as const,
-            color: isDark ? "#cbd5e1" : "#64748b",
-            marginTop: "1.5rem",
-        },
-        // Shared Listing Styles
-        tableContainer: {
-            border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
             borderRadius: "0.5rem",
-            overflow: "hidden",
-            marginTop: "1rem",
-        },
-        table: {
-            width: "100%",
-            borderCollapse: "collapse" as const,
-            textAlign: "left" as const,
-            fontSize: "0.875rem",
-        },
-        th: {
-            padding: "0.75rem 1rem",
-            backgroundColor: isDark ? "#1e293b" : "#f8fafc",
-            color: isDark ? "#e2e8f0" : "#64748b",
-            fontWeight: "600",
-            borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-        },
-        td: {
-            padding: "0.75rem 1rem",
-            borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-            color: isDark ? "#e2e8f0" : "#1e293b",
-        },
-        badge: (color: string) => {
-            const style = getBadgeStyle(color);
-            return {
-                padding: "0.15rem 0.5rem",
-                borderRadius: "0.25rem",
-                fontSize: "0.75rem",
-                fontWeight: "600",
-                backgroundColor: style.bg,
-                color: style.text,
-            };
-        },
-        actionButton: {
-            padding: "0.25rem",
-            borderRadius: "0.25rem",
-            border: "none",
-            backgroundColor: "transparent",
-            color: isDark ? "#cbd5e1" : "#64748b",
-            cursor: "pointer",
+            padding: "1rem",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-        },
-        primaryButton: {
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            padding: "0.5rem 1rem",
-            borderRadius: "0.375rem",
-            border: "none",
-            color: "white",
-            background: isDark ? "#2563eb" : "#2563eb",
-            fontSize: "0.875rem",
-            cursor: "pointer",
-            fontWeight: "500",
+            flexWrap: "wrap" as const,
+            gap: "1rem",
             marginBottom: "1rem",
-            alignSelf: "flex-end"
+            alignItems: "flex-end",
+            border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+            boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
         },
         inputGroup: {
-            display: "flex",
-            flexDirection: "column" as const,
-            gap: "0.35rem",
+            display: "flex", flexDirection: "column" as const, gap: "0.35rem"
         },
         label: {
-            fontSize: "0.75rem",
-            fontWeight: "500",
-            color: isDark ? "#cbd5e1" : "#64748b",
+            fontSize: "0.75rem", fontWeight: "500", color: isDark ? "#cbd5e1" : "#64748b"
         },
         select: {
-            padding: "0.5rem",
-            borderRadius: "0.375rem",
-            border: `1px solid ${isDark ? "#475569" : "#cbd5e1"}`,
-            backgroundColor: isDark ? "#0f172a" : "#ffffff",
-            color: isDark ? "#ffffff" : "#0f172a",
-            fontSize: "0.875rem",
-            minWidth: "140px",
-            cursor: "pointer",
+            padding: "0.5rem", borderRadius: "0.375rem", border: `1px solid ${isDark ? "#475569" : "#cbd5e1"}`,
+            backgroundColor: isDark ? "#0f172a" : "#ffffff", color: isDark ? "#ffffff" : "#0f172a", fontSize: "0.875rem", minWidth: "140px", cursor: "pointer"
         },
+        tableContainer: {
+            backgroundColor: isDark ? "#1e293b" : "#ffffff", borderRadius: "0.5rem", border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+            overflow: "hidden", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)", marginTop: "1rem"
+        },
+        table: { width: "100%", borderCollapse: "collapse" as const, fontSize: "0.875rem" },
+        th: {
+            textAlign: "left" as const, padding: "0.75rem 1rem", borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+            color: isDark ? "#94a3b8" : "#64748b", fontWeight: "500", fontSize: "0.75rem", textTransform: "uppercase" as const, letterSpacing: "0.05em"
+        },
+        td: { padding: "0.75rem 1rem", borderBottom: `1px solid ${isDark ? "#334155" : "#f1f5f9"}`, color: isDark ? "#e2e8f0" : "#334155" },
+        badge: (color: string) => ({
+            display: "inline-flex", padding: "0.25rem 0.6rem", borderRadius: "9999px", fontSize: "0.7rem", fontWeight: "600",
+            backgroundColor: color === "green" ? (isDark ? "#052e16" : "#dcfce7") : color === "red" ? (isDark ? "#450a0a" : "#fee2e2") : (isDark ? "#172554" : "#dbeafe"),
+            color: color === "green" ? (isDark ? "#4ade80" : "#166534") : color === "red" ? (isDark ? "#f87171" : "#991b1b") : (isDark ? "#60a5fa" : "#1e40af")
+        }),
+        actionButton: { padding: "0.25rem", borderRadius: "0.25rem", border: "none", backgroundColor: "transparent", cursor: "pointer", color: isDark ? "#94a3b8" : "#64748b" }
     };
 
     return (
@@ -416,7 +223,7 @@ export default function PerformanceContent() {
                     <Wrench size={14} /> Manutenção
                 </button>
                 <button style={styles.subTabButton(activeSubTab === "tipos-custo")} onClick={() => setActiveSubTab("tipos-custo")}>
-                    <List size={14} /> Tipos de Custo
+                    <List size={14} /> Tipos Custo
                 </button>
                 <button style={styles.subTabButton(activeSubTab === "custos-fixos")} onClick={() => setActiveSubTab("custos-fixos")}>
                     <Filter size={14} /> Custos Fixos
@@ -426,10 +233,8 @@ export default function PerformanceContent() {
                 </button>
             </div>
 
-
             {activeSubTab === "financeiro" && (
                 <>
-                    {/* --- FILTERS (Dia/Semana/Mês/Ano) --- */}
                     <div style={styles.filtersCard}>
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Ano</label>
@@ -459,691 +264,226 @@ export default function PerformanceContent() {
                             </select>
                         </div>
                     </div>
-
-                    {/* --- NEW CALCULATIONS (Refactored) --- */}
-                    {/* --- KPI DASHBOARD --- */}
-                    <>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1.5rem", marginTop: "1rem" }}>
-                            {/* === COLUNA ESQUERDA: EMPRESA === */}
-                            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                                {/* Faturamento Total (100%) */}
-                                <div style={{ ...cardStyle, borderLeft: "4px solid #3b82f6" }}>
-                                    <span style={cardTitle}>Faturamento Total</span>
-                                    <span style={cardValue}>R$ {financialSummary.faturamentoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                    <span style={cardSublabel}>100% (App + Particular)</span>
-                                </div>
-
-                                {/* Lucro Bruto Empresa (60%) */}
-                                <div style={{ ...cardStyle, borderLeft: "4px solid #22c55e" }}>
-                                    <span style={cardTitle}>Lucro Bruto Empresa</span>
-                                    <span style={cardValue}>R$ {financialSummary.lucroBrutoEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                    <span style={cardSublabel}>60% do Faturamento Total</span>
-                                </div>
-
-                                {/* Custo Total */}
-                                <div style={{ ...cardStyle, borderLeft: "4px solid #ef4444" }}>
-                                    <span style={cardTitle}>Custo Total</span>
-                                    <span style={cardValue}>R$ {financialSummary.custosTotais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                    <span style={cardSublabel}>Fixos: R$ {financialSummary.custosFixosMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} + Var: R$ {financialSummary.custosVariaveis.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                                </div>
-
-                                {/* Lucro Líquido Empresa */}
-                                <div style={{ ...cardStyle, borderLeft: `4px solid ${financialSummary.lucroLiquidoEmpresa >= 0 ? "#22c55e" : "#ef4444"}` }}>
-                                    <span style={cardTitle}>Lucro Líquido Empresa</span>
-                                    <span style={{ ...cardValue, color: financialSummary.lucroLiquidoEmpresa >= 0 ? "#22c55e" : "#ef4444" }}>
-                                        R$ {financialSummary.lucroLiquidoEmpresa.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    </span>
-                                    <span style={cardSublabel}>Lucro Bruto (60%) - Custo Total</span>
-                                </div>
-                            </div>
-
-                            {/* === COLUNA CENTRAL: P.E. EMPRESA === */}
-                            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", alignItems: "center", justifyContent: "flex-start" }}>
-                                <div style={{ ...cardStyle, borderLeft: "4px solid #f59e0b", width: "100%", minHeight: "200px", justifyContent: "space-between" }}>
-                                    <div>
-                                        <span style={{ ...cardTitle, display: "block", textAlign: "center", marginBottom: "0.5rem" }}>P.E. Empresa (Break-Even)</span>
-                                        <div style={{ textAlign: "center", marginBottom: "1rem" }}>
-                                            <span style={{ fontSize: "2rem", fontWeight: "700", color: "#f59e0b" }}>
-                                                R$ {financialSummary.targetReceitaBruta.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </span>
-                                            <span style={{ display: "block", fontSize: "0.75rem", color: isDark ? "#94a3b8" : "#64748b" }}>
-                                                Meta de Faturamento para Zero Prejuízo
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div style={{ width: "100%", padding: "0 1rem" }}>
-                                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem", fontSize: "0.75rem", fontWeight: "600", color: isDark ? "#fff" : "#0f172a" }}>
-                                            <span>Progresso</span>
-                                            <span>{financialSummary.progressoPE.toFixed(1)}%</span>
-                                        </div>
-                                        <div style={{ width: "100%", height: "10px", backgroundColor: isDark ? "#334155" : "#e2e8f0", borderRadius: "5px", overflow: "hidden" }}>
-                                            <div style={{
-                                                width: `${Math.min(financialSummary.progressoPE, 100)}%`,
-                                                height: "100%",
-                                                backgroundColor: financialSummary.progressoPE >= 100 ? "#22c55e" : "#f59e0b",
-                                                transition: "width 0.5s ease"
-                                            }} />
-                                        </div>
-                                        <div style={{ marginTop: "0.5rem", textAlign: "center", fontSize: "0.75rem", color: isDark ? "#94a3b8" : "#64748b" }}>
-                                            {financialSummary.progressoPE >= 100
-                                                ? "✅ Ponto de equilíbrio atingido!"
-                                                : `Faltam R$ ${financialSummary.faltaParaPE.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            {/* === COLUNA DIREITA: MOTORISTAS === */}
-                            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                                {/* Faturamento Bruto Motorista (40%) */}
-                                <div style={{ ...cardStyle, borderLeft: "4px solid #8b5cf6" }}>
-                                    <span style={cardTitle}>Faturamento Bruto Motorista</span>
-                                    <span style={cardValue}>R$ {financialSummary.repasseMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                    <span style={cardSublabel}>40% do Faturamento Total</span>
-                                </div>
-
-                                {/* Custos do Motorista (Placeholder) */}
-                                <div style={{ ...cardStyle, borderLeft: "4px solid #64748b" }}>
-                                    <span style={cardTitle}>Custos do Motorista</span>
-                                    <span style={{ ...cardValue, color: "#64748b" }}>R$ —</span>
-                                    <span style={cardSublabel}>Dados a definir</span>
-                                </div>
-
-                                {/* Lucro Líquido Motorista + Tabela */}
-                                <div style={{ ...cardStyle, borderLeft: "4px solid #8b5cf6", flex: 1 }}>
-                                    <span style={cardTitle}>Lucro Líquido Motorista</span>
-                                    <span style={cardValue}>R$ {financialSummary.repasseMotorista.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                    <span style={cardSublabel}>Por enquanto = Faturamento Bruto Motorista</span>
-
-                                    {/* Tabela de breakdown por motorista */}
-                                    <div style={{ marginTop: "1rem" }}>
-                                        <table style={{ width: "100%", fontSize: "0.8rem", borderCollapse: "collapse" }}>
-                                            <thead>
-                                                <tr style={{ borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}` }}>
-                                                    <th style={{ textAlign: "center", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "5%" }}>#</th>
-                                                    <th style={{ textAlign: "left", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Motorista</th>
-                                                    <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Valor (40%)</th>
-                                                    <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Vlr. 60%</th>
-                                                    <th style={{ textAlign: "right", padding: "0.5rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>Vlr. Total</th>
-                                                    <th style={{ textAlign: "right", padding: "0.5rem 0", color: isDark ? "#94a3b8" : "#64748b", width: "10%" }}>%</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {driverBreakdown.map((d: any, index: number) => {
-                                                    const percent = financialSummary.repasseMotorista > 0 ? (d.valor / financialSummary.repasseMotorista) * 100 : 0;
-                                                    const valor60 = d.valorTotal * 0.60;
-                                                    return (
-                                                        <tr key={d.nome} style={{ borderBottom: `1px solid ${isDark ? "#1e293b" : "#f1f5f9"}` }}>
-                                                            <td style={{ textAlign: "center", padding: "0.4rem 0", color: isDark ? "#64748b" : "#94a3b8", fontSize: "0.75rem" }}>{index + 1}º</td>
-                                                            <td style={{ padding: "0.4rem 0.25rem", color: isDark ? "#e2e8f0" : "#1e293b", whiteSpace: "nowrap" }}>{d.nome}</td>
-                                                            <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: "#8b5cf6", fontWeight: "600" }}>
-                                                                R$ {d.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                            </td>
-                                                            <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>
-                                                                R$ {valor60.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                            </td>
-                                                            <td style={{ textAlign: "right", padding: "0.4rem 0.25rem", color: isDark ? "#94a3b8" : "#64748b" }}>
-                                                                R$ {d.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                            </td>
-                                                            <td style={{ textAlign: "right", padding: "0.4rem 0", color: isDark ? "#94a3b8" : "#64748b", fontSize: "0.75rem" }}>
-                                                                {percent.toFixed(2)}%
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                                {driverBreakdown.length === 0 && (
-                                                    <tr>
-                                                        <td colSpan={6} style={{ textAlign: "center", padding: "1rem 0", color: isDark ? "#64748b" : "#94a3b8" }}>
-                                                            Nenhum motorista no período
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </>
+                    <PerformanceKPIs
+                        financialSummary={financialSummary}
+                        driverBreakdown={driverBreakdown}
+                        isDark={isDark}
+                    />
                 </>
+            )}
+
+            {activeSubTab === "repasses" && (
+                <ExpenseTable
+                    costs={costs}
+                    costTypes={costTypes}
+                    isDark={isDark}
+                    selectedYear={expYear} // Use local state for Expense Tab independency? Or share? Using local for now
+                    setSelectedYear={setExpYear}
+                    selectedMonth={expMonth}
+                    setSelectedMonth={setExpMonth}
+                    selectedDriver={expDriver}
+                    setSelectedDriver={setExpDriver}
+                    selectedCostType={expType}
+                    setSelectedCostType={setExpType}
+                    onAddExpense={() => {
+                        setEditingExpense(null);
+                        setIsExpenseModalOpen(true);
+                    }}
+                    onDeleteExpense={handleDeleteExpense}
+                />
             )}
 
             {activeSubTab === "motoristas" && (
                 <>
-                    {(() => {
-                        // 1. Process Data
-                        const driverStats = drivers.map((driver: any) => {
-                            const driverShifts = (shifts || []).filter((s: any) => {
-                                const sDate = new Date(s.inicio);
-                                const sYear = sDate.getFullYear().toString();
-                                const sMonth = (sDate.getMonth() + 1).toString();
-
-                                const yearMatch = selectedYear === "todos" || sYear === selectedYear;
-                                const monthMatch = selectedMonth === "todos" || sMonth === selectedMonth;
-                                // Match both ID (if populated) or look for name matches if ID missing (legacy compat)
-                                const idMatch = s.driverId === driver.id;
-
-                                return yearMatch && monthMatch && idMatch;
-                            });
-
-                            const totalHours = driverShifts.reduce((acc: number, s: any) => {
-                                let h = (s.duracaoMin || 0) / 60;
-                                if (h === 0 && s.inicio && s.fim) {
-                                    const start = new Date(s.inicio).getTime();
-                                    const end = new Date(s.fim).getTime();
-                                    h = (end - start) / (1000 * 60 * 60);
-                                }
-                                return acc + h;
-                            }, 0);
-                            const totalShifts = driverShifts.length;
-                            const totalRevenue = driverShifts.reduce((acc: number, s: any) => acc + (Number(s.receita) || 0), 0);
-
-                            return {
-                                name: driver.nome,
-                                totalHours,
-                                totalShifts,
-                                avgHours: totalShifts > 0 ? totalHours / totalShifts : 0,
-                                totalRevenue,
-                                revenuePerHour: totalHours > 0 ? totalRevenue / totalHours : 0
-                            };
-                        }).filter((stat: any) => stat.totalShifts > 0).sort((a: any, b: any) => b.totalHours - a.totalHours);
-
-                        const maxHours = Math.max(...driverStats.map((s: any) => s.totalHours), 1);
-
-                        return (
-                            <>
-                                <div style={styles.chartPlaceholder}>
-                                    <h3 style={{ ...styles.title, fontSize: "1rem", marginBottom: "1rem", alignSelf: "flex-start", padding: "0 1rem" }}>Horas Trabalhadas por Motorista</h3>
-                                    <div style={{ width: "90%", height: "220px", display: "flex", alignItems: "flex-end", justifyContent: "space-around", gap: "20px", paddingBottom: "20px" }}>
-                                        {driverStats.map((stat: any) => (
-                                            <div key={stat.name} style={{ display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end", flex: 1, position: "relative" }}>
-                                                {/* Tooltip-ish value */}
-                                                <span style={{ fontSize: "0.75rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "4px" }}>{stat.totalHours.toFixed(1)}h</span>
-
-                                                {/* Bar */}
-                                                <div style={{
-                                                    width: "60%",
-                                                    height: `${(stat.totalHours / maxHours) * 80}%`, // Use 80% height max
-                                                    backgroundColor: "#3b82f6",
-                                                    borderRadius: "4px 4px 0 0",
-                                                    minHeight: "4px",
-                                                    position: "relative",
-                                                    transition: "height 0.5s ease"
-                                                }}>
-                                                </div>
-
-                                                <div style={{ marginTop: "0.5rem", textAlign: "center" }}>
-                                                    <span style={{ fontSize: "0.75rem", fontWeight: "600", display: "block" }}>{stat.name.split(' ')[0]}</span>
-                                                    <span style={{ fontSize: "0.7rem", color: "#eab308", fontWeight: "bold" }}>{stat.totalShifts} turnos</span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {driverStats.length === 0 && <p>Nenhum dado encontrado para o período.</p>}
+                    {/* Driver Charts using driverBreakdown from hook */}
+                    <div style={{ ...styles.filtersCard, padding: '2rem', display: 'block' }}>
+                        <h3 style={{ ...styles.title, fontSize: "1rem", marginBottom: "1rem" }}>Horas Trabalhadas por Motorista</h3>
+                        <div style={{ width: "90%", height: "220px", display: "flex", alignItems: "flex-end", justifyContent: "space-around", gap: "20px", paddingBottom: "20px" }}>
+                            {driverBreakdown.map((stat: any) => {
+                                // Calculate max hours for scaling
+                                const maxHours = Math.max(...driverBreakdown.map((s: any) => s.totalHours), 1);
+                                return (
+                                    <div key={stat.nome} style={{ display: "flex", flexDirection: "column", alignItems: "center", height: "100%", justifyContent: "flex-end", flex: 1 }}>
+                                        <span style={{ fontSize: "0.75rem", fontWeight: "bold", color: "#3b82f6", marginBottom: "4px" }}>{stat.totalHours.toFixed(1)}h</span>
+                                        <div style={{
+                                            width: "60%",
+                                            height: `${(stat.totalHours / maxHours) * 80}%`,
+                                            backgroundColor: "#3b82f6",
+                                            borderRadius: "4px 4px 0 0",
+                                            minHeight: "4px"
+                                        }}></div>
+                                        <div style={{ marginTop: "0.5rem", textAlign: "center" }}>
+                                            <span style={{ fontSize: "0.75rem", fontWeight: "600", display: "block", color: isDark ? "#fff" : "#000" }}>{stat.nome.split(' ')[0]}</span>
+                                            <span style={{ fontSize: "0.7rem", color: "#eab308", fontWeight: "bold" }}>{stat.totalShifts} turnos</span>
+                                        </div>
                                     </div>
-                                </div>
+                                )
+                            })}
+                        </div>
+                    </div>
 
-                                <h3 style={{ ...styles.title, fontSize: "1rem", marginTop: "1rem" }}>Detalhes por Motorista</h3>
-                                <div style={styles.tableContainer}>
-                                    <table style={styles.table}>
-                                        <thead>
-                                            <tr>
-                                                <th style={styles.th}>Motorista</th>
-                                                <th style={{ ...styles.th, textAlign: 'right' }}>Horas</th>
-                                                <th style={{ ...styles.th, textAlign: 'right' }}>Turnos</th>
-                                                <th style={{ ...styles.th, textAlign: 'right' }}>Média h/turno</th>
-                                                <th style={{ ...styles.th, textAlign: 'right' }}>Receita</th>
-                                                <th style={{ ...styles.th, textAlign: 'right' }}>R$/hora</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {driverStats.map((stat: any) => (
-                                                <tr key={stat.name}>
-                                                    <td style={styles.td}>{stat.name}</td>
-                                                    <td style={{ ...styles.td, textAlign: 'right' }}>{stat.totalHours.toFixed(1)}h</td>
-                                                    <td style={{ ...styles.td, textAlign: 'right' }}>{stat.totalShifts}</td>
-                                                    <td style={{ ...styles.td, textAlign: 'right' }}>{stat.avgHours.toFixed(1)}h</td>
-                                                    <td style={{ ...styles.td, textAlign: 'right' }}>R$ {stat.totalRevenue.toFixed(2)}</td>
-                                                    <td style={{ ...styles.td, textAlign: 'right', fontWeight: "600" }}>R$ {stat.revenuePerHour.toFixed(2)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </>
-                        );
-                    })()}
+                    <div style={styles.tableContainer}>
+                        <table style={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th style={styles.th}>Motorista</th>
+                                    <th style={{ ...styles.th, textAlign: 'right' }}>Horas</th>
+                                    <th style={{ ...styles.th, textAlign: 'right' }}>Turnos</th>
+                                    <th style={{ ...styles.th, textAlign: 'right' }}>Média h/turno</th>
+                                    <th style={{ ...styles.th, textAlign: 'right' }}>Receita</th>
+                                    <th style={{ ...styles.th, textAlign: 'right' }}>R$/hora</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {driverBreakdown.map((stat: any) => (
+                                    <tr key={stat.nome}>
+                                        <td style={styles.td}>{stat.nome}</td>
+                                        <td style={{ ...styles.td, textAlign: 'right' }}>{stat.totalHours.toFixed(1)}h</td>
+                                        <td style={{ ...styles.td, textAlign: 'right' }}>{stat.totalShifts}</td>
+                                        <td style={{ ...styles.td, textAlign: 'right' }}>{stat.avgHours.toFixed(1)}h</td>
+                                        <td style={{ ...styles.td, textAlign: 'right' }}>R$ {stat.totalRevenue.toFixed(2)}</td>
+                                        <td style={{ ...styles.td, textAlign: 'right', fontWeight: "600" }}>R$ {stat.revenuePerHour.toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </>
-            )
-            }
+            )}
 
-            {
-                activeSubTab === "repasses" && (
-                    <>
-                        {/* Filtros */}
-                        <div style={styles.filtersCard}>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Ano</label>
-                                <select
-                                    style={styles.select}
-                                    value={selectedYear}
-                                    onChange={(e) => setSelectedYear(e.target.value)}
-                                >
-                                    <option value="todos">Todos</option>
-                                    <option value="2025">2025</option>
-                                    <option value="2026">2026</option>
-                                </select>
-                            </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Mês</label>
-                                <select
-                                    style={styles.select}
-                                    value={selectedMonth}
-                                    onChange={(e) => setSelectedMonth(e.target.value)}
-                                >
-                                    <option value="todos">Todos</option>
-                                    <option value="1">Janeiro</option>
-                                    <option value="2">Fevereiro</option>
-                                    <option value="3">Março</option>
-                                    <option value="4">Abril</option>
-                                    <option value="5">Maio</option>
-                                    <option value="6">Junho</option>
-                                    <option value="7">Julho</option>
-                                    <option value="8">Agosto</option>
-                                    <option value="9">Setembro</option>
-                                    <option value="10">Outubro</option>
-                                    <option value="11">Novembro</option>
-                                    <option value="12">Dezembro</option>
-                                </select>
-                            </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Motorista</label>
-                                <select
-                                    style={styles.select}
-                                    value={selectedDriver}
-                                    onChange={(e) => setSelectedDriver(e.target.value)}
-                                >
-                                    <option value="todos">Todos</option>
-                                    {Array.from(new Set(costs.map((c: any) => c.motoristaNome).filter(Boolean))).sort().map((driver: any) => (
-                                        <option key={driver} value={driver}>{driver}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Tipo de Custo</label>
-                                <select
-                                    style={styles.select}
-                                    value={selectedCostType}
-                                    onChange={(e) => setSelectedCostType(e.target.value)}
-                                >
-                                    <option value="todos">Todos</option>
-                                    {costTypes.map((type: any) => (
-                                        <option key={type.id} value={type.name}>{type.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <button
-                                style={{ ...styles.primaryButton, marginBottom: 0, marginLeft: "auto", background: "#ef4444" }}
-                                onClick={() => {
-                                    setEditingExpense(null);
-                                    setIsExpenseModalOpen(true);
-                                }}
-                            >
-                                <Plus size={16} /> Novo Custo
-                            </button>
-                        </div>
-
-                        {/* KPIs e Tabela com Filtros Aplicados */}
-                        {(() => {
-                            const filteredCosts = costs.filter((cost: any) => {
-                                const date = new Date(cost.data);
-                                const yearMatch = selectedYear === "todos" || date.getFullYear().toString() === selectedYear;
-                                const monthMatch = selectedMonth === "todos" || (date.getMonth() + 1).toString() === selectedMonth;
-                                const driverMatch = selectedDriver === "todos" || cost.motoristaNome === selectedDriver;
-                                const typeMatch = selectedCostType === "todos" || cost.tipo === selectedCostType;
-                                return yearMatch && monthMatch && driverMatch && typeMatch;
-                            });
-
-                            const filteredTotal = filteredCosts.reduce((acc: number, cost: any) => {
-                                const valorEmpresa = cost.isSplitCost ? Number(cost.valor) * 0.5 : Number(cost.valor);
-                                return acc + valorEmpresa;
-                            }, 0);
-                            const avgCost = filteredCosts.length > 0 ? filteredTotal / filteredCosts.length : 0;
-
-                            return (
-                                <>
-                                    <div style={{ ...styles.gridKPI, marginTop: "1.5rem" }}>
-                                        <div style={{ ...styles.filtersCard, padding: "1.5rem", flexDirection: "column", gap: "0.5rem", alignItems: "flex-start", width: "100%" }}>
-                                            <span style={{ fontSize: "0.875rem", color: isDark ? "#94a3b8" : "#64748b", display: "flex", gap: "0.5rem" }}><DollarSign size={16} /> Total de Custos</span>
-                                            <span style={{ fontSize: "1.5rem", fontWeight: "700", color: isDark ? "#ffffff" : "#0f172a" }}>R$ {filteredTotal.toFixed(2)}</span>
-                                        </div>
-                                        <div style={{ ...styles.filtersCard, padding: "1.5rem", flexDirection: "column", gap: "0.5rem", alignItems: "flex-start", width: "100%" }}>
-                                            <span style={{ fontSize: "0.875rem", color: isDark ? "#94a3b8" : "#64748b", display: "flex", gap: "0.5rem" }}><PieChart size={16} /> Média por Registro</span>
-                                            <span style={{ fontSize: "1.5rem", fontWeight: "700", color: isDark ? "#ffffff" : "#0f172a" }}>R$ {avgCost.toFixed(2)}</span>
-                                        </div>
-                                    </div>
-
-                                    <div style={styles.tableContainer}>
-                                        <table style={styles.table}>
-                                            <thead>
-                                                <tr>
-                                                    <th style={styles.th}>Data</th>
-                                                    <th style={styles.th}>Motorista</th>
-                                                    <th style={styles.th}>Tipo</th>
-                                                    <th style={styles.th}>Valor</th>
-                                                    <th style={styles.th}>Ações</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {filteredCosts.map((cost: any) => (
-                                                    <tr key={cost.id}>
-                                                        <td style={styles.td}>
-                                                            {new Date(cost.data).toLocaleString('pt-BR', {
-                                                                day: '2-digit', month: '2-digit', year: 'numeric',
-                                                                hour: '2-digit', minute: '2-digit'
-                                                            })}
-                                                        </td>
-                                                        <td style={styles.td}>{cost.motoristaNome || "N/A"}</td>
-                                                        <td style={styles.td}>
-                                                            <span style={styles.badge(cost.tipoCor || "blue")}>
-                                                                {cost.tipo}
-                                                            </span>
-                                                        </td>
-                                                        <td style={{ ...styles.td, fontWeight: "600" }}>
-                                                            R$ {(cost.isSplitCost ? Number(cost.valor) * 0.5 : Number(cost.valor)).toFixed(2)}
-                                                            {cost.isSplitCost && <span style={{ fontSize: '0.7rem', color: '#f59e0b', marginLeft: '4px' }}>(50%)</span>}
-                                                        </td>
-                                                        <td style={styles.td}>
-                                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                                <button style={{ ...styles.actionButton, color: '#ef4444' }} onClick={() => setDeleteConfirmId(cost.id)}><Trash2 size={16} /></button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                                {filteredCosts.length === 0 && (
-                                                    <tr>
-                                                        <td colSpan={5} style={{ ...styles.td, textAlign: "center", padding: "2rem", color: styles.label.color }}>
-                                                            Nenhum custo encontrado para os filtros selecionados.
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </>
-                            );
-                        })()}
-                    </>
-                )
-            }
-
-            {
-                activeSubTab === "manutencao" && (
-                    <div style={styles.tableContainer}>
-                        <div style={{ padding: "1rem", borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <h3 style={styles.title}>Histórico de Manutenções</h3>
-                            <span style={{ fontSize: "0.875rem", color: styles.label.color }}>Total: R$ {legacyMaintenances.reduce((acc: number, m: any) => acc + Number(m.valor), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        <table style={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th style={styles.th}>Data</th>
-                                    <th style={styles.th}>Veículo</th>
-                                    <th style={styles.th}>Tipo</th>
-                                    <th style={styles.th}>Descrição</th>
-                                    <th style={styles.th}>KM</th>
-                                    <th style={styles.th}>Valor</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {legacyMaintenances.map((m: any) => (
-                                    <tr key={m.id}>
-                                        <td style={styles.td}>
-                                            {new Date(m.data).toLocaleDateString('pt-BR')}
-                                        </td>
-                                        <td style={styles.td}>
-                                            {m.veiculoPlate ? `${m.veiculoModelo} (${m.veiculoPlate})` : "N/A"}
-                                        </td>
-                                        <td style={styles.td}>
-                                            <span style={styles.badge(m.tipo === "Corretiva" ? "red" : "blue")}>
-                                                {m.tipo}
-                                            </span>
-                                        </td>
-                                        <td style={styles.td}>{m.notes}</td>
-                                        <td style={styles.td}>{m.km?.toLocaleString('pt-BR')} km</td>
-                                        <td style={{ ...styles.td, fontWeight: "600" }}>
-                                            R$ {Number(m.valor).toFixed(2)}
-                                        </td>
-                                    </tr>
-                                ))}
-                                {legacyMaintenances.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} style={{ ...styles.td, textAlign: "center", padding: "2rem", color: styles.label.color }}>
-                                            Nenhuma manutenção encontrada.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+            {activeSubTab === "manutencao" && (
+                <div style={styles.tableContainer}>
+                    <div style={{ padding: "1rem", borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <h3 style={{ ...styles.title, fontSize: '1.2rem' }}>Histórico de Manutenções</h3>
+                        <span style={{ fontSize: "0.875rem", color: styles.label.color }}>Total: R$ {legacyMaintenances.reduce((acc: number, m: any) => acc + Number(m.valor), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                     </div>
-                )
-            }
+                    <table style={styles.table}>
+                        <thead>
+                            <tr>
+                                <th style={styles.th}>Data</th>
+                                <th style={styles.th}>Veículo</th>
+                                <th style={styles.th}>Tipo</th>
+                                <th style={styles.th}>Descrição</th>
+                                <th style={styles.th}>KM</th>
+                                <th style={styles.th}>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {legacyMaintenances.map((m: any) => (
+                                <tr key={m.id}>
+                                    <td style={styles.td}>{new Date(m.data).toLocaleDateString('pt-BR')}</td>
+                                    <td style={styles.td}>{m.veiculoPlate ? `${m.veiculoModelo} (${m.veiculoPlate})` : "N/A"}</td>
+                                    <td style={styles.td}><span style={styles.badge(m.tipo === "Corretiva" ? "red" : "blue")}>{m.tipo}</span></td>
+                                    <td style={styles.td}>{m.notes}</td>
+                                    <td style={styles.td}>{m.km?.toLocaleString('pt-BR')} km</td>
+                                    <td style={{ ...styles.td, fontWeight: "600" }}>R$ {Number(m.valor).toFixed(2)}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
 
-            {
-                activeSubTab === "tipos-custo" && (
-                    <CostTypesManager
-                        costTypes={costTypes}
-                        isDark={isDark}
-                        refetch={refetchCostTypes}
-                    />
-                )
-            }
+            {activeSubTab === "tipos-custo" && (
+                <CostTypesManager
+                    costTypes={costTypes}
+                    isDark={isDark}
+                    refetch={refetchCostTypes}
+                />
+            )}
 
-            {
-                activeSubTab === "custos-fixos" && (
-                    <FixedCostsManager
-                        costs={fixedCosts}
-                        installments={installments}
-                        vehicles={vehicles}
-                        costTypes={costTypes}
-                        onSave={(data) => {
-                            // Construct Start Date
-                            let startDate = data.specificDate;
-                            let dueDay = data.specificDate ? new Date(data.specificDate).getDate() : 5; // Default due day 5
+            {activeSubTab === "custos-fixos" && (
+                <FixedCostsManager
+                    costs={fixedCosts}
+                    installments={installments}
+                    vehicles={vehicles}
+                    costTypes={costTypes}
+                    onSave={(data) => {
+                        let startDate = data.specificDate;
+                        let dueDay = data.specificDate ? new Date(data.specificDate).getDate() : 5;
+                        if (!startDate && data.monthYear) {
+                            startDate = `${data.monthYear}-05`;
+                            dueDay = 5;
+                        } else if (!startDate) {
+                            startDate = new Date().toISOString();
+                            dueDay = new Date().getDate();
+                        }
+                        const payload = {
+                            ...data,
+                            name: data.description,
+                            value: Number(data.value),
+                            frequency: data.isRecurring ? "Mensal" : "Único",
+                            dueDay: dueDay,
+                            totalInstallments: data.isRecurring ? (data.totalInstallments || 12) : 1,
+                            startDate: startDate
+                        };
+                        return data.id ? updateFixedCostMutation.mutateAsync({ id: data.id, ...payload }) : createFixedCostMutation.mutateAsync(payload);
+                    }}
+                    onDelete={(id) => deleteFixedCostMutation.mutate(id)}
+                    onUpdateInstallment={(id, data) => updateInstallmentMutation.mutate({ id, ...data })}
+                />
+            )}
 
-                            if (!startDate && data.monthYear) {
-                                startDate = `${data.monthYear}-05`; // Default to 5th of the selected month
-                                dueDay = 5;
-                            } else if (!startDate) {
-                                startDate = new Date().toISOString();
-                                dueDay = new Date().getDate();
-                            }
+            {activeSubTab === "veiculos" && (
+                <div style={styles.tableContainer}>
+                    <div style={{ padding: "1rem", borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <h3 style={{ ...styles.title, fontSize: '1.2rem' }}>Frota Ativa</h3>
+                        <span style={{ fontSize: "0.875rem", color: styles.label.color }}>Total: {vehicles.length} Veículos</span>
+                    </div>
+                    <table style={styles.table}>
+                        <thead>
+                            <tr>
+                                <th style={styles.th}>Placa</th>
+                                <th style={styles.th}>Modelo</th>
+                                <th style={styles.th}>Ano</th>
+                                <th style={styles.th}>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {vehicles.map((v: any) => (
+                                <tr key={v.id}>
+                                    <td style={{ ...styles.td, fontWeight: "bold" }}>{v.plate}</td>
+                                    <td style={styles.td}>{v.model}</td>
+                                    <td style={styles.td}>{v.year || "-"}</td>
+                                    <td style={styles.td}><span style={styles.badge(v.status === "active" ? "green" : "red")}>{v.status === "active" ? "Ativo" : "Inativo"}</span></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
 
-                            const payload = {
-                                ...data,
-                                name: data.description,
-                                value: Number(data.value),
-                                frequency: data.isRecurring ? "Mensal" : "Único",
-                                dueDay: dueDay,
-                                totalInstallments: data.isRecurring ? (data.totalInstallments || 12) : 1,
-                                startDate: startDate
-                            };
-
-                            if (data.id) {
-                                return updateFixedCostMutation.mutateAsync({
-                                    id: data.id,
-                                    ...payload
-                                });
-                            } else {
-                                return createFixedCostMutation.mutateAsync(payload);
-                            }
+            {activeSubTab === "ferramentas" && (
+                <div style={{ padding: "1.5rem" }}>
+                    <h3 style={{ ...styles.title, marginBottom: "1.5rem", fontSize: '1.2rem' }}>🛠️ Ferramentas de Manutenção</h3>
+                    <div style={{ ...styles.filtersCard, padding: "1.5rem", marginBottom: "1rem" }}>
+                        <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>🔍 Análise de Fraude em Massa</h4>
+                        <p style={{ color: isDark ? "#94a3b8" : "#64748b", marginBottom: "1rem", fontSize: "0.875rem" }}>Executa o engine de detecção de fraude em todos os turnos finalizados.</p>
+                        <div id="fraud-analysis-results" style={{ display: "none", marginBottom: "1rem", maxHeight: "400px", overflowY: "auto" }}></div>
+                        <button onClick={async () => {
+                            if (!window.confirm("Isso irá analisar todos os turnos. Continuar?")) return;
+                            try {
+                                const res = await api.post("/fraud/analyze-all");
+                                const container = document.getElementById("fraud-analysis-results");
+                                if (container) {
+                                    container.style.display = "block";
+                                    container.innerHTML = `<div style="padding:1rem">Concluído! ${res.data.analyzed} turnos analisados.</div>`;
+                                }
+                            } catch (err: any) { alert("Erro: " + err.message); }
                         }}
-                        onDelete={(id) => deleteFixedCostMutation.mutate(id)}
-                        onUpdateInstallment={(id, data) => updateInstallmentMutation.mutate({ id, ...data })}
-                    />
-                )
-            }
-
-            {
-                activeSubTab === "veiculos" && (
-                    <div style={styles.tableContainer}>
-                        <div style={{ padding: "1rem", borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <h3 style={styles.title}>Frota Ativa</h3>
-                            <span style={{ fontSize: "0.875rem", color: styles.label.color }}>Total: {vehicles.length} Veículos</span>
-                        </div>
-                        <table style={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th style={styles.th}>Placa</th>
-                                    <th style={styles.th}>Modelo</th>
-                                    <th style={styles.th}>Ano</th>
-                                    <th style={styles.th}>Status</th>
-                                    <th style={styles.th}>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {vehicles.map((v: any) => (
-                                    <tr key={v.id}>
-                                        <td style={{ ...styles.td, fontWeight: "bold" }}>{v.plate}</td>
-                                        <td style={styles.td}>{v.model}</td>
-                                        <td style={styles.td}>{v.year || "-"}</td>
-                                        <td style={styles.td}>
-                                            <span style={styles.badge(v.status === "active" ? "green" : "red")}>
-                                                {v.status === "active" ? "Ativo" : "Inativo"}
-                                            </span>
-                                        </td>
-                                        <td style={styles.td}>
-                                            <button style={styles.actionButton}><Edit size={16} /></button>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {vehicles.length === 0 && (
-                                    <tr>
-                                        <td colSpan={5} style={{ ...styles.td, textAlign: "center", padding: "2rem", color: styles.label.color }}>
-                                            Nenhum veículo encontrado.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                            style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#8b5cf6", color: "#fff", cursor: "pointer", fontWeight: "500" }}>
+                            🔍 Executar Análise de Fraude
+                        </button>
                     </div>
-                )
-            }
+                </div>
+            )}
 
-
-
-            {
-                activeSubTab !== "financeiro" && activeSubTab !== "repasses" && activeSubTab !== "tipos-custo" && activeSubTab !== "custos-fixos" && activeSubTab !== "motoristas" && activeSubTab !== "manutencao" && activeSubTab !== "veiculos" && activeSubTab !== "ferramentas" && (
-                    <div style={styles.chartPlaceholder}>
-                        <p>Conteúdo da aba <strong>{activeSubTab.charAt(0).toUpperCase() + activeSubTab.slice(1)}</strong> em desenvolvimento.</p>
-                    </div>
-                )
-            }
-
-            {
-                activeSubTab === "ferramentas" && (
-                    <div style={{ padding: "1.5rem" }}>
-                        <h3 style={{ ...styles.title, marginBottom: "1.5rem" }}>🛠️ Ferramentas de Manutenção</h3>
-
-
-                        {/* Análise de Fraude em Massa */}
-                        <div style={{ ...styles.filtersCard, padding: "1.5rem", marginBottom: "1rem" }}>
-                            <h4 style={{ fontWeight: "600", marginBottom: "1rem", color: isDark ? "#fff" : "#0f172a" }}>
-                                🔍 Análise de Fraude em Massa
-                            </h4>
-                            <p style={{ color: isDark ? "#94a3b8" : "#64748b", marginBottom: "1rem", fontSize: "0.875rem" }}>
-                                Executa o engine de detecção de fraude em todos os turnos finalizados.
-                            </p>
-                            <div id="fraud-analysis-results" style={{ display: "none", marginBottom: "1rem", maxHeight: "400px", overflowY: "auto" }}></div>
-                            <button
-                                onClick={async () => {
-                                    if (!window.confirm("Isso irá analisar todos os turnos. Continuar?")) return;
-                                    try {
-                                        const res = await api.post("/fraud/analyze-all");
-                                        const container = document.getElementById("fraud-analysis-results");
-                                        if (container) {
-                                            container.style.display = "block";
-                                            container.innerHTML = `
-                                <div style="background: ${isDark ? '#0f172a' : '#f8fafc'}; border-radius: 8px; padding: 1rem;">
-                                    <h5 style="margin-bottom: 1rem; color: ${isDark ? '#fff' : '#000'};">
-                                        📊 Total: ${res.data.total} | Analisados: ${res.data.analyzed} | 
-                                        Alertas: ${res.data.alertsFound}
-                                    </h5>
-                                    ${res.data.details.length > 0 ? `
-                                        <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
-                                            <thead>
-                                                <tr style="background: ${isDark ? '#1e293b' : '#e2e8f0'};">
-                                                    <th style="padding: 8px; text-align: left;">ID Turno</th>
-                                                    <th style="padding: 8px; text-align: center;">Score</th>
-                                                    <th style="padding: 8px; text-align: center;">Nível</th>
-                                                    <th style="padding: 8px; text-align: left;">Alertas</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${res.data.details.map((d: any) => `
-                                                    <tr style="border-bottom: 1px solid ${isDark ? '#334155' : '#e2e8f0'};">
-                                                        <td style="padding: 6px;">${d.shiftId}</td>
-                                                        <td style="padding: 6px; text-align: center; font-weight: bold; color: ${d.level === 'critical' ? '#dc2626' :
-                                                    d.level === 'high' ? '#f59e0b' :
-                                                        d.level === 'medium' ? '#eab308' : '#3b82f6'
-                                                };">${d.score}</td>
-                                                        <td style="padding: 6px; text-align: center;">${d.level}</td>
-                                                        <td style="padding: 6px; font-size: 0.75rem;">${d.reasons.join(', ')}</td>
-                                                    </tr>
-                                                `).join('')}
-                                            </tbody>
-                                        </table>
-                                    ` : '<p style="color: #22c55e;">✅ Nenhuma anomalia detectada!</p>'}
-                                </div>
-                            `;
-                                        }
-                                    } catch (err: any) {
-                                        alert("Erro: " + (err.response?.data?.error || err.message));
-                                    }
-                                }}
-                                style={{ padding: "0.75rem 1.5rem", borderRadius: "0.5rem", border: "none", background: "#8b5cf6", color: "#fff", cursor: "pointer", fontWeight: "500" }}
-                            >
-                                🔍 Executar Análise de Fraude
-                            </button>
-                        </div>
-
-                        <div style={{ ...styles.filtersCard, padding: "2rem", textAlign: "center" as const }}>
-                            <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>✅</div>
-                            <h4 style={{ fontWeight: "600", marginBottom: "0.5rem", color: isDark ? "#fff" : "#0f172a" }}>Sistema OK</h4>
-                            <p style={{ color: isDark ? "#94a3b8" : "#64748b", fontSize: "0.875rem" }}>
-                                Todos os dados estão validados e consistentes.
-                            </p>
-                        </div>
-                    </div>
-                )
-            }
             <EditExpenseModal
                 isOpen={isExpenseModalOpen}
                 onClose={() => setIsExpenseModalOpen(false)}
                 onSave={handleSaveExpense}
                 expense={editingExpense}
             />
-
-            {deleteConfirmId && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000 }}>
-                    <div style={{ background: isDark ? '#1e293b' : '#fff', padding: '1.5rem', borderRadius: '0.5rem', maxWidth: '400px', textAlign: 'center', border: `1px solid ${isDark ? '#4b5563' : '#e5e7eb'}`, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
-                        <p style={{ marginBottom: '1rem', color: isDark ? '#fff' : '#000', fontWeight: '500' }}>Tem certeza que deseja excluir este custo?</p>
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                            <button onClick={() => setDeleteConfirmId(null)} style={{ padding: '0.5rem 1rem', borderRadius: '0.25rem', border: `1px solid ${isDark ? '#4b5563' : '#9ca3af'}`, background: 'transparent', color: isDark ? '#d1d5db' : '#374151', cursor: 'pointer' }}>Cancelar</button>
-                            <button onClick={async () => {
-                                try {
-                                    await api.delete(`/financial/expenses/${deleteConfirmId}`);
-                                    refetchExpenses();
-                                    setDeleteConfirmId(null);
-                                } catch (err) {
-                                    console.error("Erro ao excluir:", err);
-                                    alert("Erro ao excluir. Veja o console.");
-                                }
-                            }} style={{ padding: '0.5rem 1rem', borderRadius: '0.25rem', border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontWeight: '500' }}>Excluir</button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

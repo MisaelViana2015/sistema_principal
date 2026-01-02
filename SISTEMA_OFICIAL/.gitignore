@@ -48,4 +48,18 @@ server/backups/
 migration_data.json
 run_migration.ps1
 test_psql.ps1
-test_conn.ts
+
+# Auditoria e Limpeza
+*_inventory.csv
+*_inventory.txt
+*_file_tree.txt
+
+# Dumps e Validação
+dump_validation/
+
+# Logs Locais
+logs/
+
+# Debug Temporário
+debug_*.ts
+debug_*.json

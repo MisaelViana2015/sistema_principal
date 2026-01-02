@@ -1,6 +1,7 @@
 import { db } from "../../core/db/connection.js";
 import { shifts, rides } from "../../../shared/schema.js";
-import { eq, lt, desc } from "drizzle-orm";
+import { eq, lt, desc, sql } from "drizzle-orm";
+import { calculateAuditMetrics } from "./fraud.audit.service.js";
 import { buildDriverBaseline } from "./fraud.baseline.js";
 import { analyzeShiftRules, checkProductivityVsBaseline, checkDriverHistoricalDeviation, checkValueAsymmetry, checkTimeGapsWithPresence } from "./fraud.engine.js";
 import { FraudRepository } from "./fraud.repository.js";
@@ -307,6 +308,148 @@ export const FraudService = {
             ridesPerHour: totalCorridas / durationHours,
             score,
             baseline
+        };
+    },
+
+    /**
+     * Recupera os detalhes completos de um evento de fraude, incluindo dados do turno,
+     * métricas calculadas e auditoria.
+     */
+    async getEventDetail(eventId: string) {
+        const event = await FraudRepository.getFraudEventById(eventId);
+
+        if (!event) {
+            return null; // Controller treated as 404
+        }
+
+        if (!event.shiftId) {
+            throw new Error("Evento sem turno associado");
+        }
+
+        let shiftData = await db.query.shifts.findFirst({
+            where: (s, { eq }) => eq(s.id, event.shiftId as string)
+        });
+
+        // FALLBACK GRACEFUL PARA EVENTOS ÓRFÃOS
+        if (!shiftData) {
+            console.warn(`[FRAUD] Evento ${eventId} possui turno órfão ${event.shiftId}. Usando fallback de metadata.`);
+            const meta = event.metadata as any || {};
+            const fallbackDate = event.detectedAt ? event.detectedAt.toISOString() : new Date().toISOString();
+
+            // Reconstrói um objeto de turno "falso" apenas para visualização
+            shiftData = {
+                id: event.shiftId as string,
+                driverId: event.driverId as string,
+                vehicleId: meta.vehicleId || 'desconhecido',
+                inicio: meta.date ? new Date(meta.date + "T00:00:00").toISOString() : fallbackDate,
+                fim: meta.date ? new Date(meta.date + "T23:59:59").toISOString() : fallbackDate,
+                totalBruto: meta.revenueTotal || "0",
+                totalCorridas: 0,
+                kmInicial: "0",
+                kmFinal: String(meta.kmTotal || 0),
+                status: "excluido_ou_nao_encontrado" // Sinalizador visual
+            } as any;
+        }
+
+        // At this point, shiftData is guaranteed to be defined
+        const shift = shiftData!;
+
+        // Fetch Driver and Vehicle Details
+        const driver = await db.query.drivers.findFirst({
+            where: (d, { eq }) => eq(d.id, shift.driverId),
+            columns: { nome: true }
+        });
+
+        const vehicle = await db.query.vehicles.findFirst({
+            where: (v, { eq }) => eq(v.id, shift.vehicleId),
+            columns: { plate: true, modelo: true }
+        });
+
+        // EXPLICIT CALCULATION FROM RIDES (MANDATORY REQUIREMENT)
+        const ridesRaw = await db.execute(sql`SELECT tipo, valor FROM rides WHERE shift_id = ${shift.id}`);
+        const ridesList = ridesRaw.rows as any[];
+
+        let ridesAppCount = 0;
+        let ridesParticularCount = 0;
+        let revenueApp = 0;
+        let revenueParticular = 0;
+
+        let ridesUnknownCount = 0;
+        let revenueUnknown = 0;
+
+        ridesList.forEach(r => {
+            const rawType = (r.tipo || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const val = Number(r.valor || 0);
+
+            if (['app', 'aplicativo'].includes(rawType)) {
+                ridesAppCount++;
+                revenueApp += val;
+            } else if (rawType === 'particular') {
+                ridesParticularCount++;
+                revenueParticular += val;
+            } else {
+                ridesUnknownCount++;
+                revenueUnknown += val;
+            }
+        });
+
+        // --- AUDIT ENRICHMENT (PHASE 2) ---
+        // Calculate strict operational metrics (Time Slots, Gaps, Baseline)
+        // This does NOT affect the fraud engine or risk score.
+        let auditMetrics = null;
+        try {
+            // Calculate share particular for contextual score
+            const shareParticular = Number(shift.totalBruto || 0) > 0
+                ? (revenueParticular / Number(shift.totalBruto)) * 100
+                : 0;
+
+            auditMetrics = await calculateAuditMetrics(
+                shift.id,
+                shift.driverId,
+                {
+                    inicio: shift.inicio,
+                    fim: shift.fim,
+                    totalBruto: Number(shift.totalBruto || 0),
+                    totalCorridas: Number(shift.totalCorridas || 0),
+                    kmInicial: Number(shift.kmInicial || 0),
+                    kmFinal: Number(shift.kmFinal || 0),
+                    duracaoMin: Number(shift.duracaoMin || 0)
+
+                },
+                event.riskScore || 0,
+                shareParticular
+            );
+        } catch (auditError) {
+            console.error("[FRAUD] Error calculating audit metrics:", auditError);
+            // Non-blocking error - return null metrics
+        }
+
+        return {
+            event,
+            shift: {
+                id: shift.id,
+                driverId: shift.driverId,
+                vehicleId: shift.vehicleId,
+                inicio: shift.inicio,
+                fim: shift.fim,
+                kmInicial: Number(shift.kmInicial || 0),
+                kmFinal: Number(shift.kmFinal || 0),
+                totalBruto: Number(shift.totalBruto || 0),
+                totalCorridas: Number(shift.totalCorridas || 0),
+                duracaoMin: Number(shift.duracaoMin || 0),
+                // New Explicit Aggregations
+                ridesAppCount,
+                ridesParticularCount,
+                ridesUnknownCount,
+                revenueApp,
+                revenueParticular,
+                revenueUnknown,
+                // Identity Details
+                driverName: driver?.nome || "Desconhecido",
+                vehiclePlate: vehicle?.plate || "Desconhecido",
+                vehicleModel: vehicle?.modelo || ""
+            },
+            auditMetrics // Injecting Audit Metrics for Phase 2
         };
     },
 

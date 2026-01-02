@@ -32,6 +32,8 @@
         "dist",
         "client/dist",
         "server/dist",
-        "**/dist"
+        "**/dist",
+        "scripts",
+        "server/scripts"
     ]
 }
