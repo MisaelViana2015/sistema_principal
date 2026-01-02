@@ -36,7 +36,7 @@ export async function findAllShifts(page = 1, limit = 50, filters?: any) {
             inicio: shifts.inicio,
             fim: shifts.fim,
             status: shifts.status,
-            kmRodado: shifts.kmFinal,
+            kmFinal: shifts.kmFinal,
             kmInicial: shifts.kmInicial,
             receita: shifts.totalBruto,
             totalApp: shifts.totalApp,
@@ -44,6 +44,7 @@ export async function findAllShifts(page = 1, limit = 50, filters?: any) {
             totalCorridasApp: shifts.totalCorridasApp,
             totalCorridasParticular: shifts.totalCorridasParticular,
             totalCorridas: shifts.totalCorridas,
+            totalBruto: shifts.totalBruto,
             // Financials (Added)
             totalCustos: shifts.totalCustos,
             totalCustosParticular: shifts.totalCustosParticular,
@@ -61,7 +62,7 @@ export async function findAllShifts(page = 1, limit = 50, filters?: any) {
 
     const processedResults = results.map((shift: any) => ({
         ...shift,
-        kmRodado: shift.kmRodado && shift.kmInicial ? (shift.kmRodado - shift.kmInicial) : 0
+        kmRodado: shift.kmFinal && shift.kmInicial ? (shift.kmFinal - shift.kmInicial) : 0
     }));
 
     return {
