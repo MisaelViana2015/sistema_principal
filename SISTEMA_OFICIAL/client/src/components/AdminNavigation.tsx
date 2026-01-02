@@ -17,7 +17,7 @@ interface AdminNavItem {
 const adminNavItems: AdminNavItem[] = [
     { path: "/admin/motoristas", label: "Motoristas", icon: Users },
     { path: "/admin/veiculos", label: "Veículos", icon: Car },
-    { path: "/fraude/eventos", label: "Fraude", icon: Shield },
+    { path: "/fraude", label: "Fraude", icon: Shield },
     { path: "/admin/audit", label: "Auditoria", icon: FileText },
     { path: "/admin/relatorios", label: "Relatórios", icon: FileText },
     { path: "/admin/dashboard", label: "Dashboard", icon: BarChart3 },
