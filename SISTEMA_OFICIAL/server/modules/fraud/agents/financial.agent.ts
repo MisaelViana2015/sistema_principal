@@ -17,7 +17,7 @@ export const FinancialAgent: FraudAgent = {
 
         const totalRevenue = ctx.rides.reduce((s, r) => s + r.valor, 0);
         // ADJUSTMENT 3: Use .value standard from context, not .valor
-        const totalExpenses = ctx.expenses.reduce((s, e) => s + e.value, 0);
+        const totalExpenses = ctx.expenses.reduce((s, e) => s + (e.valor || 0), 0);
 
         // REGRA 1: EXPENSE_REVENUE_MISMATCH (gasto alto, receita baixa)
         if (totalExpenses > 50 && totalRevenue < totalExpenses * 3) {
@@ -46,7 +46,7 @@ export const FinancialAgent: FraudAgent = {
         );
 
         // ADJUSTMENT 3: Use .value here too
-        const fuelTotal = fuelExpenses.reduce((s, e) => s + e.value, 0);
+        const fuelTotal = fuelExpenses.reduce((s, e) => s + (e.valor || 0), 0);
 
         if (fuelTotal > 30 && totalRevenue < fuelTotal * 4) {
             hits.push({

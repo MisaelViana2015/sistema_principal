@@ -22,14 +22,14 @@ export const AuditAgent: FraudAgent = {
             const postCloseEdits = await db
                 .select()
                 .from(entityHistory)
+                .innerJoin(rides, eq(rides.id, entityHistory.entityId))
                 .where(
                     and(
                         eq(entityHistory.entity, 'rides'),
-                        gte(entityHistory.createdAt, cutoff)
+                        gte(entityHistory.createdAt, cutoff),
+                        eq(rides.shiftId, ctx.shiftId)
                     )
-                )
-                .innerJoin(rides, eq(rides.id, entityHistory.entityId))
-                .where(eq(rides.shiftId, ctx.shiftId));
+                );
 
             if (postCloseEdits.length > 0) {
                 hits.push({
@@ -69,7 +69,13 @@ export const AuditAgent: FraudAgent = {
             );
 
         if (rideInserts.length >= 8) {
-            const times = rideInserts.map(r => new Date(r.insertedAt!).getTime()).sort((a, b) => a - b);
+            const times = rideInserts
+                .map(r => r.insertedAt ? new Date(r.insertedAt).getTime() : 0)
+                .filter(t => t > 0)
+                .sort((a, b) => a - b);
+
+            if (times.length < 2) return hits;
+
             const insertSpanMin = (times[times.length - 1] - times[0]) / 60000;
 
             // Comparar com spread de ride.hora
@@ -109,11 +115,13 @@ export const AuditAgent: FraudAgent = {
                 and(
                     eq(entityHistory.entity, 'rides'),
                     eq(entityHistory.operation, 'DELETE'),
-                    eq(rides.shiftId, ctx.shiftId)  // <-- CRITICAL FIX APPLIED
+                    eq(rides.shiftId, ctx.shiftId)
                 )
             );
 
         for (const del of deleteOps) {
+            if (!del.actorId || !del.createdAt) continue; // Skip incomplete records
+
             const recreate = await db
                 .select()
                 .from(entityHistory)
@@ -123,7 +131,7 @@ export const AuditAgent: FraudAgent = {
                         eq(entityHistory.entity, 'rides'),
                         eq(entityHistory.operation, 'INSERT'),
                         eq(entityHistory.actorId, del.actorId),
-                        gte(entityHistory.createdAt, del.createdAt!),
+                        gte(entityHistory.createdAt, del.createdAt),
                         eq(rides.shiftId, ctx.shiftId)
                     )
                 )
