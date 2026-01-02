@@ -104,45 +104,87 @@ CREATE TABLE IF NOT EXISTS "vehicle_costs" (
 	"data_vencimento" timestamp
 );
 --> statement-breakpoint
-ALTER TABLE "cost_types" ADD COLUMN "is_active" boolean DEFAULT true NOT NULL;--> statement-breakpoint
-ALTER TABLE "cost_types" ADD COLUMN "visible_to_driver" boolean DEFAULT true NOT NULL;--> statement-breakpoint
-ALTER TABLE "cost_types" ADD COLUMN "icon" text;--> statement-breakpoint
-ALTER TABLE "cost_types" ADD COLUMN "color" text;--> statement-breakpoint
-ALTER TABLE "expenses" ADD COLUMN "is_particular" boolean DEFAULT false;--> statement-breakpoint
-ALTER TABLE "expenses" ADD COLUMN "is_split_cost" boolean DEFAULT false;--> statement-breakpoint
-ALTER TABLE "fixed_costs" ADD COLUMN "cost_type_id" varchar;--> statement-breakpoint
-ALTER TABLE "fixed_costs" ADD COLUMN "vehicle_id" varchar;--> statement-breakpoint
-ALTER TABLE "fixed_costs" ADD COLUMN "vendor" text;--> statement-breakpoint
-ALTER TABLE "fixed_costs" ADD COLUMN "total_installments" integer;--> statement-breakpoint
-ALTER TABLE "fixed_costs" ADD COLUMN "start_date" timestamp;--> statement-breakpoint
-ALTER TABLE "fixed_costs" ADD COLUMN "description" text;--> statement-breakpoint
-ALTER TABLE "fixed_costs" ADD COLUMN "is_active" boolean DEFAULT true;--> statement-breakpoint
-ALTER TABLE "shifts" ADD COLUMN "total_custos_particular" real DEFAULT 0;--> statement-breakpoint
-ALTER TABLE "shifts" ADD COLUMN "discount_company" real DEFAULT 0;--> statement-breakpoint
-ALTER TABLE "shifts" ADD COLUMN "discount_driver" real DEFAULT 0;--> statement-breakpoint
-ALTER TABLE "vehicles" ADD COLUMN "color" text;--> statement-breakpoint
-ALTER TABLE "vehicles" ADD COLUMN "image_url" text;--> statement-breakpoint
-ALTER TABLE "vehicles" ADD COLUMN "status" text DEFAULT 'ativo';--> statement-breakpoint
+ALTER TABLE "cost_types"
+ADD COLUMN IF NOT EXISTS "is_active" boolean DEFAULT true NOT NULL;
+--> statement-breakpoint
+ALTER TABLE "cost_types"
+ADD COLUMN IF NOT EXISTS "visible_to_driver" boolean DEFAULT true NOT NULL;
+--> statement-breakpoint
+ALTER TABLE "cost_types"
+ADD COLUMN IF NOT EXISTS "icon" text;
+--> statement-breakpoint
+ALTER TABLE "cost_types"
+ADD COLUMN IF NOT EXISTS "color" text;
+--> statement-breakpoint
+ALTER TABLE "expenses"
+ADD COLUMN IF NOT EXISTS "is_particular" boolean DEFAULT false;
+--> statement-breakpoint
+ALTER TABLE "expenses"
+ADD COLUMN IF NOT EXISTS "is_split_cost" boolean DEFAULT false;
+--> statement-breakpoint
+ALTER TABLE "fixed_costs"
+ADD COLUMN IF NOT EXISTS "cost_type_id" varchar;
+--> statement-breakpoint
+ALTER TABLE "fixed_costs"
+ADD COLUMN IF NOT EXISTS "vehicle_id" varchar;
+--> statement-breakpoint
+ALTER TABLE "fixed_costs"
+ADD COLUMN IF NOT EXISTS "vendor" text;
+--> statement-breakpoint
+ALTER TABLE "fixed_costs"
+ADD COLUMN IF NOT EXISTS "total_installments" integer;
+--> statement-breakpoint
+ALTER TABLE "fixed_costs"
+ADD COLUMN IF NOT EXISTS "start_date" timestamp;
+--> statement-breakpoint
+ALTER TABLE "fixed_costs"
+ADD COLUMN IF NOT EXISTS "description" text;
+--> statement-breakpoint
+ALTER TABLE "fixed_costs"
+ADD COLUMN IF NOT EXISTS "is_active" boolean DEFAULT true;
+--> statement-breakpoint
+ALTER TABLE "shifts"
+ADD COLUMN IF NOT EXISTS "total_custos_particular" real DEFAULT 0;
+--> statement-breakpoint
+ALTER TABLE "shifts"
+ADD COLUMN IF NOT EXISTS "discount_company" real DEFAULT 0;
+--> statement-breakpoint
+ALTER TABLE "shifts"
+ADD COLUMN IF NOT EXISTS "discount_driver" real DEFAULT 0;
+--> statement-breakpoint
+ALTER TABLE "vehicles"
+ADD COLUMN IF NOT EXISTS "color" text;
+--> statement-breakpoint
+ALTER TABLE "vehicles"
+ADD COLUMN IF NOT EXISTS "image_url" text;
+--> statement-breakpoint
+ALTER TABLE "vehicles"
+ADD COLUMN IF NOT EXISTS "status" text DEFAULT 'ativo';
+--> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "fixed_costs" ADD CONSTRAINT "fixed_costs_cost_type_id_cost_types_id_fk" FOREIGN KEY ("cost_type_id") REFERENCES "cost_types"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "fixed_costs"
+ADD CONSTRAINT "fixed_costs_cost_type_id_cost_types_id_fk" FOREIGN KEY ("cost_type_id") REFERENCES "cost_types"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
- WHEN duplicate_object THEN null;
+WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "fixed_costs" ADD CONSTRAINT "fixed_costs_vehicle_id_vehicles_id_fk" FOREIGN KEY ("vehicle_id") REFERENCES "vehicles"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "fixed_costs"
+ADD CONSTRAINT "fixed_costs_vehicle_id_vehicles_id_fk" FOREIGN KEY ("vehicle_id") REFERENCES "vehicles"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
- WHEN duplicate_object THEN null;
+WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "fixed_cost_installments" ADD CONSTRAINT "fixed_cost_installments_fixed_cost_id_fixed_costs_id_fk" FOREIGN KEY ("fixed_cost_id") REFERENCES "fixed_costs"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "fixed_cost_installments"
+ADD CONSTRAINT "fixed_cost_installments_fixed_cost_id_fixed_costs_id_fk" FOREIGN KEY ("fixed_cost_id") REFERENCES "fixed_costs"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
- WHEN duplicate_object THEN null;
+WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "tires" ADD CONSTRAINT "tires_vehicle_id_vehicles_id_fk" FOREIGN KEY ("vehicle_id") REFERENCES "vehicles"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "tires"
+ADD CONSTRAINT "tires_vehicle_id_vehicles_id_fk" FOREIGN KEY ("vehicle_id") REFERENCES "vehicles"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
- WHEN duplicate_object THEN null;
+WHEN duplicate_object THEN null;
 END $$;
