@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import AdminNavigation from "../components/AdminNavigation";
 
 export default function AdminRoute() {
     const { user, isLoading } = useAuth();
