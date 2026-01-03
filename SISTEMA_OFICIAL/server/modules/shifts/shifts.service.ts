@@ -470,6 +470,10 @@ export async function createManualShift(data: ManualShiftData, context?: AuditCo
                 console.log('[createManualShift] Starting transaction...', data);
 
                 // 1. Criar o turno básico (já finalizado)
+                // Calcular duração em minutos
+                const duracaoMs = new Date(data.fim).getTime() - new Date(data.inicio).getTime();
+                const duracaoMin = Math.round(duracaoMs / 60000);
+
                 const [newShift] = await tx.insert(shifts).values({
                     driverId: data.driverId,
                     vehicleId: data.vehicleId,
@@ -477,6 +481,7 @@ export async function createManualShift(data: ManualShiftData, context?: AuditCo
                     kmFinal: data.kmFinal,
                     inicio: data.inicio,
                     fim: data.fim,
+                    duracaoMin: duracaoMin,
                     status: 'finalizado'
                     // Nota: campo 'origem' removido pois não existe no schema
                 }).returning();
