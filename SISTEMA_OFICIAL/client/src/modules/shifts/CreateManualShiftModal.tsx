@@ -61,7 +61,7 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
             const [driversRes, vehiclesRes, costTypesRes] = await Promise.all([
                 api.get('/drivers'),
                 api.get('/vehicles'),
-                api.get('/cost-types')
+                api.get('/financial/cost-types')
             ]);
             console.log('[CreateManualShift] Drivers:', driversRes.data);
             console.log('[CreateManualShift] Vehicles:', vehiclesRes.data);
