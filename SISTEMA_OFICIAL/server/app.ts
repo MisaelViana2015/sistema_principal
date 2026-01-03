@@ -19,6 +19,7 @@ import financialRoutes from "./modules/financial/financial.routes.js";
 import featuresRoutes from "./modules/config/features.routes.js";
 import { fraudRoutes } from "./modules/fraud/fraud.routes.js";
 import maintenanceRoutes from "./modules/maintenance/maintenance.routes.js"; // NEW
+import agentRoutes from "./modules/agent/agent.routes.js"; // AGENT IA
 import { apiLimiter } from "./core/middlewares/rateLimit.js";
 
 /**
@@ -182,6 +183,7 @@ import adminToolsRoutes from "./routes/admin-tools.routes.js";
 app.use("/api/admin", adminRoutes);
 app.use("/api/tires", tiresRoutes);
 app.use("/api/admin-tools", adminToolsRoutes);
+app.use("/api/agent", agentRoutes); // AGENT IA
 
 // ============================================
 // TRATAMENTO DE ERROS
