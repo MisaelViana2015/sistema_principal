@@ -1,3 +1,4 @@
+// CACHE_BUST: 2026-01-03-17-24 - Force rebuild for /api/agent endpoints
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
