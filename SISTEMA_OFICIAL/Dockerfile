@@ -16,6 +16,8 @@ RUN rm -f package-lock.json
 RUN npm install
 
 # Copy source code
+# Invalidate cache by changing this value
+ARG CACHEBUST=2026010317370
 COPY . .
 
 # Build the server (this will also compile shared if needed)
