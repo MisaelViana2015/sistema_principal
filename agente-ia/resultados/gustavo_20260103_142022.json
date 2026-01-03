@@ -1,0 +1,124 @@
+{
+  "timestamp": "2026-01-03T14:20:22.799712",
+  "turno": {
+    "event_id": "8c3eed5a-7a2b-4b37-89f0-f44edcaebe06",
+    "shift_id": "f61bf051-9b32-413e-8019-070eb5c5fc83",
+    "motorista": "Gustavo",
+    "veiculo": "Dolphi Mini BR - TQU0H17",
+    "data": "31/12/2025",
+    "inicio": "06:48:58",
+    "fim": "20:15:15",
+    "duracao_horas": 13.44,
+    "km_inicial": 22266,
+    "km_final": 22424,
+    "km_total": 158,
+    "receita_total": 453.56,
+    "total_corridas": 24,
+    "ticket_medio": 18.9,
+    "produtividade": 1.8,
+    "receita_km": 2.87,
+    "receita_hora": 33.75,
+    "corridas_app": 13,
+    "receita_app": 261.56,
+    "corridas_particular": 11,
+    "receita_particular": 192.0,
+    "share_particular": 42.3,
+    "gaps_detectados": [
+      {
+        "inicio": "07:22:03",
+        "fim": "07:52:21",
+        "duracao": "30 min"
+      },
+      {
+        "inicio": "07:52:21",
+        "fim": "08:25:31",
+        "duracao": "33 min"
+      },
+      {
+        "inicio": "08:25:31",
+        "fim": "09:32:59",
+        "duracao": "67 min"
+      },
+      {
+        "inicio": "09:32:59",
+        "fim": "11:13:02",
+        "duracao": "100 min"
+      },
+      {
+        "inicio": "11:13:02",
+        "fim": "11:34:59",
+        "duracao": "22 min"
+      },
+      {
+        "inicio": "12:10:21",
+        "fim": "12:52:18",
+        "duracao": "42 min"
+      },
+      {
+        "inicio": "12:52:18",
+        "fim": "14:04:01",
+        "duracao": "72 min"
+      },
+      {
+        "inicio": "14:22:31",
+        "fim": "14:47:45",
+        "duracao": "25 min"
+      },
+      {
+        "inicio": "14:47:45",
+        "fim": "15:31:15",
+        "duracao": "44 min"
+      },
+      {
+        "inicio": "15:31:15",
+        "fim": "16:18:31",
+        "duracao": "47 min"
+      },
+      {
+        "inicio": "16:18:31",
+        "fim": "17:36:38",
+        "duracao": "78 min"
+      },
+      {
+        "inicio": "17:36:38",
+        "fim": "18:14:03",
+        "duracao": "37 min"
+      },
+      {
+        "inicio": "18:14:03",
+        "fim": "18:36:52",
+        "duracao": "23 min"
+      },
+      {
+        "inicio": "18:36:52",
+        "fim": "18:58:29",
+        "duracao": "22 min"
+      },
+      {
+        "inicio": "19:19:01",
+        "fim": "19:40:41",
+        "duracao": "22 min"
+      },
+      {
+        "inicio": "19:40:41",
+        "fim": "20:10:14",
+        "duracao": "30 min"
+      }
+    ],
+    "score_sistema": 105,
+    "nivel_risco": "critical",
+    "regras_disparadas": [
+      {
+        "regra": "Gap de tempo injustificado",
+        "severidade": "medium",
+        "pontos": 90
+      },
+      {
+        "regra": "Seleção suspeita de corridas",
+        "severidade": "medium",
+        "pontos": 15
+      }
+    ]
+  },
+  "analise_ia": " Para o turno analisado, apresentamos os seguintes resultados e conclusões:\n\n1. Indicadores financeiros:\n   - A receita por KM (R$ 2.87/km) está dentro do faixa normal de R$ 2,00 a R$ 3,30/km.\n   - A receita por hora (R$ 33.75/h) é um pouco acima da média esperada, mas não é suficiente para indicar fraude.\n\n2. Gaps de tempo:\n   - O motorista apresentou três intervalos sem corrida acima de 20 minutos, com os mais críticos sendo de 1h40 (09:32 a 11:13), 78 minutos (16:18 a 17:36) e 72 minutos (12:52 a 14:04). Esses intervalos são considerados justificáveis, pois o motorista pode ter sido bloqueado em trânsito ou tido que realizar manutenção no veículo.\n\n3. Padrões suspeitos:\n   - O motorista teve 42% de corridas particulares, o que é um pouco acima da média esperada para um motorista que escolhe corridas. Isso pode indicar uma tendência para realizar mais corridas particulares do que as oficiais, mas não é suficiente para indicar fraude.\n\n4. Veredito: SUSPEITO\n   - Apesar de haver algumas indicações suspeitas, ainda não há evidências claras de fraude no turno analisado. É necessário realizar uma investigação mais detalhada para confirmar se o motorista está realizando corridas particulares em vez das oficiais.\n\n5. Recomendações:\n   - Realizar uma investigação mais detalhada sobre as corridas do motorista Gustavo, verificando se há evidências de fraude.\n   - Aplicar sanções caso seja confirmado que o motorista está realizando corridas particulares em vez das oficiais.\n   - Treinar o motorista sobre a importância de seguir as regras e manter uma produtividade adequada.\n   - Monitorar mais atentamente os intervalos sem corrida para garantir que não haja fraudes no sistema."
+}

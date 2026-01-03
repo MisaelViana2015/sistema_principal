@@ -10,7 +10,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "src"))
 sys.path.insert(0, SRC_DIR)
 
-from agent_controller import agent
+from agent_manager import agent
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'rota-verde-agente-secret'

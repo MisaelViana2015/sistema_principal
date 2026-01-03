@@ -1,5 +1,8 @@
 {
     "chatgpt_url": "https://chat.openai.com",
+    "ollama_url": "http://localhost:11434",
+    "ollama_model": "mistral",
+    "chrome_profile_dir": "c:\\dev\\agente-ia\\chrome_profile",
     "rota_verde_api": "https://endpoint-api-production.up.railway.app/api",
     "check_interval_seconds": 300,
     "max_tokens_before_rotate": 8000,

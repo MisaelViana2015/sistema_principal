@@ -1,0 +1,8 @@
+{
+  "motorista": "Carlos Silva",
+  "turno_id": "T2024-0103-001",
+  "data": "03/01/2026",
+  "regra": "REGRA 14 - Corridas Consecutivas Mesmo Valor",
+  "analise": " 1. Sim, há violação da Regra 14.\n2. As corridas que violam a regra são as seguintes:\n   - Corrida 3 (09:00) com valor 15.0\n   - Corrida 4 (09:15) com valor 15.0\n   - Corrida 5 (09:28) com valor 15.0\n   - Corrida 6 (09:45) com valor 15.0\n   - Corrida 7 (10:02) com valor 15.0\n   O valor repetido é 15.0.\n3. Veredito: SUSPEITO\n4. Recomendação de ação: Realizar uma investigação mais detalhada sobre as corridas suspeitas para verificar se há manipulação ou corridas falsas.",
+  "timestamp": "03/01/2026 13:36:47"
+}

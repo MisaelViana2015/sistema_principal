@@ -144,4 +144,95 @@ router.get("/daily-summary", async (req, res) => {
     }
 });
 
+/**
+ * GET /agent/shift/:id
+ * Retorna turno com todas as corridas para análise de fraude
+ */
+router.get("/shift/:id", async (req, res) => {
+    try {
+        const shiftId = req.params.id;
+
+        const shift = await db.query.shifts.findFirst({
+            where: (s, { eq }) => eq(s.id, shiftId),
+            with: {
+                driver: { columns: { nome: true } },
+                vehicle: { columns: { plate: true, modelo: true } },
+                rides: true
+            }
+        });
+
+        if (!shift) {
+            return res.status(404).json({ error: "Turno não encontrado" });
+        }
+
+        // Formatar corridas
+        const corridasFormatadas = (shift.rides as any[]).map(r => ({
+            hora: r.hora,
+            valor: Number(r.valor),
+            tipo: r.tipo || "App",
+            origem: r.origem,
+            destino: r.destino
+        }));
+
+        res.json({
+            shiftId: shift.id,
+            motorista: shift.driver?.nome || "Desconhecido",
+            veiculo: `${shift.vehicle?.modelo || ""} - ${shift.vehicle?.plate || "N/A"}`,
+            inicio: shift.inicio,
+            fim: shift.fim,
+            kmInicial: Number(shift.kmInicial || 0),
+            kmFinal: Number(shift.kmFinal || 0),
+            kmTotal: Number(shift.kmFinal || 0) - Number(shift.kmInicial || 0),
+            totalBruto: Number(shift.totalBruto || 0),
+            totalCustos: Number(shift.totalCustos || 0),
+            totalCorridas: corridasFormatadas.length,
+            corridas: corridasFormatadas,
+            generatedAt: new Date().toISOString()
+        });
+    } catch (error: any) {
+        console.error("[AGENT] Error in shift/:id:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /agent/pending-fraud
+ * Retorna lista de turnos pendentes de análise de fraude
+ */
+router.get("/pending-fraud", async (req, res) => {
+    try {
+        const events = await db.query.fraudEvents.findMany({
+            where: (e, { eq }) => eq(e.status, 'pendente'),
+            orderBy: (e, { desc }) => desc(e.riskScore),
+            limit: 20
+        });
+
+        const results = await Promise.all(events.map(async (event) => {
+            const driver = event.driverId ? await db.query.drivers.findFirst({
+                where: (d, { eq }) => eq(d.id, event.driverId as string),
+                columns: { nome: true }
+            }) : null;
+
+            return {
+                eventId: event.id,
+                shiftId: event.shiftId,
+                motorista: driver?.nome || "Desconhecido",
+                riskScore: event.riskScore,
+                riskLevel: event.riskLevel,
+                detectedAt: event.detectedAt,
+                rules: event.rules
+            };
+        }));
+
+        res.json({
+            count: results.length,
+            events: results,
+            generatedAt: new Date().toISOString()
+        });
+    } catch (error: any) {
+        console.error("[AGENT] Error in pending-fraud:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
