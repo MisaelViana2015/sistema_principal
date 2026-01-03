@@ -150,7 +150,8 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
                                     <Label>KM Inicial</Label>
                                     <Input
                                         type="number"
-                                        className="bg-gray-800 border-gray-700"
+                                        inputMode="numeric"
+                                        className="bg-gray-800 border-gray-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         value={formData.kmInicial}
                                         onChange={e => setFormData({ ...formData, kmInicial: e.target.value })}
                                     />
@@ -159,7 +160,8 @@ export function EditShiftModal({ shiftId, open, onOpenChange, onSuccess }: EditS
                                     <Label>KM Final</Label>
                                     <Input
                                         type="number"
-                                        className="bg-gray-800 border-gray-700"
+                                        inputMode="numeric"
+                                        className="bg-gray-800 border-gray-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         value={formData.kmFinal}
                                         onChange={e => setFormData({ ...formData, kmFinal: e.target.value })}
                                     />
