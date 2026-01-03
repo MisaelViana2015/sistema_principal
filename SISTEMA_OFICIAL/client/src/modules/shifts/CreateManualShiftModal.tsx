@@ -184,7 +184,7 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
                         <Loader2 className="animate-spin w-8 h-8 text-emerald-400" />
                     </div>
                 ) : (
-                    <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+                    <div className="flex-1 overflow-y-auto space-y-6 pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {/* Dados do Turno */}
                         <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
                             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -198,7 +198,7 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
                                         <SelectTrigger className="bg-gray-800 border-gray-700">
                                             <SelectValue placeholder="Selecione..." />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-gray-800 border-gray-700">
+                                        <SelectContent className="bg-gray-800 border-gray-700 z-[10001]">
                                             {drivers.map(d => (
                                                 <SelectItem key={d.id} value={d.id}>{d.nome}</SelectItem>
                                             ))}
@@ -211,9 +211,9 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
                                         <SelectTrigger className="bg-gray-800 border-gray-700">
                                             <SelectValue placeholder="Selecione..." />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-gray-800 border-gray-700">
+                                        <SelectContent className="bg-gray-800 border-gray-700 z-[10001]">
                                             {vehicles.map(v => (
-                                                <SelectItem key={v.id} value={v.id}>{v.placa} — {v.apelido}</SelectItem>
+                                                <SelectItem key={v.id} value={v.id}>{v.plate} — {v.modelo}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -222,7 +222,8 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
                                     <Label>KM Inicial *</Label>
                                     <Input
                                         type="number"
-                                        className="bg-gray-800 border-gray-700"
+                                        inputMode="numeric"
+                                        className="bg-gray-800 border-gray-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         value={kmInicial}
                                         onChange={e => setKmInicial(e.target.value)}
                                         placeholder="Ex: 32150"
@@ -232,7 +233,8 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
                                     <Label>KM Final *</Label>
                                     <Input
                                         type="number"
-                                        className="bg-gray-800 border-gray-700"
+                                        inputMode="numeric"
+                                        className="bg-gray-800 border-gray-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         value={kmFinal}
                                         onChange={e => setKmFinal(e.target.value)}
                                         placeholder="Ex: 32280"
@@ -299,7 +301,7 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
                                                 <SelectTrigger className="bg-gray-800 border-gray-700 text-sm">
                                                     <SelectValue />
                                                 </SelectTrigger>
-                                                <SelectContent className="bg-gray-800 border-gray-700">
+                                                <SelectContent className="bg-gray-800 border-gray-700 z-[10001]">
                                                     <SelectItem value="app">App</SelectItem>
                                                     <SelectItem value="particular">Particular</SelectItem>
                                                 </SelectContent>
@@ -351,7 +353,7 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
                                                     <SelectTrigger className="bg-gray-800 border-gray-700 text-sm">
                                                         <SelectValue placeholder="Selecione..." />
                                                     </SelectTrigger>
-                                                    <SelectContent className="bg-gray-800 border-gray-700">
+                                                    <SelectContent className="bg-gray-800 border-gray-700 z-[10001]">
                                                         {costTypes.map(ct => (
                                                             <SelectItem key={ct.id} value={ct.id}>{ct.name}</SelectItem>
                                                         ))}
