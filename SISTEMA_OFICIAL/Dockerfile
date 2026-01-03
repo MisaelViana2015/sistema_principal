@@ -1,4 +1,5 @@
 # Build stage
+# CACHE_BUST: 2026-01-03-17-16 - Force rebuild for /api/agent endpoints
 FROM node:18-alpine AS builder
 
 WORKDIR /app
