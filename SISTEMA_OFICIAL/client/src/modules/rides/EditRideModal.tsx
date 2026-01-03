@@ -35,7 +35,7 @@ export function EditRideModal({ ride, isOpen, onClose, onSave }: EditRideModalPr
 
             setFormData({
                 valor: String(ride.valor),
-                tipo: ride.tipo,
+                tipo: (ride.tipo || 'APP').toUpperCase(), // Garantir MAIÚSCULO
                 hora: formattedDate
             });
         }
@@ -49,6 +49,7 @@ export function EditRideModal({ ride, isOpen, onClose, onSave }: EditRideModalPr
         try {
             await onSave(ride.id, {
                 ...formData,
+                tipo: formData.tipo.toUpperCase(), // Garantir MAIÚSCULO
                 hora: new Date(formData.hora).toISOString()
             });
             onClose();
