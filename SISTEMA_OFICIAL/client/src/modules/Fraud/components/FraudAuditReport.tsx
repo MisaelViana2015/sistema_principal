@@ -42,23 +42,23 @@ const OFFICIAL_RULES_LIST = [
     { code: "RECEITA_KM_DESVIO_ALTO", name: "REGRA 08 — DESVIO DE BASELINE ALTO", desc: "Receita/KM variou +/- 50% em relação à média pessoal." },
     { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 09 — DESVIO DE BASELINE CRÍTICO", desc: "Receita/KM variou +/- 50% (1.5x) em relação à média pessoal." },
     { code: "KM_SALTO_ABSURDO", name: "REGRA 10 — GAP DE KM ANÔMALO", desc: "Diferença entre turnos maior que 250 km. Indica uso não registrado." },
-    { code: "KM_RETROCEDEU", name: "REGRA ERROR — KM RETROCEDEU", desc: "O km inicial do turno atual é menor que o km final do turno anterior." },
+    { code: "KM_RETROCEDEU", name: "REGRA 11 — KM RETROCEDEU", desc: "O km inicial do turno atual é menor que o km final do turno anterior." },
 
-    // === REGRAS V2 - COMPARAÇÃO EM TEMPO REAL (CohortAgent) ===
-    { code: "DRIVER_IDLE_FLEET_ACTIVE", name: "REGRA V2 — MOTORISTA PARADO COM FROTA ATIVA", desc: "Demanda alta na cidade porém motorista não registrou corridas nos últimos 15 minutos. Indica possível ocultação de corridas ou parada não justificada." },
-    { code: "NO_RIDE_15_PLUS_HIGH_DEMAND", name: "REGRA V2 — SEM CORRIDAS ≥R$15 EM DEMANDA ALTA", desc: "Frota com mediana de valor acima de R$15, mas motorista só tem corridas abaixo desse valor. Indica possível seleção de corridas ou divisão." },
-    { code: "OUTLIER_VS_FLEET", name: "REGRA V2 — PRODUTIVIDADE ABAIXO DA FROTA", desc: "Motorista está produzindo menos de 50% da média de corridas/hora da frota ativa no mesmo período." },
+    // === REGRAS 12-14 - COMPARAÇÃO EM TEMPO REAL (CohortAgent) ===
+    { code: "DRIVER_IDLE_FLEET_ACTIVE", name: "REGRA 12 — MOTORISTA PARADO COM FROTA ATIVA", desc: "Demanda alta na cidade porém motorista não registrou corridas nos últimos 15 minutos. Indica possível ocultação de corridas ou parada não justificada." },
+    { code: "NO_RIDE_15_PLUS_HIGH_DEMAND", name: "REGRA 13 — SEM CORRIDAS ≥R$15 EM DEMANDA ALTA", desc: "Frota com mediana de valor acima de R$15, mas motorista só tem corridas abaixo desse valor. Indica possível seleção de corridas ou divisão." },
+    { code: "OUTLIER_VS_FLEET", name: "REGRA 14 — PRODUTIVIDADE ABAIXO DA FROTA", desc: "Motorista está produzindo menos de 50% da média de corridas/hora da frota ativa no mesmo período." },
 
-    // === REGRAS V2 - PADRÕES SUSPEITOS (RealTimeAgent) ===
-    { code: "LOW_VALUE_STEADY", name: "REGRA V2 — PADRÃO DE VALORES BAIXOS", desc: "60% ou mais das corridas são ≤ R$12. Padrão típico de divisão de corridas (uma corrida real dividida em várias menores)." },
-    { code: "RIDE_INTERVAL_20_30", name: "REGRA V2 — INTERVALO SUSPEITAMENTE REGULAR", desc: "Maioria dos intervalos entre corridas está entre 20-35 minutos. Padrão fabricado típico de corridas inventadas." },
-    { code: "VALUE_DISTRIBUTION_SPIKE", name: "REGRA V2 — CONCENTRAÇÃO EM VALOR ÚNICO", desc: "Mais de 50% das corridas têm exatamente o mesmo valor. Indica valores possivelmente inventados." },
+    // === REGRAS 15-17 - PADRÕES SUSPEITOS (RealTimeAgent) ===
+    { code: "LOW_VALUE_STEADY", name: "REGRA 15 — PADRÃO DE VALORES BAIXOS", desc: "60% ou mais das corridas são ≤ R$12. Padrão típico de divisão de corridas (uma corrida real dividida em várias menores)." },
+    { code: "RIDE_INTERVAL_20_30", name: "REGRA 16 — INTERVALO SUSPEITAMENTE REGULAR", desc: "Maioria dos intervalos entre corridas está entre 20-35 minutos. Padrão fabricado típico de corridas inventadas." },
+    { code: "VALUE_DISTRIBUTION_SPIKE", name: "REGRA 17 — CONCENTRAÇÃO EM VALOR ÚNICO", desc: "Mais de 50% das corridas têm exatamente o mesmo valor. Indica valores possivelmente inventados." },
 
-    // === REGRAS V2 - ANÁLISE COMPORTAMENTAL ===
-    { code: "PRODUTIVIDADE_ABAIXO_BASELINE", name: "REGRA V2 — PRODUTIVIDADE VS FROTA", desc: "Motorista produziu 70%+ menos que a média da frota em múltiplas faixas horárias do turno." },
-    { code: "TIME_GAP_SEM_JUSTIFICATIVA", name: "REGRA V2 — GAP DE TEMPO SEM CORRIDA", desc: "Período de 1h ou mais sem registrar corridas enquanto turno estava ativo. Requer verificação de câmeras." },
-    { code: "DEVIATION_VS_SELF", name: "REGRA V2 — DESVIO DO PRÓPRIO HISTÓRICO", desc: "Produtividade muito diferente da média histórica do próprio motorista nos últimos 30 dias." },
-    { code: "VALUE_ASYMMETRY", name: "REGRA V2 — ASSIMETRIA DE VALORES", desc: "Motorista pegando apenas corridas baratas enquanto frota tem acesso às mesmas corridas caras. Indica seleção proposital." },
+    // === REGRAS 18-21 - ANÁLISE COMPORTAMENTAL ===
+    { code: "PRODUTIVIDADE_ABAIXO_BASELINE", name: "REGRA 18 — PRODUTIVIDADE VS FROTA", desc: "Motorista produziu 70%+ menos que a média da frota em múltiplas faixas horárias do turno." },
+    { code: "TIME_GAP_SEM_JUSTIFICATIVA", name: "REGRA 19 — GAP DE TEMPO SEM CORRIDA", desc: "Período de 1h ou mais sem registrar corridas enquanto turno estava ativo. Requer verificação de câmeras." },
+    { code: "DEVIATION_VS_SELF", name: "REGRA 20 — DESVIO DO PRÓPRIO HISTÓRICO", desc: "Produtividade muito diferente da média histórica do próprio motorista nos últimos 30 dias." },
+    { code: "VALUE_ASYMMETRY", name: "REGRA 21 — ASSIMETRIA DE VALORES", desc: "Motorista pegando apenas corridas baratas enquanto frota tem acesso às mesmas corridas caras. Indica seleção proposital." },
 ];
 
 const getSeverityWeight = (s?: string) => {
@@ -600,6 +600,363 @@ export const FraudAuditReport: React.FC<FraudAuditReportProps> = ({ event, shift
                     })}
                 </div>
             </div>
+
+            {/* 13. Dados Técnicos da Detecção - NOVA SEÇÃO */}
+            {sortedRules.length > 0 && (
+                <div className="mt-8 break-inside-avoid">
+                    <h2 className="text-lg font-bold border-b border-gray-800 mb-3 pb-1">13. Dados Técnicos da Detecção</h2>
+                    <p className="text-sm text-gray-700 mb-4 text-justify">
+                        Esta seção apresenta os dados brutos que dispararam cada regra. Use estas informações para validar manualmente consultando as corridas do turno.
+                    </p>
+
+                    <div className="space-y-4">
+                        {sortedRules.map((rule: any, idx: number) => {
+                            const rDef = OFFICIAL_RULES_LIST.find(r => r.code === rule.code);
+                            const data = rule.data || {};
+
+                            return (
+                                <div key={idx} className="border border-gray-300 rounded-lg overflow-hidden">
+                                    {/* Header */}
+                                    <div className={`px-4 py-2 font-bold text-sm ${rule.severity === 'critical' ? 'bg-red-100 text-red-800' : rule.severity === 'high' ? 'bg-orange-100 text-orange-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                        {rDef?.name || rule.label || rule.code}
+                                        <span className="float-right font-normal text-xs uppercase">{rule.severity} • {rule.score} pts</span>
+                                    </div>
+
+                                    {/* Body - Dados Técnicos */}
+                                    <div className="p-4 bg-gray-50 text-xs">
+                                        <p className="text-gray-600 mb-3 italic">{rule.description}</p>
+
+                                        {/* Dados Genéricos */}
+                                        {Object.keys(data).length > 0 && (
+                                            <div className="space-y-2">
+                                                <p className="font-bold text-gray-800 border-b pb-1">📊 Dados que Dispararam a Regra:</p>
+
+                                                {/* Valores Monetários */}
+                                                {data.revPerKm !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Receita/KM Calculada:</span>
+                                                        <span className="font-mono font-bold">{fmtBRL(data.revPerKm)}/km</span>
+                                                    </div>
+                                                )}
+                                                {data.revPerHour !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Receita/Hora Calculada:</span>
+                                                        <span className="font-mono font-bold">{fmtBRL(data.revPerHour)}/h</span>
+                                                    </div>
+                                                )}
+                                                {data.threshold !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Limite Esperado:</span>
+                                                        <span className="font-mono">{fmtBRL(data.threshold)}/km</span>
+                                                    </div>
+                                                )}
+                                                {data.minThreshold !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Limite Mínimo:</span>
+                                                        <span className="font-mono">{typeof data.minThreshold === 'number' && data.minThreshold > 100 ? fmtBRL(data.minThreshold) : `${data.minThreshold}`}</span>
+                                                    </div>
+                                                )}
+                                                {data.maxThreshold !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Limite Máximo:</span>
+                                                        <span className="font-mono">{typeof data.maxThreshold === 'number' && data.maxThreshold > 100 ? fmtBRL(data.maxThreshold) : `${data.maxThreshold}`}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Baseline Comparison */}
+                                                {data.baseline !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Média Histórica (Baseline):</span>
+                                                        <span className="font-mono">{fmtBRL(data.baseline)}</span>
+                                                    </div>
+                                                )}
+                                                {data.ratio !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Desvio (Ratio):</span>
+                                                        <span className="font-mono font-bold text-red-700">{data.ratio.toFixed(2)}x</span>
+                                                    </div>
+                                                )}
+
+                                                {/* KM Data */}
+                                                {data.gap !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Gap de KM:</span>
+                                                        <span className="font-mono font-bold">{data.gap} km</span>
+                                                    </div>
+                                                )}
+                                                {data.prevShiftKmEnd !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">KM Final Turno Anterior:</span>
+                                                        <span className="font-mono">{data.prevShiftKmEnd} km</span>
+                                                    </div>
+                                                )}
+                                                {data.currentShiftKmStart !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">KM Inicial Turno Atual:</span>
+                                                        <span className="font-mono">{data.currentShiftKmStart} km</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Duration Data */}
+                                                {data.durationHours !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Duração do Turno:</span>
+                                                        <span className="font-mono">{data.durationHours.toFixed(2)}h</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Productivity vs Fleet */}
+                                                {data.hoursBelow && Array.isArray(data.hoursBelow) && (
+                                                    <div className="mt-2 p-2 bg-white rounded border">
+                                                        <p className="font-bold text-gray-700 mb-2">🕐 Faixas Horárias Abaixo do Esperado:</p>
+                                                        <table className="w-full text-xs">
+                                                            <thead>
+                                                                <tr className="border-b">
+                                                                    <th className="text-left py-1">Horário</th>
+                                                                    <th className="text-center py-1">Corridas Realizadas</th>
+                                                                    <th className="text-center py-1">Frota Média</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {data.hoursBelow.map((h: any, i: number) => (
+                                                                    <tr key={i} className="border-b border-gray-100">
+                                                                        <td className="py-1">{String(h.hour).padStart(2, '0')}:00 - {String(h.hour).padStart(2, '0')}:59</td>
+                                                                        <td className="text-center font-bold text-red-600">{h.actual}</td>
+                                                                        <td className="text-center text-gray-600">{h.expected?.toFixed(1)}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                )}
+
+                                                {/* Time Gaps */}
+                                                {data.gaps && Array.isArray(data.gaps) && (
+                                                    <div className="mt-2 p-2 bg-white rounded border">
+                                                        <p className="font-bold text-gray-700 mb-2">⏱️ Intervalos Sem Corrida Detectados:</p>
+                                                        <table className="w-full text-xs">
+                                                            <thead>
+                                                                <tr className="border-b">
+                                                                    <th className="text-left py-1">Início do Gap</th>
+                                                                    <th className="text-left py-1">Fim do Gap</th>
+                                                                    <th className="text-center py-1">Duração</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {data.gaps.map((g: any, i: number) => (
+                                                                    <tr key={i} className="border-b border-gray-100">
+                                                                        <td className="py-1 font-mono">{new Date(g.start).toLocaleTimeString('pt-BR')}</td>
+                                                                        <td className="py-1 font-mono">{new Date(g.end).toLocaleTimeString('pt-BR')}</td>
+                                                                        <td className="text-center font-bold text-orange-600">{g.msg}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                        {data.isShiftOpen && (
+                                                            <p className="text-xs text-orange-600 mt-2 font-medium">⚠️ Turno estava ABERTO durante esses intervalos</p>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Historical Deviation */}
+                                                {data.currentRidesPerHour !== undefined && data.historicalAvg !== undefined && (
+                                                    <div className="mt-2 p-2 bg-white rounded border">
+                                                        <p className="font-bold text-gray-700 mb-2">📉 Comparação com Histórico Pessoal:</p>
+                                                        <div className="grid grid-cols-3 gap-2 text-center">
+                                                            <div>
+                                                                <span className="block text-gray-500">Turno Atual</span>
+                                                                <span className="font-bold text-lg text-red-600">{data.currentRidesPerHour.toFixed(1)}/h</span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="block text-gray-500">Média Histórica</span>
+                                                                <span className="font-bold text-lg text-green-600">{data.historicalAvg.toFixed(1)}/h</span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="block text-gray-500">Desvio</span>
+                                                                <span className="font-bold text-lg text-orange-600">{data.deviation}</span>
+                                                            </div>
+                                                        </div>
+                                                        {data.sampleSize && (
+                                                            <p className="text-xs text-gray-500 mt-2 text-center">Baseado em {data.sampleSize} turnos anteriores</p>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Value Asymmetry */}
+                                                {data.driverLowPercent !== undefined && data.fleetLowPercent !== undefined && (
+                                                    <div className="mt-2 p-2 bg-white rounded border">
+                                                        <p className="font-bold text-gray-700 mb-2">⚖️ Assimetria de Seleção de Corridas:</p>
+                                                        <div className="grid grid-cols-3 gap-2 text-center">
+                                                            <div>
+                                                                <span className="block text-gray-500">% Corridas Baratas (Motorista)</span>
+                                                                <span className="font-bold text-lg">{data.driverLowPercent.toFixed(1)}%</span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="block text-gray-500">% Corridas Baratas (Frota)</span>
+                                                                <span className="font-bold text-lg">{data.fleetLowPercent.toFixed(1)}%</span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="block text-gray-500">Diferença</span>
+                                                                <span className="font-bold text-lg text-red-600">{data.asymmetry?.toFixed(1)}%</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Sequence of Equal Values */}
+                                                {data.valor !== undefined && data.count !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2 bg-white p-2 rounded border mt-2">
+                                                        <div>
+                                                            <span className="block text-gray-500 text-xs">Valor Repetido</span>
+                                                            <span className="font-bold">{fmtBRL(data.valor)}</span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="block text-gray-500 text-xs">Quantidade Consecutiva</span>
+                                                            <span className="font-bold text-red-600">{data.count}x em sequência</span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Revenue/Rides Data */}
+                                                {data.revenueTotal !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Receita Total:</span>
+                                                        <span className="font-mono font-bold">{fmtBRL(data.revenueTotal)}</span>
+                                                    </div>
+                                                )}
+                                                {data.kmTotal !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">KM Total:</span>
+                                                        <span className="font-mono">{data.kmTotal} km</span>
+                                                    </div>
+                                                )}
+                                                {data.ridesCount !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Total de Corridas:</span>
+                                                        <span className="font-mono">{data.ridesCount}</span>
+                                                    </div>
+                                                )}
+                                                {data.ridesPerHour !== undefined && (
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <span className="text-gray-600">Corridas/Hora:</span>
+                                                        <span className="font-mono">{data.ridesPerHour.toFixed(2)}/h</span>
+                                                    </div>
+                                                )}
+
+                                                {/* NOVO: Comparação com Frota (Dedo Duro) */}
+                                                {rule.comparison && (
+                                                    <div className="mt-3 p-3 bg-white rounded border border-blue-200">
+                                                        <p className="font-bold text-blue-800 mb-2">👥 {rule.comparison.context}</p>
+
+                                                        {rule.comparison.fleet && rule.comparison.fleet.length > 0 ? (
+                                                            <div className="space-y-2">
+                                                                {rule.comparison.fleet.map((driver: any, i: number) => (
+                                                                    <div key={i} className="bg-green-50 p-2 rounded border border-green-200">
+                                                                        <p className="font-semibold text-green-800">
+                                                                            ✅ {driver.driverName} ({driver.vehiclePlate}): {driver.total || driver.rides?.length} corrida(s)
+                                                                        </p>
+                                                                        {driver.rides && driver.rides.length > 0 && (
+                                                                            <ul className="ml-4 mt-1 text-xs text-green-700">
+                                                                                {driver.rides.map((r: any, j: number) => (
+                                                                                    <li key={j}>• {r.hora} → R$ {r.valor?.toFixed(2)} ({r.tipo})</li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+
+                                                                <div className="bg-red-50 p-2 rounded border border-red-200">
+                                                                    <p className="font-semibold text-red-800">
+                                                                        ❌ VOCÊ: {rule.comparison.yourValue}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-gray-500 italic">Nenhum outro motorista ativo neste período para comparação.</p>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* NOVO: Corridas Suspeitas (Evidence) */}
+                                                {rule.evidence?.rides && rule.evidence.rides.length > 0 && (
+                                                    <div className="mt-3 p-3 bg-yellow-50 rounded border border-yellow-300">
+                                                        <p className="font-bold text-yellow-800 mb-2">⚠️ Corridas Suspeitas Detectadas:</p>
+                                                        <table className="w-full text-xs">
+                                                            <thead>
+                                                                <tr className="border-b border-yellow-300">
+                                                                    <th className="text-left py-1">#</th>
+                                                                    <th className="text-left py-1">Horário</th>
+                                                                    <th className="text-right py-1">Valor</th>
+                                                                    <th className="text-left py-1">Tipo</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {rule.evidence.rides.map((r: any, i: number) => (
+                                                                    <tr key={i} className="border-b border-yellow-200">
+                                                                        <td className="py-1">{i + 1}</td>
+                                                                        <td className="py-1 font-mono">{r.hora}</td>
+                                                                        <td className="py-1 text-right font-bold">R$ {r.valor?.toFixed(2)}</td>
+                                                                        <td className="py-1">{r.tipo}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                )}
+
+                                                {/* NOVO: O QUE / QUANDO / VALORES (formato atômico) */}
+                                                {rule.what && (
+                                                    <div className="mt-3 p-3 bg-slate-100 rounded border">
+                                                        <div className="grid grid-cols-1 gap-2">
+                                                            <div>
+                                                                <span className="text-slate-500 text-xs">📍 O QUE:</span>
+                                                                <span className="block font-bold text-slate-800">{rule.what}</span>
+                                                            </div>
+                                                            {rule.when && (
+                                                                <div>
+                                                                    <span className="text-slate-500 text-xs">⏰ QUANDO:</span>
+                                                                    <span className="block font-mono">{rule.when.start}{rule.when.end ? ` → ${rule.when.end}` : ''}</span>
+                                                                </div>
+                                                            )}
+                                                            {rule.values && (
+                                                                <div className="grid grid-cols-3 gap-2 mt-2 text-center">
+                                                                    <div className="bg-white p-1 rounded">
+                                                                        <span className="block text-xs text-gray-500">Observado</span>
+                                                                        <span className="font-bold text-red-600">{rule.values.observed}</span>
+                                                                    </div>
+                                                                    <div className="bg-white p-1 rounded">
+                                                                        <span className="block text-xs text-gray-500">Esperado</span>
+                                                                        <span className="font-medium text-green-600">{rule.values.expected}</span>
+                                                                    </div>
+                                                                    {rule.values.diff && (
+                                                                        <div className="bg-white p-1 rounded">
+                                                                            <span className="block text-xs text-gray-500">Diferença</span>
+                                                                            <span className="font-bold text-orange-600">{rule.values.diff}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {Object.keys(data).length === 0 && (
+                                            <p className="text-gray-400 italic">Dados adicionais não disponíveis para esta regra.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+                        <strong>💡 Como usar estes dados:</strong> Compare os horários e valores acima com as corridas registradas no turno.
+                        Vá em <strong>Turnos → [Turno ID] → Ver Corridas</strong> e verifique se as inconsistências apontadas correspondem aos registros.
+                    </div>
+                </div>
+            )}
 
             <div className="text-center text-[10px] text-gray-400 mt-8 pt-4 border-t print:block hidden">
                 Relatório gerado eletronicamente por Rota Verde Antifraude. Este documento é para uso interno e auditoria.

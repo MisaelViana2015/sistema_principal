@@ -26,6 +26,9 @@ router.post("/:id/finish", shiftsController.finish);
 // Encerrar turno manualmente (Admin Manutenção)
 router.post("/:id/close", requireAdmin, shiftsController.adminClose);
 
+// Criar turno manual retroativo (Admin)
+router.post("/manual", requireAdmin, shiftsController.createManual);
+
 // Apenas ADMIN pode editar ou excluir turnos
 router.patch("/:id", requireAdmin, shiftsController.update);
 router.delete("/:id", requireAdmin, shiftsController.delete);

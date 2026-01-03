@@ -16,6 +16,15 @@ import { FinancialAgent } from './agents/financial.agent.js';
 import { ClosureAgent } from './agents/closure.agent.js';
 import { TelemetryAgent } from './agents/telemetry.agent.js';
 
+// Import atomic rules (V3)
+import {
+    ruleGapAbove30Min,
+    ruleConsecutiveSameValue,
+    ruleLowRevenuePerKm,
+    ruleFleetProductivityBelow,
+    type AtomicRuleHit
+} from './fraud.rules.atomic.js';
+
 const FRAUD_AGENTS: FraudAgent[] = [
     RealTimeAgent,
     CohortAgent,
@@ -159,6 +168,97 @@ export async function runFraudOrchestrator(shiftId: string): Promise<FraudShiftA
         } catch (err) {
             console.error(`[${agent.name}] Erro:`, err);
         }
+    }
+
+    // === V3 ATOMIC RULES ===
+    // Executar regras atômicas que geram dados comparativos "dedo duro"
+    try {
+        const shift = await db.query.shifts.findFirst({
+            where: eq(shifts.id, shiftId),
+        });
+
+        if (shift) {
+            const durationHours = shift.fim
+                ? (new Date(shift.fim).getTime() - new Date(shift.inicio).getTime()) / 3600000
+                : (Date.now() - new Date(shift.inicio).getTime()) / 3600000;
+
+            const kmTotal = Number(shift.kmFinal || 0) - Number(shift.kmInicial || 0);
+            const revenueTotal = ctx.rides.reduce((s, r) => s + r.valor, 0);
+
+            // Regra: Gaps de tempo (com comparação de frota)
+            const gapHits = await ruleGapAbove30Min(shift, ctx.rides);
+            allHits.push(...gapHits.map(h => ({
+                code: h.code,
+                label: h.name,
+                description: h.what,
+                severity: h.severity,
+                score: h.score,
+                data: { ...h.values, ...h.evidence },
+                // Campos adicionais para o formato "dedo duro"
+                what: h.what,
+                when: h.when,
+                values: h.values,
+                evidence: h.evidence,
+                comparison: h.comparison,
+            } as any)));
+
+            // Regra: Corridas consecutivas mesmo valor
+            const sameValueHits = ruleConsecutiveSameValue(ctx.rides);
+            allHits.push(...sameValueHits.map(h => ({
+                code: h.code,
+                label: h.name,
+                description: h.what,
+                severity: h.severity,
+                score: h.score,
+                data: { ...h.values },
+                what: h.what,
+                when: h.when,
+                values: h.values,
+                evidence: h.evidence,
+            } as any)));
+
+            // Regra: Receita/km baixa (somente para turnos fechados com km)
+            if (!ctx.isOpen && kmTotal > 0) {
+                const lowRevHit = ruleLowRevenuePerKm(shift, kmTotal, revenueTotal);
+                if (lowRevHit) {
+                    allHits.push({
+                        code: lowRevHit.code,
+                        label: lowRevHit.name,
+                        description: lowRevHit.what,
+                        severity: lowRevHit.severity,
+                        score: lowRevHit.score,
+                        data: { ...lowRevHit.values },
+                        what: lowRevHit.what,
+                        when: lowRevHit.when,
+                        values: lowRevHit.values,
+                    } as any);
+                }
+            }
+
+            // Regra: Produtividade vs frota (somente turnos fechados)
+            if (!ctx.isOpen) {
+                const fleetProdHit = await ruleFleetProductivityBelow(shift, ctx.rides, durationHours);
+                if (fleetProdHit) {
+                    allHits.push({
+                        code: fleetProdHit.code,
+                        label: fleetProdHit.name,
+                        description: fleetProdHit.what,
+                        severity: fleetProdHit.severity,
+                        score: fleetProdHit.score,
+                        data: { ...fleetProdHit.values },
+                        what: fleetProdHit.what,
+                        when: fleetProdHit.when,
+                        values: fleetProdHit.values,
+                        comparison: fleetProdHit.comparison,
+                    } as any);
+                }
+            }
+
+            agentsRun.push('AtomicRulesV3');
+            console.log(`[AtomicRulesV3] Regras atômicas executadas`);
+        }
+    } catch (err) {
+        console.error('[AtomicRulesV3] Erro:', err);
     }
 
     // Aplicar combinações

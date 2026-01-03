@@ -475,6 +475,16 @@ export async function checkProductivityVsBaseline(
     driverId: string,
     driverRides: any[]
 ): Promise<FraudRuleHit | null> {
+    // SAFETY CHECK: Se o turno tem boa produtividade global, não analisar faixas horárias
+    // Isso evita falsos positivos para motoristas que produziram bem no geral
+    const overallRidesPerHour = durationHours > 0 ? driverRides.length / durationHours : 0;
+
+    // Se produtividade global >= 1.5 corridas/hora, motorista está produzindo bem
+    // Não faz sentido alertar por faixas horárias específicas
+    if (overallRidesPerHour >= 1.5) {
+        return null;
+    }
+
     const weekday = shiftStart.getDay();
     const hourlyAnalysis: { hour: number; actual: number; expected: number }[] = [];
 
@@ -491,7 +501,8 @@ export async function checkProductivityVsBaseline(
         const ridesInHour = driverRides.filter(r => new Date(r.hora).getHours() === currentHour);
 
         const ratio = ridesInHour.length / baseline.avgRidesPerHour;
-        if (ratio < 0.3) { // < 30% of fleet average
+        // Mudança: de 0.3 (30%) para 0.2 (20%) - mais tolerante
+        if (ratio < 0.2) { // < 20% of fleet average (mais restritivo para disparar)
             hourlyAnalysis.push({
                 hour: currentHour,
                 actual: ridesInHour.length,
@@ -500,14 +511,21 @@ export async function checkProductivityVsBaseline(
         }
     }
 
-    if (hourlyAnalysis.length >= 2) {
+    // Mudança: de 2 para 3 faixas horárias mínimas
+    // E a produtividade global deve ser ruim (já verificado acima)
+    if (hourlyAnalysis.length >= 3) {
         return {
             code: "PRODUTIVIDADE_ABAIXO_BASELINE",
             label: "Produtividade abaixo do baseline",
-            description: `Motorista produziu 70% menos que a frota em ${hourlyAnalysis.length} faixas horárias.`,
-            severity: "high", // Based on score 15 defined in plan (Medium/High boundary)
+            description: `Motorista produziu 80% menos que a frota em ${hourlyAnalysis.length} faixas horárias (produtividade geral: ${overallRidesPerHour.toFixed(1)}/h).`,
+            severity: "high",
             score: 15,
-            data: { hoursBelow: hourlyAnalysis }
+            data: {
+                hoursBelow: hourlyAnalysis,
+                overallRidesPerHour: overallRidesPerHour.toFixed(2),
+                totalRides: driverRides.length,
+                durationHours: durationHours.toFixed(2)
+            }
         };
     }
     return null;

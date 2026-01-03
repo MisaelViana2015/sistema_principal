@@ -440,3 +440,108 @@ export async function deleteShift(id: string, context?: AuditContext) {
         // fetchAfter não é necessário para DELETE (será null)
     });
 }
+
+/**
+ * Create Manual Shift - Cria turno retroativo completo (Admin only)
+ * Cria o turno já finalizado + corridas + custos em uma transação
+ */
+interface ManualShiftData {
+    driverId: string;
+    vehicleId: string;
+    kmInicial: number;
+    kmFinal: number;
+    inicio: Date;
+    fim: Date;
+    rides: { hora: string; valor: number; tipo: string }[];
+    expenses: { hora?: string; costTypeId: string; value: number; description?: string }[];
+}
+
+export async function createManualShift(data: ManualShiftData, context?: AuditContext) {
+    const auditContext = context || auditService.createSystemContext('admin-create-manual-shift');
+
+    return auditService.withAudit({
+        action: AUDIT_ACTIONS.START_SHIFT,
+        entity: 'shifts',
+        entityId: 'manual-new',
+        operation: 'INSERT',
+        context: auditContext,
+        execute: async () => {
+            return await db.transaction(async (tx) => {
+                console.log('[createManualShift] Starting transaction...', data);
+
+                // 1. Criar o turno básico (já finalizado)
+                const [newShift] = await tx.insert(shifts).values({
+                    driverId: data.driverId,
+                    vehicleId: data.vehicleId,
+                    kmInicial: data.kmInicial,
+                    kmFinal: data.kmFinal,
+                    inicio: data.inicio,
+                    fim: data.fim,
+                    status: 'finalizado'
+                    // Nota: campo 'origem' removido pois não existe no schema
+                }).returning();
+
+                console.log('[createManualShift] Shift created:', newShift.id);
+
+                // 2. Inserir corridas
+                if (data.rides && data.rides.length > 0) {
+                    await tx.insert(rides).values(
+                        data.rides.map(r => ({
+                            shiftId: newShift.id,
+                            hora: new Date(r.hora),
+                            valor: String(r.valor), // rides.valor is string in schema
+                            tipo: r.tipo
+                        }))
+                    );
+                    console.log(`[createManualShift] Inserted ${data.rides.length} rides`);
+                }
+
+                // 3. Inserir custos/despesas
+                if (data.expenses && data.expenses.length > 0) {
+                    await tx.insert(expenses).values(
+                        data.expenses.map(e => ({
+                            shiftId: newShift.id,
+                            costTypeId: e.costTypeId,
+                            value: String(e.value), // expenses.value is string in schema
+                            date: e.hora ? new Date(e.hora) : data.inicio, // campo 'date' é obrigatório
+                            notes: e.description || null
+                        }))
+                    );
+                    console.log(`[createManualShift] Inserted ${data.expenses.length} expenses`);
+                }
+
+                // 4. Atualizar KM do veículo
+                await tx.update(vehicles)
+                    .set({
+                        kmInicial: data.kmFinal,
+                        currentKm: data.kmFinal
+                    })
+                    .where(eq(vehicles.id, data.vehicleId));
+
+                console.log(`[createManualShift] Vehicle KM updated to ${data.kmFinal}`);
+
+                return newShift;
+            });
+        },
+        fetchAfter: async (result) => {
+            if (result && result.id) {
+                // Recalcular totais financeiros
+                try {
+                    await recalculateShiftTotals(result.id);
+                    console.log('[createManualShift] Totals recalculated');
+                } catch (err) {
+                    console.error('[createManualShift] Error recalculating:', err);
+                }
+
+                // Analisar fraude
+                FraudService.analyzeShift(result.id).catch(err => {
+                    console.error(`[createManualShift] Fraud analysis error:`, err);
+                });
+
+                return await getShiftById(result.id);
+            }
+            return result;
+        }
+    });
+}
+

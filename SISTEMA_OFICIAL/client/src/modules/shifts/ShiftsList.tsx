@@ -3,10 +3,11 @@ import { shiftsService, PaginatedResponse } from "./shifts.service";
 import { driversService } from "../drivers/drivers.service";
 import { vehiclesService } from "../vehicles/vehicles.service";
 import { Shift, Driver, Vehicle } from "../../../../shared/schema";
-import { Eye, Edit, Trash2, ChevronLeft, ChevronRight, Loader2, AlertTriangle, Filter } from "lucide-react";
+import { Eye, Edit, Trash2, ChevronLeft, ChevronRight, Loader2, AlertTriangle, Filter, Plus } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 
 import { EditShiftModal } from "./EditShiftModal";
+import { CreateManualShiftModal } from "./CreateManualShiftModal";
 
 export default function ShiftsList() {
     const [data, setData] = useState<PaginatedResponse<Shift> | null>(null);
@@ -17,6 +18,9 @@ export default function ShiftsList() {
     // Edit Modal State
     const [selectedShiftId, setSelectedShiftId] = useState<string | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // Create Manual Shift Modal
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Filters
     const [filters, setFilters] = useState({
@@ -118,7 +122,13 @@ export default function ShiftsList() {
         <div style={s.container}>
             <div style={s.header}>
                 <h1 style={s.title}>Gestão de Turnos (Paginação)</h1>
-
+                <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors"
+                >
+                    <Plus size={18} />
+                    Novo Turno Manual
+                </button>
             </div>
 
             {/* Filters */}
@@ -294,6 +304,15 @@ export default function ShiftsList() {
                 shiftId={selectedShiftId}
                 onSuccess={() => {
                     loadShifts();
+                }}
+            />
+
+            <CreateManualShiftModal
+                open={isCreateModalOpen}
+                onOpenChange={setIsCreateModalOpen}
+                onSuccess={() => {
+                    loadShifts();
+                    alert("Turno manual criado com sucesso!");
                 }}
             />
         </div>

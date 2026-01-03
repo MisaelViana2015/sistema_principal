@@ -138,7 +138,8 @@ export const shiftsController = {
     getOpen: getOpenShiftController,
     update: updateShiftController,
     delete: deleteShiftController,
-    adminClose: adminCloseShiftController
+    adminClose: adminCloseShiftController,
+    createManual: createManualShiftController
 };
 
 /**
@@ -180,3 +181,48 @@ export async function adminCloseShiftController(req: Request, res: Response) {
         return res.status(400).json({ message: error.message || "Erro ao encerrar turno" });
     }
 }
+
+/**
+ * Create Manual Shift Controller - Criar turno retroativo completo (somente admin)
+ * Cria turno já fechado com corridas e custos de uma só vez
+ */
+export async function createManualShiftController(req: Request, res: Response) {
+    try {
+        const { driverId, vehicleId, kmInicial, kmFinal, inicio, fim, rides, expenses } = req.body;
+
+        // Validação básica
+        if (!driverId) return res.status(400).json({ message: "Motorista é obrigatório" });
+        if (!vehicleId) return res.status(400).json({ message: "Veículo é obrigatório" });
+        if (!kmInicial && kmInicial !== 0) return res.status(400).json({ message: "KM Inicial é obrigatório" });
+        if (!kmFinal && kmFinal !== 0) return res.status(400).json({ message: "KM Final é obrigatório" });
+        if (!inicio) return res.status(400).json({ message: "Horário de início é obrigatório" });
+        if (!fim) return res.status(400).json({ message: "Horário de fim é obrigatório" });
+        if (!rides || !Array.isArray(rides) || rides.length === 0) {
+            return res.status(400).json({ message: "Pelo menos uma corrida é obrigatória" });
+        }
+
+        const inicioDate = new Date(inicio);
+        const fimDate = new Date(fim);
+
+        if (isNaN(inicioDate.getTime()) || isNaN(fimDate.getTime())) {
+            return res.status(400).json({ message: "Datas inválidas" });
+        }
+
+        const result = await shiftsService.createManualShift({
+            driverId,
+            vehicleId,
+            kmInicial: Number(kmInicial),
+            kmFinal: Number(kmFinal),
+            inicio: inicioDate,
+            fim: fimDate,
+            rides,
+            expenses: expenses || []
+        }, req.auditContext);
+
+        return res.status(201).json(result);
+    } catch (error: any) {
+        console.error("[createManualShift] Error:", error);
+        return res.status(400).json({ message: error.message || "Erro ao criar turno manual" });
+    }
+}
+

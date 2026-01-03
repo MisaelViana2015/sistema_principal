@@ -43,7 +43,7 @@ const OFFICIAL_RULES_LIST = [
     { code: "RECEITA_KM_DESVIO_ALTO", name: "REGRA 11 — DESVIO BASELINE ALTO", desc: "Receita/KM variou ≥1.5x em relação à média pessoal." },
     { code: "RECEITA_KM_DESVIO_CRITICO", name: "REGRA 12 — DESVIO BASELINE CRÍTICO", desc: "Receita/KM variou ≥1.5x em relação à média pessoal." },
     { code: "GAP_KM_ANOMALO", name: "REGRA 13 — GAP DE KM ANÔMALO", desc: "Diferença entre turnos maior que 250 km." },
-    { code: "KM_RETROCEDEU", name: "REGRA ERROR — KM RETROCEDEU", desc: "Km inicial menor que km final do turno anterior." },
+    { code: "KM_RETROCEDEU", name: "REGRA 14 — KM RETROCEDEU", desc: "Km inicial menor que km final do turno anterior." },
 ];
 
 // Helper to determine severity level for primary rule sort
