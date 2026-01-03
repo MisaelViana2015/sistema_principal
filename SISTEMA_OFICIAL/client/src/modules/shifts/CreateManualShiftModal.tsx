@@ -16,7 +16,7 @@ interface CreateManualShiftModalProps {
 interface RideEntry {
     hora: string;
     valor: string;
-    tipo: 'app' | 'particular';
+    tipo: 'APP' | 'PARTICULAR';
 }
 
 interface CostEntry {
@@ -41,7 +41,7 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
     const [fim, setFim] = useState("");
 
     // Dynamic lists
-    const [rides, setRides] = useState<RideEntry[]>([{ hora: "", valor: "", tipo: "app" }]);
+    const [rides, setRides] = useState<RideEntry[]>([{ hora: "", valor: "", tipo: "APP" }]);
     const [costs, setCosts] = useState<CostEntry[]>([]);
 
     const [saving, setSaving] = useState(false);
@@ -85,14 +85,14 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
         setKmFinal("");
         setInicio("");
         setFim("");
-        setRides([{ hora: "", valor: "", tipo: "app" }]);
+        setRides([{ hora: "", valor: "", tipo: "APP" }]);
         setCosts([]);
         setError(null);
     };
 
     // Rides management
     const addRide = () => {
-        setRides([...rides, { hora: "", valor: "", tipo: "app" }]);
+        setRides([...rides, { hora: "", valor: "", tipo: "APP" }]);
     };
 
     const removeRide = (index: number) => {
@@ -309,8 +309,8 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent className="bg-gray-800 border-gray-700 z-[10001]">
-                                                    <SelectItem value="app">App</SelectItem>
-                                                    <SelectItem value="particular">Particular</SelectItem>
+                                                    <SelectItem value="APP">App</SelectItem>
+                                                    <SelectItem value="PARTICULAR">Particular</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>
