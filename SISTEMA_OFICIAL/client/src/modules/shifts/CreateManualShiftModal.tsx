@@ -57,16 +57,22 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
     const loadData = async () => {
         setLoading(true);
         try {
+            console.log('[CreateManualShift] Loading data...');
             const [driversRes, vehiclesRes, costTypesRes] = await Promise.all([
                 api.get('/drivers'),
                 api.get('/vehicles'),
                 api.get('/cost-types')
             ]);
-            setDrivers(driversRes.data);
-            setVehicles(vehiclesRes.data);
-            setCostTypes(costTypesRes.data);
-        } catch (err) {
-            console.error('Error loading data:', err);
+            console.log('[CreateManualShift] Drivers:', driversRes.data);
+            console.log('[CreateManualShift] Vehicles:', vehiclesRes.data);
+            console.log('[CreateManualShift] CostTypes:', costTypesRes.data);
+            setDrivers(driversRes.data || []);
+            setVehicles(vehiclesRes.data || []);
+            setCostTypes(costTypesRes.data || []);
+        } catch (err: any) {
+            console.error('[CreateManualShift] Error loading data:', err);
+            console.error('[CreateManualShift] Error response:', err.response?.data);
+            setError('Erro ao carregar dados. Verifique o console.');
         } finally {
             setLoading(false);
         }
@@ -289,7 +295,8 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
                                             <Input
                                                 type="number"
                                                 step="0.01"
-                                                className="bg-gray-800 border-gray-700 text-sm"
+                                                inputMode="decimal"
+                                                className="bg-gray-800 border-gray-700 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                 value={ride.valor}
                                                 onChange={e => updateRide(idx, 'valor', e.target.value)}
                                                 placeholder="15.00"
@@ -365,7 +372,8 @@ export function CreateManualShiftModal({ open, onOpenChange, onSuccess }: Create
                                                 <Input
                                                     type="number"
                                                     step="0.01"
-                                                    className="bg-gray-800 border-gray-700 text-sm"
+                                                    inputMode="decimal"
+                                                    className="bg-gray-800 border-gray-700 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                     value={cost.value}
                                                     onChange={e => updateCost(idx, 'value', e.target.value)}
                                                 />
