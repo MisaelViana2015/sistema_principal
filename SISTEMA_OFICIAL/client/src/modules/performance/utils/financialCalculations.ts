@@ -135,5 +135,5 @@ export function calculateDriverMetrics(
             totalRevenue,
             revenuePerHour: totalHours > 0 ? totalRevenue / totalHours : 0
         };
-    }).filter((d) => d.totalShifts > 0).sort((a, b) => b.totalHours - a.totalHours);
+    }).filter((d) => d.totalShifts > 0).sort((a, b) => b.valor - a.valor);
 }
