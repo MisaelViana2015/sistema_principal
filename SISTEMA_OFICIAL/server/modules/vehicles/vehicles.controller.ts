@@ -69,7 +69,18 @@ export const vehiclesController = {
     async update(req: Request, res: Response, next: NextFunction) {
         try {
             const data = updateVehicleSchema.parse(req.body);
-            const updatedVehicle = await vehiclesService.updateVehicle(req.params.id, data, req.auditContext);
+            // Map keys from Portuguese (validator) to English (database schema)
+            const mappedData: Record<string, any> = {};
+            if (data.placa !== undefined) mappedData.plate = data.placa;
+            if (data.modelo !== undefined) mappedData.modelo = data.modelo;
+            if (data.kmInicial !== undefined) mappedData.kmInicial = data.kmInicial;
+            if (data.motoristaPadraoId !== undefined) mappedData.motoristaPadraoId = data.motoristaPadraoId;
+            if (data.color !== undefined) mappedData.color = data.color;
+            if (data.imageUrl !== undefined) mappedData.imageUrl = data.imageUrl;
+            if (data.isActive !== undefined) mappedData.isActive = data.isActive;
+            if (data.status !== undefined) mappedData.status = data.status;
+
+            const updatedVehicle = await vehiclesService.updateVehicle(req.params.id, mappedData, req.auditContext);
             res.json(updatedVehicle);
         } catch (error) {
             next(error);
