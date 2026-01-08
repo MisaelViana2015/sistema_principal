@@ -103,7 +103,7 @@ export default function VehiclesList() {
 
         try {
             const payload = {
-                plate: formData.plate.toUpperCase(),
+                placa: formData.plate.toUpperCase(),
                 modelo: formData.modelo,
                 kmInicial: Number(formData.kmInicial),
                 motoristaPadraoId: formData.motoristaPadraoId || null,
