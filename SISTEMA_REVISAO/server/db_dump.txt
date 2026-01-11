@@ -1,0 +1,785 @@
+
+
+=== TABLE: costs ===
+[
+  {
+    "id": "8be1e8d8-24cb-4d8e-8eb7-d528190cc1ad",
+    "shift_id": "0dc8deab-7036-4186-9015-d14b6bccf2da",
+    "tipo": "Recarga Carro",
+    "valor": "78.00",
+    "observacao": null,
+    "hora": "2025-11-07T13:20:45.059Z",
+    "type_id": null
+  },
+  {
+    "id": "a40dbf04-873c-45b2-b287-eda28998ee37",
+    "shift_id": "65d8a02f-92e5-40d4-8130-a0cdf3084c4d",
+    "tipo": "Recarga Carro",
+    "valor": "31.00",
+    "observacao": null,
+    "hora": "2025-11-08T03:58:24.492Z",
+    "type_id": null
+  },
+  {
+    "id": "43f64ac9-1a2f-4ac4-9c22-81887c521194",
+    "shift_id": "e43d8651-74fe-4bad-8463-dd43f1df5dac",
+    "tipo": "Recarga Carro",
+    "valor": "30.66",
+    "observacao": null,
+    "hora": "2025-11-08T06:47:00.723Z",
+    "type_id": null
+  },
+  {
+    "id": "7a071504-18ce-402b-a2f0-38c4d00e4c1b",
+    "shift_id": "fb80d61d-4f8a-48ce-8f82-4048a20d3288",
+    "tipo": "Outros",
+    "valor": "10.00",
+    "observacao": "Pedagio de meio dia !! Scs!",
+    "hora": "2025-11-08T19:14:03.386Z",
+    "type_id": null
+  },
+  {
+    "id": "a345ff20-c0f7-4548-a179-ad91d7391518",
+    "shift_id": "fb80d61d-4f8a-48ce-8f82-4048a20d3288",
+    "tipo": "Recarga Carro",
+    "valor": "63.54",
+    "observacao": null,
+    "hora": "2025-11-08T21:54:40.910Z",
+    "type_id": null
+  },
+  {
+    "id": "6117c080-4beb-41cd-8174-1ad0768e43bf",
+    "shift_id": "fb80d61d-4f8a-48ce-8f82-4048a20d3288",
+    "tipo": "Outros",
+    "valor": "10.00",
+    "observacao": "Pedagio das 19h Scs ",
+    "hora": "2025-11-09T03:11:08.250Z",
+    "type_id": null
+  },
+  {
+    "id": "c766aba2-399e-4565-93da-2173980939d4",
+    "shift_id": "b825f6ca-316e-4551-bf1d-b557638ed7a0",
+    "tipo": "Recarga Carro",
+    "valor": "35.51",
+    "observacao": "",
+    "hora": "2025-11-08T23:41:00.000Z",
+    "type_id": null
+  },
+  {
+    "id": "85e7aaf5-f15b-45e9-b222-84a63bed8ff9",
+    "shift_id": "6499f520-ffad-41ee-acc7-e244f3817187",
+    "tipo": "Outros",
+    "valor": "12.60",
+    "observacao": "Pedagio",
+    "hora": "2025-11-10T04:54:13.283Z",
+    "type_id": null
+  },
+  {
+    "id": "cd30be7a-7121-4e8e-b53b-f4f5832bd8af",
+    "shift_id": "d47556e0-4f70-4e82-a00f-42e702560220",
+    "tipo": "Recarga Carro",
+    "valor": "26.50",
+    "observacao": null,
+    "hora": "2025-11-11T00:04:55.453Z",
+    "type_id": null
+  },
+  {
+    "id": "cf0251eb-11ee-4919-aa01-412004c3e397",
+    "shift_id": "79f5b32f-b2ea-4439-b85c-3e7046a8271a",
+    "tipo": "Pedágio",
+    "valor": "12.60",
+    "observacao": "Ida e volta lajeado ",
+    "hora": "2025-11-23T02:38:27.946Z",
+    "type_id": null
+  },
+  {
+    "id": "7fb6d79d-7e98-42ae-9f57-f14d90703877",
+    "shift_id": "79f5b32f-b2ea-4439-b85c-3e7046a8271a",
+    "tipo": "Recarga Carro",
+    "valor": "36.80",
+    "observacao": "Casa cheia",
+    "hora": "2025-11-23T02:40:26.456Z",
+    "type_id": null
+  },
+  {
+    "id": "59183fc8-1ea8-4be3-b138-96f64f1c291c",
+    "shift_id": "c2c7d746-88fe-442f-83e1-8905322b9828",
+    "tipo": "Outros",
+    "valor": "1.00",
+    "observacao": null,
+    "hora": "2025-11-24T12:12:23.441Z",
+    "type_id": null
+  },
+  {
+    "id": "d5639eec-3600-4ba1-9bd6-9a96b4ef574b",
+    "shift_id": "3bc61b5e-583b-4703-b65f-7e88861ab7ca",
+    "tipo": "Pedágio",
+    "valor": "10.00",
+    "observacao": null,
+    "hora": "2025-11-27T06:59:34.233Z",
+    "type_id": null
+  },
+  {
+    "id": "afabb2ef-0aa7-4a55-b85a-09c841715ba8",
+    "shift_id": "9218f5f0-9d19-40b9-8d58-c51b993bd3c2",
+    "tipo": "Recarga App",
+    "valor": "20.00",
+    "observacao": null,
+    "hora": "2025-10-27T09:00:00.000Z",
+    "type_id": null
+  },
+  {
+    "id": "5d97a269-b8d8-429c-8616-2c3d8c805b96",
+    "shift_id": "2e3225a3-3dd3-4cc0-9376-ee06b8da4a5c",
+    "tipo": "Recarga App",
+    "valor": "40.00",
+    "observacao": null,
+    "hora": "2025-10-28T09:00:00.000Z",
+    "type_id": null
+  },
+  {
+    "id": "9d7a73ec-6f98-43c7-85af-2b0db93f227a",
+    "shift_id": "2e3225a3-3dd3-4cc0-9376-ee06b8da4a5c",
+    "tipo": "Outro",
+    "valor": "12.07",
+    "observacao": null,
+    "hora": "2025-10-28T09:00:00.000Z",
+    "type_id": null
+  },
+  {
+    "id": "968107bb-4fd8-4723-bdc4-3f8e3f7af445",
+    "shift_id": "0c326774-204c-4852-be59-c4dcc07b3bd0",
+    "tipo": "Recarga App",
+    "valor": "20.00",
+    "observacao": null,
+    "hora": "2025-10-29T09:00:00.000Z",
+    "type_id": null
+  },
+  {
+    "id": "20fc8321-a3e0-4ec4-b698-65776559b52e",
+    "shift_id": "0c326774-204c-4852-be59-c4dcc07b3bd0",
+    "tipo": "Outro",
+    "valor": "11.82",
+    "observacao": null,
+    "hora": "2025-10-29T09:00:00.000Z",
+    "type_id": null
+  },
+  {
+    "id": "c6b47e8d-87cf-48ff-bf9d-746d7404f935",
+    "shift_id": "d06538e3-fb39-4115-868b-6c1517be17ae",
+    "tipo": "Recarga App",
+    "valor": "20.00",
+    "observacao": null,
+    "hora": "2025-10-15T09:00:00.000Z",
+    "type_id": null
+  },
+  {
+    "id": "921844d6-c9fc-4a49-8679-f95c44ceaf2c",
+    "shift_id": "fe2988e5-312b-41a0-a754-060b1f0f7e55",
+    "tipo": "Recarga App",
+    "valor": "20.00",
+    "observacao": null,
+    "hora": "2025-10-16T09:15:00.000Z",
+    "type_id": null
+  }
+]
+
+=== TABLE: expenses ===
+[
+  {
+    "id": "59244b86-c032-41db-bd2d-d8023dd9780f",
+    "driver_id": null,
+    "shift_id": "0dc8deab-7036-4186-9015-d14b6bccf2da",
+    "cost_type_id": "edb836ed-6ffc-426f-b3d6-cb25d431f893",
+    "valor": "78.00",
+    "date": "2025-11-07T16:20:45.059Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "de74763e-fb41-41fc-b3aa-1ef9a59fde77",
+    "driver_id": null,
+    "shift_id": "65d8a02f-92e5-40d4-8130-a0cdf3084c4d",
+    "cost_type_id": "edb836ed-6ffc-426f-b3d6-cb25d431f893",
+    "valor": "31.00",
+    "date": "2025-11-08T06:58:24.492Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "aee43f13-f7b4-442a-a314-38366391b112",
+    "driver_id": null,
+    "shift_id": "e43d8651-74fe-4bad-8463-dd43f1df5dac",
+    "cost_type_id": "edb836ed-6ffc-426f-b3d6-cb25d431f893",
+    "valor": "30.66",
+    "date": "2025-11-08T09:47:00.723Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "c6b7b47a-884b-407f-92c3-4e5b3e1a5b89",
+    "driver_id": null,
+    "shift_id": "fb80d61d-4f8a-48ce-8f82-4048a20d3288",
+    "cost_type_id": "b700eac7-c55d-4b2a-afc4-f19e45255a45",
+    "valor": "10.00",
+    "date": "2025-11-08T22:14:03.386Z",
+    "notes": "[MIGRATED] Pedagio de meio dia !! Scs!",
+    "is_particular": false
+  },
+  {
+    "id": "425270c6-b736-481c-b105-5aadcba5ef68",
+    "driver_id": null,
+    "shift_id": "fb80d61d-4f8a-48ce-8f82-4048a20d3288",
+    "cost_type_id": "edb836ed-6ffc-426f-b3d6-cb25d431f893",
+    "valor": "63.54",
+    "date": "2025-11-09T00:54:40.910Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "5bb8cc35-419a-4ed8-9898-85599fc009d5",
+    "driver_id": null,
+    "shift_id": "fb80d61d-4f8a-48ce-8f82-4048a20d3288",
+    "cost_type_id": "b700eac7-c55d-4b2a-afc4-f19e45255a45",
+    "valor": "10.00",
+    "date": "2025-11-09T06:11:08.250Z",
+    "notes": "[MIGRATED] Pedagio das 19h Scs ",
+    "is_particular": false
+  },
+  {
+    "id": "e9400f76-d772-4bb7-8a4d-a098e0b81a2e",
+    "driver_id": null,
+    "shift_id": "b825f6ca-316e-4551-bf1d-b557638ed7a0",
+    "cost_type_id": "edb836ed-6ffc-426f-b3d6-cb25d431f893",
+    "valor": "35.51",
+    "date": "2025-11-09T02:41:00.000Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "29df778e-429a-4e69-aa45-e2d2fb780104",
+    "driver_id": null,
+    "shift_id": "6499f520-ffad-41ee-acc7-e244f3817187",
+    "cost_type_id": "b700eac7-c55d-4b2a-afc4-f19e45255a45",
+    "valor": "12.60",
+    "date": "2025-11-10T07:54:13.283Z",
+    "notes": "[MIGRATED] Pedagio",
+    "is_particular": false
+  },
+  {
+    "id": "043f51ef-2b36-42fb-b69c-4556230c19ec",
+    "driver_id": null,
+    "shift_id": "d47556e0-4f70-4e82-a00f-42e702560220",
+    "cost_type_id": "edb836ed-6ffc-426f-b3d6-cb25d431f893",
+    "valor": "26.50",
+    "date": "2025-11-11T03:04:55.453Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "a161a9b5-3093-46c3-8e8a-850e85cfbf6d",
+    "driver_id": null,
+    "shift_id": "79f5b32f-b2ea-4439-b85c-3e7046a8271a",
+    "cost_type_id": "1b3c7239-d601-4649-a3d2-cc55f41c8f6a",
+    "valor": "12.60",
+    "date": "2025-11-23T05:38:27.946Z",
+    "notes": "[MIGRATED] Ida e volta lajeado ",
+    "is_particular": false
+  },
+  {
+    "id": "9037b70b-51e6-430c-8752-6baa44747614",
+    "driver_id": null,
+    "shift_id": "79f5b32f-b2ea-4439-b85c-3e7046a8271a",
+    "cost_type_id": "edb836ed-6ffc-426f-b3d6-cb25d431f893",
+    "valor": "36.80",
+    "date": "2025-11-23T05:40:26.456Z",
+    "notes": "[MIGRATED] Casa cheia",
+    "is_particular": false
+  },
+  {
+    "id": "d0028406-d74d-4d5e-a6bb-e86b877c1254",
+    "driver_id": null,
+    "shift_id": "c2c7d746-88fe-442f-83e1-8905322b9828",
+    "cost_type_id": "b700eac7-c55d-4b2a-afc4-f19e45255a45",
+    "valor": "1.00",
+    "date": "2025-11-24T15:12:23.441Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "caf28d62-1b82-4141-97d9-764d4adf0893",
+    "driver_id": null,
+    "shift_id": "3bc61b5e-583b-4703-b65f-7e88861ab7ca",
+    "cost_type_id": "1b3c7239-d601-4649-a3d2-cc55f41c8f6a",
+    "valor": "10.00",
+    "date": "2025-11-27T09:59:34.233Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "cfaa68f4-b512-48cd-8a1b-bb67e63baeec",
+    "driver_id": null,
+    "shift_id": "9218f5f0-9d19-40b9-8d58-c51b993bd3c2",
+    "cost_type_id": "2c316e35-205b-4244-a2f8-7a2ea4508d43",
+    "valor": "20.00",
+    "date": "2025-10-27T12:00:00.000Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "55eb7f14-02ab-4f1d-9dd0-b9cebbb2302f",
+    "driver_id": null,
+    "shift_id": "2e3225a3-3dd3-4cc0-9376-ee06b8da4a5c",
+    "cost_type_id": "2c316e35-205b-4244-a2f8-7a2ea4508d43",
+    "valor": "40.00",
+    "date": "2025-10-28T12:00:00.000Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "f0b0fcf4-0416-42c4-9bb0-2b819904f06b",
+    "driver_id": null,
+    "shift_id": "2e3225a3-3dd3-4cc0-9376-ee06b8da4a5c",
+    "cost_type_id": "b700eac7-c55d-4b2a-afc4-f19e45255a45",
+    "valor": "12.07",
+    "date": "2025-10-28T12:00:00.000Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "b028aaac-8597-4639-b3b4-1d6e83d8e40d",
+    "driver_id": null,
+    "shift_id": "0c326774-204c-4852-be59-c4dcc07b3bd0",
+    "cost_type_id": "2c316e35-205b-4244-a2f8-7a2ea4508d43",
+    "valor": "20.00",
+    "date": "2025-10-29T12:00:00.000Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "ea84d1fe-d89f-46a7-b25b-52a6c78d8baa",
+    "driver_id": null,
+    "shift_id": "0c326774-204c-4852-be59-c4dcc07b3bd0",
+    "cost_type_id": "b700eac7-c55d-4b2a-afc4-f19e45255a45",
+    "valor": "11.82",
+    "date": "2025-10-29T12:00:00.000Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "1927efa0-cd42-4abd-878e-5c0b6b8563c2",
+    "driver_id": null,
+    "shift_id": "d06538e3-fb39-4115-868b-6c1517be17ae",
+    "cost_type_id": "2c316e35-205b-4244-a2f8-7a2ea4508d43",
+    "valor": "20.00",
+    "date": "2025-10-15T12:00:00.000Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  },
+  {
+    "id": "c06d379e-4a86-4224-abcf-43fac51ffe39",
+    "driver_id": null,
+    "shift_id": "fe2988e5-312b-41a0-a754-060b1f0f7e55",
+    "cost_type_id": "2c316e35-205b-4244-a2f8-7a2ea4508d43",
+    "valor": "20.00",
+    "date": "2025-10-16T12:15:00.000Z",
+    "notes": "[MIGRATED]",
+    "is_particular": false
+  }
+]
+
+=== TABLE: vehicle_costs ===
+[
+  {
+    "id": "45dccdc2-533d-4ba8-9ce5-988477c6f313",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (1/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2025-10",
+    "data_pagamento": "2025-10-27T03:00:00.000Z",
+    "status": "pago",
+    "observacao": null,
+    "data_referencia": "2025-10-11T03:00:00.000Z",
+    "valor_pago": "2750.00",
+    "data_vencimento": null
+  },
+  {
+    "id": "4cb1384a-ccd9-4742-a898-2fda0e868039",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (4/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2026-01",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2026-01-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "10021bbd-7308-4340-8b47-b483e1fdea6f",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (11/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2026-08",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2026-08-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "386e33dc-2ce5-4327-b8b1-812acc29c3d4",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (18/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2027-03",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2027-03-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "b1467792-714a-4b98-8a38-504d5501a30a",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (10/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2026-07",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2026-07-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "5e5f32cb-bec8-4a9b-9f50-50a806dbd25b",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (14/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2026-11",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2026-11-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "80ade943-ea29-47c9-bdba-56a431f54376",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (12/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2026-09",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2026-09-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "a19ea99c-24c5-4e28-b52b-7b2ef9729743",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (6/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2026-03",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2026-03-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "b7da93cb-1c93-440f-9df9-f0d85fb7ba18",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (3/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2025-12",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2025-12-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "a2e95756-5496-4516-a622-f3769b05b2c5",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (9/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2026-06",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2026-06-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "4f95d4f8-17ee-4d7e-a9c9-4f712fe53458",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (5/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2026-02",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2026-02-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "712a0d22-c004-4c0d-91c4-17cf4e18c3df",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (19/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2027-04",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2027-04-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "ee4c159e-041f-4c96-8989-5062ed1732b7",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (8/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2026-05",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2026-05-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "3095eb77-05e8-45b0-a116-f386e05adf27",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (20/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2027-05",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2027-05-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "3b4d8d3d-b81c-4dcc-b9e9-82dd1465c2db",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (16/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2027-01",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2027-01-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "87a3da13-3d2e-4ce9-95f4-d4e5e57cd51c",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (21/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2027-06",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2027-06-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "452cbf7d-4961-45ee-97bc-f8a414b45140",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (25/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2027-10",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2027-10-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "57de58d1-58e2-4a03-b81b-dc08d1fb7c47",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (15/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2026-12",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2026-12-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "ffad933f-d1fd-4ed8-bca9-4c11099d0475",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (26/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2027-11",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2027-11-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  },
+  {
+    "id": "f5c69667-6d0c-46a9-a996-09fc2e2bbffa",
+    "vehicle_id": "40675965-5401-4f1b-adb3-6f0c64dccb5c",
+    "tipo": "Prestação",
+    "descricao": "Santander (34/60)",
+    "valor": "2593.12",
+    "mes_referencia": "2028-07",
+    "data_pagamento": null,
+    "status": "pendente",
+    "observacao": null,
+    "data_referencia": "2028-07-11T03:00:00.000Z",
+    "valor_pago": null,
+    "data_vencimento": null
+  }
+]
+
+=== TABLE: shift_cost_types ===
+[
+  {
+    "id": "9968e127-31f2-48b3-816c-53d83c7e0492",
+    "name": "Recarga APP",
+    "icon": "Zap",
+    "color_token": "blue",
+    "is_default": true,
+    "created_at": "2025-11-14T12:38:09.404Z"
+  },
+  {
+    "id": "8eedc353-661d-4019-9795-59ebb1f4b643",
+    "name": "Recarga Carro",
+    "icon": "Car",
+    "color_token": "green",
+    "is_default": true,
+    "created_at": "2025-11-14T12:38:09.442Z"
+  },
+  {
+    "id": "f7fef27e-1e2c-4014-b96d-92110694f726",
+    "name": "Pedágio",
+    "icon": "Ticket",
+    "color_token": "green",
+    "is_default": true,
+    "created_at": "2025-11-14T12:38:09.474Z"
+  },
+  {
+    "id": "5c4a3410-8742-4df0-a26f-7edee0d2b6bc",
+    "name": "Outros",
+    "icon": "DollarSign",
+    "color_token": "orange",
+    "is_default": true,
+    "created_at": "2025-11-14T12:38:09.503Z"
+  }
+]
+
+=== TABLE: cost_types ===
+[
+  {
+    "id": "95dc4e6a-5474-4ba1-98d1-dc1e70e00e6b",
+    "name": "Combustível",
+    "category": "Variável",
+    "description": null,
+    "is_active": true,
+    "icon": "fuel",
+    "color": "orange"
+  },
+  {
+    "id": "1b3c7239-d601-4649-a3d2-cc55f41c8f6a",
+    "name": "Pedágio",
+    "category": "Variável",
+    "description": null,
+    "is_active": true,
+    "icon": "ticket",
+    "color": "yellow"
+  },
+  {
+    "id": "08095465-f93e-49cc-a346-60aa27c233b4",
+    "name": "Limpeza",
+    "category": "Variável",
+    "description": null,
+    "is_active": true,
+    "icon": "droplet",
+    "color": "blue"
+  },
+  {
+    "id": "295021de-0118-49c5-9b00-5fb6073f1f13",
+    "name": "Alimentação",
+    "category": "Variável",
+    "description": null,
+    "is_active": true,
+    "icon": "utensils",
+    "color": "green"
+  },
+  {
+    "id": "ed08c628-53b4-49a2-a088-48bc9d122ac8",
+    "name": "Manutenção",
+    "category": "Variável",
+    "description": null,
+    "is_active": true,
+    "icon": "wrench",
+    "color": "red"
+  },
+  {
+    "id": "b700eac7-c55d-4b2a-afc4-f19e45255a45",
+    "name": "Outros",
+    "category": "Variável",
+    "description": null,
+    "is_active": true,
+    "icon": "dollar-sign",
+    "color": "gray"
+  },
+  {
+    "id": "2c316e35-205b-4244-a2f8-7a2ea4508d43",
+    "name": "Recarga APP",
+    "category": "Variável",
+    "description": null,
+    "is_active": true,
+    "icon": "zap",
+    "color": "blue"
+  },
+  {
+    "id": "edb836ed-6ffc-426f-b3d6-cb25d431f893",
+    "name": "Recarga Carro",
+    "category": "Variável",
+    "description": null,
+    "is_active": true,
+    "icon": "car",
+    "color": "green"
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1765047960856,
+      "tag": "0000_faulty_bucky",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1765646866012,
+      "tag": "0001_greedy_triathlon",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1766744959601,
+      "tag": "0002_sticky_deathbird",
+      "breakpoints": true
+    }
+  ]
+}

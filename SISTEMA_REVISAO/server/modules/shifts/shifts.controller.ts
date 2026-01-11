@@ -1,0 +1,227 @@
+import { Request, Response } from "express";
+import * as shiftsService from "./shifts.service.js";
+import { startShiftSchema, finishShiftSchema, updateShiftSchema } from "./shifts.validators.js";
+import { FraudService } from "../fraud/fraud.service.js"; // Import FraudService
+
+export async function getAllShiftsController(req: Request, res: Response) {
+    try {
+        const user = req.user;
+        if (!user) return res.status(401).json({ message: "Usuário não autenticado" });
+
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 50;
+
+        let driverIdFilter = req.query.driverId as string;
+
+        // Regra de Segurança: Se não for ADMIN, força filtrar pelos próprios turnos
+        if (user.role !== 'admin') {
+            driverIdFilter = user.userId;
+        }
+
+        const filters = {
+            driverId: driverIdFilter,
+            vehicleId: req.query.vehicleId as string,
+            status: req.query.status as string,
+            startDate: req.query.startDate as string,
+            endDate: req.query.endDate as string,
+        };
+
+        const result = await shiftsService.getAllShifts(page, limit, filters);
+        return res.json(result);
+    } catch (error) {
+        console.error("Error getting shifts:", error);
+        return res.status(500).json({ message: "Erro ao buscar turnos" });
+    }
+}
+
+export async function getShiftByIdController(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const shift = await shiftsService.getShiftById(id);
+        if (!shift) return res.status(404).json({ message: "Turno não encontrado" });
+        return res.json(shift);
+    } catch (error) {
+        console.error("Error getting shift by id:", error);
+        return res.status(500).json({ message: "Erro ao buscar turno" });
+    }
+}
+
+
+export async function startShiftController(req: Request, res: Response) {
+    try {
+        const user = (req as any).user;
+        const driverId = user.role === 'admin' ? (req.body.driverId || user.userId) : user.userId;
+        const data = { ...req.body, driverId }; // Merge driverId
+
+        const validatedData = startShiftSchema.parse(data);
+
+        const shift = await shiftsService.startShift(validatedData.driverId!, validatedData.vehicleId, validatedData.kmInicial, req.auditContext);
+        return res.status(201).json(shift);
+    } catch (error: any) {
+        if (error.issues) return res.status(400).json({ message: "Validation error", details: error.issues });
+        return res.status(400).json({ message: error.message || "Erro ao iniciar turno" });
+    }
+}
+
+export async function finishShiftController(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const user = (req as any).user;
+        const validatedData = finishShiftSchema.parse(req.body);
+
+        // Security: Ensure the shift belongs to the driver
+        if (user.role !== 'admin') {
+            const shift = await shiftsService.getShiftById(id);
+            if (!shift || shift.driverId !== user.userId) {
+                return res.status(403).json({ message: "Você não tem permissão para finalizar este turno." });
+            }
+        }
+
+        const shift = await shiftsService.finishShift(id, validatedData.kmFinal, req.auditContext);
+
+        // 🔴 NOVO: Dispara análise de fraude automaticamente ao fechar turno
+        // Fire-and-forget para não bloquear o response
+        FraudService.analyzeShift(id).catch(err =>
+            console.error(`❌ Erro análise fraude pós-turno ${id}:`, err)
+        );
+
+        return res.json(shift);
+    } catch (error: any) {
+        if (error.issues) return res.status(400).json({ message: "Validation error", details: error.issues });
+        return res.status(400).json({ message: error.message || "Erro ao finalizar turno" });
+    }
+}
+
+export async function getOpenShiftController(req: Request, res: Response) {
+    try {
+        const driverId = req.query.driverId as string || (req as any).user?.userId;
+        if (!driverId) return res.status(400).json({ message: "Motorista não identificado" });
+
+        const shift = await shiftsService.getOpenShift(driverId);
+        return res.json(shift || null);
+    } catch (error) {
+        console.error("Error getting open shift:", error);
+        return res.status(500).json({ message: "Erro ao buscar turno aberto" });
+    }
+}
+
+export async function deleteShiftController(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        await shiftsService.deleteShift(id, req.auditContext);
+        return res.json({ message: "Turno excluído com sucesso" });
+    } catch (error) {
+        console.error("Error deleting shift:", error);
+        return res.status(500).json({ message: "Erro ao excluir turno" });
+    }
+}
+
+// Add update controller
+export async function updateShiftController(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const validatedData = updateShiftSchema.parse(req.body);
+        const updated = await shiftsService.updateShift(id, validatedData, req.auditContext);
+        return res.json(updated);
+    } catch (error: any) {
+        console.error("Error updating shift:", error);
+        if (error.issues) return res.status(400).json({ message: "Validation error", details: error.issues });
+        return res.status(500).json({ message: "Erro ao atualizar turno" });
+    }
+}
+
+export const shiftsController = {
+    getAll: getAllShiftsController,
+    getById: getShiftByIdController,
+    start: startShiftController,
+    finish: finishShiftController,
+    getOpen: getOpenShiftController,
+    update: updateShiftController,
+    delete: deleteShiftController,
+    adminClose: adminCloseShiftController,
+    createManual: createManualShiftController
+};
+
+/**
+ * Admin Close Shift Controller - Encerrar turno manualmente (somente admin)
+ * NUNCA altera timestamps das corridas!
+ */
+export async function adminCloseShiftController(req: Request, res: Response) {
+    try {
+        const { id } = req.params;
+        const { fim, kmFinal } = req.body;
+
+        // Validação básica
+        if (!fim) {
+            return res.status(400).json({ message: "Data/hora de fim é obrigatória" });
+        }
+        if (!kmFinal && kmFinal !== 0) {
+            return res.status(400).json({ message: "KM Final é obrigatório" });
+        }
+
+        // Converter para Date
+        const fimDate = new Date(fim);
+        if (isNaN(fimDate.getTime())) {
+            return res.status(400).json({ message: "Data/hora de fim inválida" });
+        }
+
+        const result = await shiftsService.adminCloseShift(id, fimDate, Number(kmFinal), req.auditContext);
+
+        // Retornar com aviso se houver
+        if (result.warning) {
+            return res.json({
+                ...result.shift,
+                _warning: result.warning
+            });
+        }
+
+        return res.json(result.shift);
+    } catch (error: any) {
+        console.error("[adminCloseShift] Error:", error);
+        return res.status(400).json({ message: error.message || "Erro ao encerrar turno" });
+    }
+}
+
+/**
+ * Create Manual Shift Controller - Criar turno retroativo completo (somente admin)
+ * Cria turno já fechado com corridas e custos de uma só vez
+ */
+export async function createManualShiftController(req: Request, res: Response) {
+    try {
+        const { driverId, vehicleId, kmInicial, kmFinal, inicio, fim, rides, expenses } = req.body;
+
+        // Validação básica
+        if (!driverId) return res.status(400).json({ message: "Motorista é obrigatório" });
+        if (!vehicleId) return res.status(400).json({ message: "Veículo é obrigatório" });
+        if (!kmInicial && kmInicial !== 0) return res.status(400).json({ message: "KM Inicial é obrigatório" });
+        if (!kmFinal && kmFinal !== 0) return res.status(400).json({ message: "KM Final é obrigatório" });
+        if (!inicio) return res.status(400).json({ message: "Horário de início é obrigatório" });
+        if (!fim) return res.status(400).json({ message: "Horário de fim é obrigatório" });
+        if (!rides || !Array.isArray(rides) || rides.length === 0) {
+            return res.status(400).json({ message: "Pelo menos uma corrida é obrigatória" });
+        }
+
+        const inicioDate = new Date(inicio);
+        const fimDate = new Date(fim);
+
+        if (isNaN(inicioDate.getTime()) || isNaN(fimDate.getTime())) {
+            return res.status(400).json({ message: "Datas inválidas" });
+        }
+
+        const result = await shiftsService.createManualShift({
+            driverId,
+            vehicleId,
+            kmInicial: Number(kmInicial),
+            kmFinal: Number(kmFinal),
+            inicio: inicioDate,
+            fim: fimDate,
+            rides,
+            expenses: expenses || []
+        }, req.auditContext);
+
+        return res.status(201).json(result);
+    } catch (error: any) {
+        console.error("[createManualShift] Error:", error);
+        return res.status(400).json({ message: error.message || "Erro ao criar turno manual" });
+    }
+}
