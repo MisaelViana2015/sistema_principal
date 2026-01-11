@@ -1,0 +1,465 @@
+
+import { pgTable, unique, varchar, text, boolean, timestamp, foreignKey, numeric, integer, jsonb, real, index, json, uuid } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { sql, relations } from "drizzle-orm";
+import { randomUUID } from "crypto";
+
+export const drivers = pgTable("drivers", {
+    id: varchar("id", { length: 36 }).$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    nome: text("nome").notNull(),
+    email: text("email").notNull(),
+    telefone: text("telefone"),
+    senha: text("senha").notNull(),
+    role: varchar("role", { length: 20 }).default('driver').notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    temp_password_hash: text("temp_password_hash"),
+    temp_password_expires_at: timestamp("temp_password_expires_at", { withTimezone: true, mode: 'string' }),
+    must_reset_password: boolean("must_reset_password").default(false).notNull(),
+},
+    (table) => {
+        return {
+            driversEmailKey: unique("drivers_email_key").on(table.email),
+        }
+    });
+
+export const sessions = pgTable("sessions", {
+    id: varchar("id", { length: 36 }).$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    driverId: varchar("driver_id", { length: 36 }).notNull().references(() => drivers.id, { onDelete: "cascade" }),
+    token: text("token").notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: 'string' }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+},
+    (table) => {
+        return {
+            sessionsTokenKey: unique("sessions_token_key").on(table.token),
+        }
+    });
+
+export const vehicles = pgTable("vehicles", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    plate: text("plate").notNull(),
+    modelo: text("modelo").notNull(),
+    motoristaPadraoId: varchar("motorista_padrao_id"),
+    isActive: boolean("is_active").default(true).notNull(),
+    currentShiftId: varchar("current_shift_id"),
+    kmInicial: real("km_inicial").notNull(),
+    color: text("color"),
+    imageUrl: text("image_url"),
+    status: text("status").default('ativo'), // 'ativo' | 'manutencao' | 'indisponivel'
+    currentKm: real("current_km").default(0),
+},
+    (table) => {
+        return {
+            vehiclesPlateKey: unique("vehicles_plate_key").on(table.plate),
+        }
+    });
+
+// Types
+export type Driver = typeof drivers.$inferSelect;
+export type NewDriver = typeof drivers.$inferInsert;
+export type Session = typeof sessions.$inferSelect;
+export type NewSession = typeof sessions.$inferInsert;
+export type Vehicle = typeof vehicles.$inferSelect;
+export type NewVehicle = typeof vehicles.$inferInsert;
+
+export const shifts = pgTable("shifts", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    driverId: varchar("driver_id").notNull(),
+    vehicleId: varchar("vehicle_id").notNull(),
+    inicio: timestamp("inicio").notNull(),
+    fim: timestamp("fim"),
+    kmInicial: real("km_inicial").notNull(),
+    kmFinal: real("km_final"),
+    status: text("status").default('em_andamento').notNull(),
+    totalApp: real("total_app").default(0),
+    totalParticular: real("total_particular").default(0),
+    totalBruto: real("total_bruto").default(0),
+    totalCustos: real("total_custos").default(0),
+    totalCustosParticular: real("total_custos_particular").default(0),
+    liquido: real("liquido").default(0),
+    repasseEmpresa: real("repasse_empresa").default(0),
+    repasseMotorista: real("repasse_motorista").default(0),
+    totalCorridasApp: integer("total_corridas_app").default(0),
+    totalCorridasParticular: integer("total_corridas_particular").default(0),
+    totalCorridas: integer("total_corridas").default(0),
+    duracaoMin: integer("duracao_min").default(0),
+    valorKm: real("valor_km").default(0),
+    discountCompany: real("discount_company").default(0),
+    discountDriver: real("discount_driver").default(0),
+}, (table) => {
+    return {
+        driverIdIndex: index("idx_shifts_driver_id").on(table.driverId),
+        vehicleIdIndex: index("idx_shifts_vehicle_id").on(table.vehicleId),
+        statusIndex: index("idx_shifts_status").on(table.status),
+        inicioIndex: index("idx_shifts_inicio").on(table.inicio),
+    }
+});
+
+export const rides = pgTable("rides", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    shiftId: varchar("shift_id").notNull(),
+    tipo: text("tipo").notNull(),
+    valor: numeric("valor", { precision: 12, scale: 2 }).notNull(),
+    hora: timestamp("hora").notNull(),
+}, (table) => {
+    return {
+        shiftIdIndex: index("idx_rides_shift_id").on(table.shiftId),
+        horaIndex: index("idx_rides_hora").on(table.hora),
+    }
+});
+
+export type Shift = typeof shifts.$inferSelect;
+export type NewShift = typeof shifts.$inferInsert;
+export type Ride = typeof rides.$inferSelect;
+export type NewRide = typeof rides.$inferInsert;
+
+export const costTypes = pgTable("cost_types", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    name: text("name").notNull(),
+    category: text("category").default('Variável').notNull(), // 'Fixo' or 'Variável'
+    description: text("description"),
+    isActive: boolean("is_active").default(true).notNull(),
+    visibleToDriver: boolean("visible_to_driver").default(true).notNull(),
+    icon: text("icon"),
+    color: text("color"),
+});
+
+export const fixedCosts = pgTable("fixed_costs", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    name: text("name").notNull(),
+    value: numeric("valor", { precision: 12, scale: 2 }).notNull(),
+    frequency: text("frequency").default('Mensal').notNull(),
+    dueDay: integer("due_day").default(5), // Day of month
+    costTypeId: varchar("cost_type_id").references(() => costTypes.id),
+    vehicleId: varchar("vehicle_id").references(() => vehicles.id),
+    vendor: text("vendor"),
+    totalInstallments: integer("total_installments"), // 60, 96, etc.
+    startDate: timestamp("start_date"),
+    description: text("description"),
+    isActive: boolean("is_active").default(true),
+});
+
+export const fixedCostInstallments = pgTable("fixed_cost_installments", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    fixedCostId: varchar("fixed_cost_id").references(() => fixedCosts.id).notNull(),
+    installmentNumber: integer("installment_number").notNull(),
+    dueDate: timestamp("due_date").notNull(),
+    value: numeric("valor", { precision: 12, scale: 2 }).notNull(),
+    status: text("status").default('Pendente').notNull(), // 'Pendente', 'Pago', 'Atrasado'
+    paidAmount: numeric("paid_amount", { precision: 12, scale: 2 }),
+    paidDate: timestamp("paid_date"),
+    notes: text("notes"),
+}, (table) => {
+    return {
+        fixedCostIdIndex: index("idx_fixed_cost_inst_id").on(table.fixedCostId),
+        dueDateIndex: index("idx_fixed_cost_inst_due").on(table.dueDate),
+        statusIndex: index("idx_fixed_cost_inst_status").on(table.status),
+    }
+});
+
+export const tires = pgTable("tires", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    vehicleId: uuid("vehicle_id").references(() => vehicles.id),
+    position: text("position").notNull(), // Dianteiro Esq, etc
+    brand: text("brand").notNull(),
+    model: text("model").notNull(),
+    status: text("status").notNull(), // Novo, Meia Vida, etc
+    installDate: timestamp("install_date").notNull(),
+    installKm: integer("install_km").notNull(),
+    cost: numeric("cost", { precision: 10, scale: 2 }).default('0'),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertTireSchema = createInsertSchema(tires);
+export type Tire = typeof tires.$inferSelect;
+export type InsertTire = typeof tires.$inferInsert;
+
+export const expenses = pgTable("expenses", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    driverId: varchar("driver_id").references(() => drivers.id), // Optional link to driver
+    shiftId: varchar("shift_id"), // Link to shift
+    costTypeId: varchar("cost_type_id").references(() => costTypes.id).notNull(),
+    value: numeric("valor", { precision: 12, scale: 2 }).notNull(),
+    date: timestamp("date").notNull(),
+    notes: text("notes"),
+    isParticular: boolean("is_particular").default(false), // Legacy/Particular Cost
+    isSplitCost: boolean("is_split_cost").default(false), // 50/50 Split
+}, (table) => {
+    return {
+        driverIdIndex: index("idx_expenses_driver_id").on(table.driverId),
+        shiftIdIndex: index("idx_expenses_shift_id").on(table.shiftId),
+        dateIndex: index("idx_expenses_date").on(table.date),
+    }
+});
+
+// Tabela Legacy recuperada do backup
+export const legacyMaintenances = pgTable("maintenances", {
+    id: varchar("id").primaryKey(),
+    vehicleId: varchar("vehicle_id"),
+    description: text("descricao"), // Mapeando coluna 'descricao'
+    notes: text("observacao"), // Mapeando coluna 'observacao'
+    type: text("tipo"),
+    value: numeric("valor"),
+    date: timestamp("data"), // Mapeando coluna 'data'
+    km: real("km_atual"), // Mapeando coluna 'km_atual'
+});
+
+export const legacyShiftCostTypes = pgTable("shift_cost_types", {
+    id: varchar("id").primaryKey(),
+    name: text("name"),
+    icon: text("icon"),
+    colorToken: text("color_token"),
+    isDefault: boolean("is_default"),
+    createdAt: timestamp("created_at") // Note: Backup showed '2025-11-14...' format, might need care if string or timestamp.
+    // Postgres backup usually handles timestamp correctly if column type is timestamp.
+});
+
+export type CostType = typeof costTypes.$inferSelect;
+export type NewCostType = typeof costTypes.$inferInsert;
+export type FixedCost = typeof fixedCosts.$inferSelect;
+export type NewFixedCost = typeof fixedCosts.$inferInsert;
+export type Expense = typeof expenses.$inferSelect;
+export type NewExpense = typeof expenses.$inferInsert;
+export type LegacyMaintenance = typeof legacyMaintenances.$inferSelect;
+
+// --- LEGACY TABLES (KEPT TO PREVENT DATA LOSS DURING MIGRATION) ---
+
+export const vehicleCosts = pgTable("vehicle_costs", {
+    id: varchar("id").primaryKey(),
+    vehicleId: varchar("vehicle_id"),
+    tipo: text("tipo"),
+    descricao: text("descricao"),
+    valor: numeric("valor"),
+    mesReferencia: text("mes_referencia"),
+    dataPagamento: timestamp("data_pagamento"),
+    status: text("status"),
+    observacao: text("observacao"),
+    dataReferencia: timestamp("data_referencia"),
+    valorPago: numeric("valor_pago"),
+    dataVencimento: timestamp("data_vencimento"),
+});
+
+export const costs = pgTable("costs", {
+    id: varchar("id").primaryKey(),
+    shiftId: varchar("shift_id"),
+    tipo: text("tipo"),
+    valor: numeric("valor"),
+    observacao: text("observacao"),
+    hora: timestamp("hora"),
+    typeId: varchar("type_id"),
+});
+
+export const logs = pgTable("logs", {
+    id: varchar("id").primaryKey(),
+    level: text("level"),
+    message: text("message"),
+    meta: jsonb("meta"),
+    timestamp: timestamp("timestamp"),
+});
+
+export const fraudEvents = pgTable("fraud_events", {
+    id: varchar("id", { length: 36 }).$defaultFn(() => randomUUID()).primaryKey().notNull(),
+    shiftId: varchar("shift_id").references(() => shifts.id),
+    driverId: varchar("driver_id").references(() => drivers.id),
+    rideId: varchar("ride_id"), // Optional: fraud can be in a specific ride
+    riskScore: real("risk_score").default(0),
+    riskLevel: varchar("risk_level", { length: 20 }).default('low'), // low, medium, high, critical
+    rules: jsonb("rules"), // Array of fired rules
+    metadata: jsonb("metadata"), // Snapshot of data at time of analysis
+    status: varchar("status", { length: 20 }).default('pendente'), // pendente, revisado, ignorado, confirmado
+    reviewedBy: varchar("reviewed_by"),
+    reviewedAt: timestamp("reviewed_at"),
+    reviewNotes: text("review_notes"),
+    externalEvidence: text("external_evidence"), // JSON com evidências
+    evidenceType: text("evidence_type"), // 'camera', 'city_app', 'complaint'
+    externalRideCount: integer("external_ride_count"), // Qtd corridas externas
+    createdAt: timestamp("created_at").defaultNow(),
+    detectedAt: timestamp("detected_at").defaultNow(),
+}, (table) => {
+    return {
+        detectedAtIndex: index("idx_fraud_events_detected_at").on(table.detectedAt),
+    }
+});
+
+export const preventiveMaintenances = pgTable("preventive_maintenances", {
+    id: varchar("id").primaryKey(),
+    vehicleId: varchar("vehicle_id"),
+    maintenanceType: text("maintenance_type"),
+    lastKm: real("last_km"),
+    nextKm: real("next_km"),
+    lastDate: timestamp("last_date"),
+    nextDate: timestamp("next_date"),
+    status: text("status"),
+    notes: text("notes"),
+});
+
+export const sessionTable = pgTable("session", { // Singular 'session' found in DB
+    sid: varchar("sid").primaryKey(),
+    sess: json("sess"),
+    expire: timestamp("expire"),
+});
+
+// RELATIONS
+export const fraudEventsRelations = relations(fraudEvents, ({ one }) => ({
+    driver: one(drivers, {
+        fields: [fraudEvents.driverId],
+        references: [drivers.id],
+    }),
+    shift: one(shifts, {
+        fields: [fraudEvents.shiftId],
+        references: [shifts.id],
+    }),
+}));
+
+export const driversRelations = relations(drivers, ({ many }) => ({
+    fraudEvents: many(fraudEvents),
+}));
+
+export const shiftsRelations = relations(shifts, ({ one, many }) => ({
+    driver: one(drivers, {
+        fields: [shifts.driverId],
+        references: [drivers.id],
+    }),
+    vehicle: one(vehicles, {
+        fields: [shifts.vehicleId],
+        references: [vehicles.id],
+    }),
+    rides: many(rides),
+    expenses: many(expenses),
+    fraudEvents: many(fraudEvents),
+}));
+
+export const expensesRelations = relations(expenses, ({ one }) => ({
+    shift: one(shifts, {
+        fields: [expenses.shiftId],
+        references: [shifts.id],
+    }),
+    costType: one(costTypes, {
+        fields: [expenses.costTypeId],
+        references: [costTypes.id],
+    }),
+}));
+
+export const ridesRelations = relations(rides, ({ one }) => ({
+    shift: one(shifts, {
+        fields: [rides.shiftId],
+        references: [shifts.id],
+    }),
+}));
+
+// MAINTENANCE SYSTEM
+export const maintenanceConfigs = pgTable("maintenance_configs", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey(),
+    name: text("name").notNull(), // "Troca de Óleo", "Rodízio"
+    intervalKm: integer("interval_km").notNull(), // 10000, 5000
+    isActive: boolean("is_active").default(true),
+});
+
+export const vehicleMaintenances = pgTable("vehicle_maintenances", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey(),
+    vehicleId: varchar("vehicle_id").references(() => vehicles.id).notNull(),
+    configId: varchar("config_id").references(() => maintenanceConfigs.id).notNull(),
+    lastPerformedAt: timestamp("last_performed_at"),
+    lastPerformedKm: real("last_performed_km").default(0),
+    nextDueKm: real("next_due_km").notNull(),
+    status: text("status").default('ok'), // 'ok', 'warning', 'overdue'
+});
+
+export const maintenanceConfigsRelations = relations(maintenanceConfigs, ({ many }) => ({
+    vehicleMaintenances: many(vehicleMaintenances),
+}));
+
+export const vehicleMaintenancesRelations = relations(vehicleMaintenances, ({ one }) => ({
+    vehicle: one(vehicles, {
+        fields: [vehicleMaintenances.vehicleId],
+        references: [vehicles.id],
+    }),
+    config: one(maintenanceConfigs, {
+        fields: [vehicleMaintenances.configId],
+        references: [maintenanceConfigs.id],
+    }),
+}));
+
+export type MaintenanceConfig = typeof maintenanceConfigs.$inferSelect;
+export type VehicleMaintenance = typeof vehicleMaintenances.$inferSelect;
+
+// ============================================
+// AUDIT SYSTEM - Rastreabilidade Completa
+// ============================================
+
+/**
+ * audit_logs - Registro de TODAS as ações do sistema
+ * Quem fez, quando, qual ação, qual entidade
+ */
+export const auditLogs = pgTable("audit_logs", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+
+    // Identificação do Ator
+    actorType: text("actor_type").notNull(), // 'user' | 'admin' | 'ai' | 'system'
+    actorId: varchar("actor_id"),
+    actorRole: text("actor_role"),
+
+    // Ação Semântica
+    action: text("action").notNull(), // 'CREATE_EXPENSE', 'FINISH_SHIFT', 'DELETE_RIDE'
+    entity: text("entity").notNull(), // 'shifts', 'expenses', 'rides', 'vehicles'
+    entityId: varchar("entity_id"),
+
+    // Contexto da Request
+    source: text("source").default('api'), // 'api' | 'web' | 'job' | 'ai'
+    requestId: varchar("request_id"),
+    ip: text("ip"),
+    userAgent: text("user_agent"),
+
+    // Metadata Adicional (sem PII sensível)
+    meta: jsonb("meta").default({}),
+}, (table) => ({
+    createdAtIdx: index("idx_audit_logs_created_at").on(table.createdAt),
+    entityIdx: index("idx_audit_logs_entity").on(table.entity, table.entityId),
+    actorIdx: index("idx_audit_logs_actor").on(table.actorType, table.actorId),
+    actionIdx: index("idx_audit_logs_action").on(table.action),
+}));
+
+/**
+ * entity_history - Histórico de Alterações (antes/depois)
+ * Permite rollback lógico e auditoria forense
+ */
+export const entityHistory = pgTable("entity_history", {
+    id: varchar("id").$defaultFn(() => randomUUID()).primaryKey(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+
+    // Entidade Afetada
+    entity: text("entity").notNull(),
+    entityId: varchar("entity_id").notNull(),
+    operation: text("operation").notNull(), // 'INSERT' | 'UPDATE' | 'DELETE'
+
+    // Snapshots (deep copies)
+    beforeData: jsonb("before_data"), // null para INSERT
+    afterData: jsonb("after_data"),   // null para DELETE
+
+    // Identificação do Ator
+    actorType: text("actor_type").notNull(),
+    actorId: varchar("actor_id"),
+    actorRole: text("actor_role"),
+
+    // Contexto
+    source: text("source").default('api'),
+    requestId: varchar("request_id"),
+    payloadHash: text("payload_hash"), // sha256 do payload (sem campos voláteis)
+
+    // Metadata
+    meta: jsonb("meta").default({}),
+}, (table) => ({
+    createdAtIdx: index("idx_entity_history_created_at").on(table.createdAt),
+    entityIdx: index("idx_entity_history_entity").on(table.entity, table.entityId),
+    actorIdx: index("idx_entity_history_actor").on(table.actorType, table.actorId),
+}));
+
+// Types para Auditoria
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type NewAuditLog = typeof auditLogs.$inferInsert;
+export type EntityHistoryRecord = typeof entityHistory.$inferSelect;
+export type NewEntityHistory = typeof entityHistory.$inferInsert;

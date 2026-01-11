@@ -1,0 +1,23 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../dist/client",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "src/*"
+            ],
+            "@shared/*": [
+                "../shared/*"
+            ]
+        },
+        "types": [
+            "node",
+            "vite/client"
+        ]
+    },
+    "include": [
+        "src/**/*",
+        "../shared/**/*"
+    ]
+}

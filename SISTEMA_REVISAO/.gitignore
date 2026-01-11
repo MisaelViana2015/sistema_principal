@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+dist/
+build/
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.backup
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Editor directories and files
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# Shared compiled files (keep source .ts)
+shared/*.js
+shared/*.js.map
+shared/*.d.ts
+!shared/index.d.ts
+
+# Backups and Local Ops
+*.cred
+db_prod.cred
+debug_*.json
+server/backups/
+migration_data.json
+run_migration.ps1
+test_psql.ps1
+
+# Auditoria e Limpeza
+*_inventory.csv
+*_inventory.txt
+*_file_tree.txt
+
+# Dumps e Validação
+dump_validation/
+
+# Logs Locais
+logs/
+
+# Debug Temporário
+debug_*.ts
+debug_*.json
